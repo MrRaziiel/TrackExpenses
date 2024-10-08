@@ -1,0 +1,197 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Dashboard</title>
+    <!-- Chart.js via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .vertical-menu {
+            width: 200px;
+        }
+
+            .vertical-menu a {
+                background-color: #f8f9fa;
+                color: black;
+                display: block;
+                padding: 12px;
+                text-decoration: none;
+                border: 1px solid #dee2e6;
+            }
+
+                .vertical-menu a.active {
+                    background-color: #007bff;
+                    color: white;
+                }
+
+                .vertical-menu a:hover {
+                    background-color: #007bff;
+                    color: white;
+                }
+
+        .stock-ticker {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .financial-news {
+            padding: 20px;
+            background-color: #f8f9fa;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Vertical Menu -->
+            
+
+            <!-- Main Content -->
+            <div class="col-md-10">
+                <div class="stock-ticker" id="stock-ticker">
+                    <!-- Stock ticker will be rendered here -->
+                </div>
+
+                <!-- Chart.js Financial Chart -->
+                <canvas id="marketChart" width="400" height="200"></canvas>
+
+                <!-- Financial News Section -->
+                <div class="financial-news" id="news-section">
+                    <h3>Financial News</h3>
+                    <ul id="news-list">
+                        <!-- News articles will be rendered here -->
+                    </ul>
+                </div>
+
+                <!-- Add a Stock to Watchlist -->
+                <div class="mt-4">
+                    <h3>Add a Stock to Watchlist</h3>
+                    <form id="stock-form">
+                        <div class="mb-3">
+                            <label for="stock-symbol" class="form-label">Stock Symbol</label>
+                            <input type="text" id="stock-symbol" class="form-control" placeholder="Enter stock symbol">
+                        </div>
+                        <div class="mb-3">
+                            <label for="stock-price" class="form-label">Stock Price</label>
+                            <input type="number" id="stock-price" class="form-control" placeholder="Enter stock price">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Stock</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Model: Stock data simulation
+        let stocks = [
+            { symbol: 'AAPL', price: 145.32 },
+            { symbol: 'GOOGL', price: 2725.62 },
+            { symbol: 'AMZN', price: 3342.88 },
+            { symbol: 'TSLA', price: 755.21 },
+            { symbol: 'MSFT', price: 299.10 }
+        ];
+
+        // Model: Simulated financial news
+        const news = [
+            'Apple stocks rally as new iPhone releases.',
+            'Google announces groundbreaking AI updates.',
+            'Amazon hits record-high sales during holiday season.',
+            'Tesla stocks soar as new EV models hit the market.',
+            'Microsoft integrates AI across all platforms.'
+        ];
+
+        // View: Rendering the stock ticker
+        function renderStockTicker(data) {
+            const tickerElement = document.getElementById('stock-ticker');
+            tickerElement.innerHTML = data.map(stock => {
+                return `<span>${stock.symbol}: $${stock.price.toFixed(2)}</span>`;
+            }).join(' | ');
+        }
+
+        // View: Rendering financial news
+        function renderNews() {
+            const newsList = document.getElementById('news-list');
+            newsList.innerHTML = news.map(article => `<li>${article}</li>`).join('');
+        }
+
+        // View: Render Chart.js Market Chart
+        function renderMarketChart() {
+            const ctx = document.getElementById('marketChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['January', 'February', 'March', 'April', 'May', 'June'],
+                    datasets: [{
+                        label: 'Stock Prices (in USD)',
+                        data: stocks.map(stock => stock.price), // Use stock prices dynamically
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 2,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // MVM: Update and bind data
+        function updateStockTicker() {
+            renderStockTicker(stocks); // Update stock ticker with model data
+        }
+
+        // MVM: Simulate stock price changes (optional, for dynamic behavior)
+        function simulateStockPriceChanges() {
+            stocks.forEach(stock => {
+                stock.price += (Math.random() - 0.5) * 10; // Simulate random price changes
+            });
+            updateStockTicker(); // Re-render stock ticker with new prices
+        }
+
+        // MVM: Add a custom stock to the list
+        function addStockToWatchlist(event) {
+            event.preventDefault(); // Prevent form submission
+            const symbol = document.getElementById('stock-symbol').value.toUpperCase();
+            const price = parseFloat(document.getElementById('stock-price').value);
+            if (symbol && !isNaN(price)) {
+                stocks.push({ symbol, price });
+                updateStockTicker(); // Update ticker with new stock
+            }
+        }
+
+        // Initial render of stock ticker, chart, and news
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStockTicker(); // MVM triggers view update with current model data
+            renderMarketChart(); // View renders the chart
+            renderNews(); // View renders the news section
+        });
+
+        // Add event listener to stock form
+        document.getElementById('stock-form').addEventListener('submit', addStockToWatchlist);
+
+        // Optionally, simulate stock price changes every few seconds
+        setInterval(simulateStockPriceChanges, 5000);
+    </script>
+
+    <!-- Bootstrap JS via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

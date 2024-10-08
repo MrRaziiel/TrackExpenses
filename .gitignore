@@ -1,0 +1,34 @@
+# Build Folders
+bin/
+obj/
+
+# User-specific Files
+*.csproj.user
+*.suo
+*.user
+*.vs/
+.vscode/
+
+# Logs
+*.log
+
+# Publish outputs
+wwwroot/
+
+# Database
+*.mdf
+*.ldf
+*.bak
+
+# Secrets
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.json
+
+# Package Folders
+packages/
+node_modules/
+bower_components/
+
+# Resharper files
+*.DotSettings.user
