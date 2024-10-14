@@ -7,49 +7,30 @@
     <h1 class="display-4">Welcome</h1>
     <a asp-action="CreateEditExpense" class="btn btn-secondary">CREATE NEW</a>
     <br/>
-    <table class="table">
-        <thead>
-            <th>
-                ID
-            </th>
-        <th>
-            Name
-        </th>
-        <th>
-               Value
-        </th>
-        <th>
-            Description
-        </th>
-        <th>
-            Actions
-        </th>
-        </thead>
-        <tbody>
-            @{
-                foreach(var expense in Model)
+    @{  
+        if (Model != null)
+        {
+            <table>
+            @foreach (var expense in Model)
+            {
+                @foreach (var property in expense.GetType().GetProperties())
                 {
                     <tr>
-                    <td>
-                    @expense.Id
-                    </td>
-                        <td>
-                            @expense.Name
-                        </td>
-                        <td>
-                            @expense.Value
-                        </td>
-                        <td>
-                            @expense.Description
-                        </td>
-                        <td>
-                            <a asp-action="CreateEditExpense" asp-route-id="@expense.Id">EDIT</a>
-                            <a asp-action="DeleteExpense" asp-route-id="@expense.Id">DELETE</a>
-                        </td>
-               
+                        <td>@property.Name</td> <!-- Display Property Name (Key) -->
+                        <td>@property.GetValue(expense)</td> <!-- Display Property Value -->
                     </tr>
+                       
                 }
+                    <td>
+                        <a asp-action="CreateEditExpense" asp-route-id="@expense.Id">EDIT</a>
+                        <a asp-action="DeleteExpense" asp-route-id="@expense.Id">DELETE</a>
+                    </td>
+                
             }
+            </table>
+        }
+        
+    }
         </tbody>
     </table>
 

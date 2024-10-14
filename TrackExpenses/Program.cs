@@ -1,13 +1,17 @@
-using TrackExpenses.App_Start;
 using Microsoft.EntityFrameworkCore;
+using TrackExpenses.App_Start;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-
-builder.Services.AddDbContext<FinancasDbContext>(options => options.UseInMemoryDatabase("FinancasDbContext"));
-
+var computerName = Environment.MachineName;
+Console.WriteLine(computerName);
+//builder.Services.AddDbContext<FinancasDbContext>(options => options.UseInMemoryDatabase("FinancasDbContext"));
+builder.Services.AddDbContext<FinancasDbContext>(options => 
+    options.UseSqlServer("Server="+ Environment.MachineName+"; Database=TRACKEXPENSES;Trusted_Connection=True;TrustServerCertificate=True;"
+    ));
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

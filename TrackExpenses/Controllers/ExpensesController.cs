@@ -19,7 +19,14 @@ namespace TrackExpenses.Controllers
         {
             //List ALL expenses
             var allExpenses  = _context.Expenses.ToList();
-            return View(allExpenses);
+            if (allExpenses != null)
+                {
+                return View(allExpenses);
+            }
+            else
+            {
+                return View();
+            }
         }
         public IActionResult CreateEditExpense(int? id)
         {
@@ -48,8 +55,6 @@ namespace TrackExpenses.Controllers
             if(model.Id == 0)
             {
                 //Create
-                var higherIdExpense = _context.Expenses.OrderByDescending(expense => expense.Id).FirstOrDefault();
-                if (higherIdExpense != null) model.Id = higherIdExpense.Id + 1;
                 _context.Expenses.Add(model);
             }
             else{
