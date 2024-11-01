@@ -28,7 +28,11 @@ namespace TrackExpenses.Controllers
                 return View();
             }
         }
-        public IActionResult CreateEditExpense(int? id)
+        public IActionResult CreateGroupClient()
+        {
+            return View();
+        }
+            public IActionResult CreateEditExpense(int? id)
         {
 
             if (id != null) 

@@ -1,44 +1,54 @@
 ﻿@model TrackExpenses.Models.Client
 
 @{
-    ViewData["Title"] = "Add / Edit Client";
+    ViewData["Title"] = "CreateEditClient";
 }
 
-<h2>Add Client</h2>
+<h1>CreateEditClient</h1>
 
-
-<!-- Dynamic form to insert Client data -->
-<form asp-action="Create" method="post">
-    @foreach (var property in typeof(TrackExpenses.Models.Client).GetProperties())
-    {
-        if (property.Name != "Id")  // Skip the primary key (ID) if auto-generated
-        {
+<h4>Client</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="CreateEditClient">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
-
-            <label>@property.Name</label>
-               
-
-            @if (property.PropertyType == typeof(string))  // For string properties
-            {
-                <input type="text" name="@property.Name" class="form-control" />
-            }
-            else if (property.PropertyType == typeof(int) || property.PropertyType == typeof(decimal))  // For numeric properties
-            {
-                <input type="number" name="@property.Name" class="form-control" />
-            }
-            else if (property.PropertyType == typeof(DateTime))  // For DateTime properties
-            {
-                <input type="date" name="@property.Name" class="form-control" />
-            }
-            else
-            {
-                <input type="text" name="@property.Name" class="form-control" /> <!-- Fallback to text -->
-            }
-                
+                <label asp-for="FirstName" class="control-label"></label>
+                <input asp-for="FirstName" class="form-control" />
+                <span asp-validation-for="FirstName" class="text-danger"></span>
             </div>
-        }
-    }
-
-    <button type="submit" class="btn btn-primary">Submit</button>
-</form>
-
+            <div class="form-group">
+                <label asp-for="LastName" class="control-label"></label>
+                <input asp-for="LastName" class="form-control" />
+                <span asp-validation-for="LastName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Birthday" class="control-label"></label>
+                <input asp-for="Birthday" class="form-control" />
+                <span asp-validation-for="Birthday" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Email" class="control-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Password" class="control-label"></label>
+                <input asp-for="Password" class="form-control" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PhotoPath" class="control-label"></label>
+                <input asp-for="PhotoPath" class="form-control" />
+                <span asp-validation-for="PhotoPath" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="GroupId" class="control-label"></label>
+                <select asp-for="GroupId" class ="form-control" asp-items="ViewBag.GroupId"></select>
+            </div>
+            <div class="form-group">
+                <input asp-action="CreateEditClientForm" type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
