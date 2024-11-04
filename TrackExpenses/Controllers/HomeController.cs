@@ -2,6 +2,7 @@ using TrackExpenses.App_Start;
 using TrackExpenses.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 
 namespace TrackExpenses.Controllers
 {
@@ -20,6 +21,7 @@ namespace TrackExpenses.Controllers
             return View();
         }
 
+        [Authorize]
         public IActionResult Privacy()
         {
             return View();
