@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TrackExpenses.App_Start;
+using TrackExpenses.Models;
 
 namespace TrackExpenses.Controllers
 {
@@ -24,17 +25,39 @@ namespace TrackExpenses.Controllers
                 return View();
             }
         }
-        public IActionResult CreateEditClient(int? id)
+        public IActionResult CreateEditClient(string? id)
         {
 
-            if (id != null)
             {
-                //editing  -> load an expense by Id
-                var expenseInDB = _context.Clients.SingleOrDefault(expense => expense.Id == id);
-                return View(expenseInDB);
+
+                if (id != null)
+                {
+                    //editing  -> load an expense by Id
+                    var clientInDB = _context.Clients.SingleOrDefault(client => client.Id == id);
+                    return View(clientInDB);
+
+                }
+                return View();
+            }
+        }
+
+        public IActionResult CreateEditClientForm(Client client)
+        {
+
+            if (client.Id == null)
+            {
+                //Create
+                _context.Clients.Add(client);
+            }
+            else
+            {
+                //Editing
+                _context.Clients.Update(client);
 
             }
-            return View();
+            _context.SaveChanges();
+            return RedirectToAction("ListClients");
+
         }
-    }
+}
 }

@@ -1,10 +1,12 @@
 ﻿
 using TrackExpenses.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace TrackExpenses.App_Start
 {
-    public class FinancasDbContext : DbContext
+
+    public class FinancasDbContext : IdentityDbContext<Client>
     {
         public DbSet<Expense> Expenses { get; set; }
         public DbSet<GroupOfClients> GroupOfClients { get; set; }
