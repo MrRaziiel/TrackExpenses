@@ -1,11 +1,7 @@
-﻿using Azure.Identity;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
-using System.Runtime.InteropServices;
 using TrackExpenses.Models;
 using TrackExpenses.ViewModels;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace TrackExpenses.Controllers
 {
@@ -54,7 +50,7 @@ namespace TrackExpenses.Controllers
         {
             if (ModelState.IsValid)
             {
-                Client clients = new Client
+                Client client = new Client
                 {
 
                     FirstName = model.Name,
@@ -64,7 +60,7 @@ namespace TrackExpenses.Controllers
                     Password = model.Password,
                 };
 
-                var result = await userManager.CreateAsync(clients, model.Password);
+                var result = await userManager.CreateAsync(client, model.Password);
                 if (result.Succeeded)
                 {
                     return RedirectToAction("Login", "Account");

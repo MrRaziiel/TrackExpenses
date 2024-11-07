@@ -43,47 +43,5 @@ namespace TrackExpenses.Models
         public GroupOfClients? GroupOfClients { get; set; } 
     }
 
-
-    //public String LoginProcess(String clientEmail, String strPassword)
-    //{
-    //    String message = "";
-    //    //my connection string
-    //    SqlConnection con = new(System.Configuration.ConfigurationManager.ConnectionStrings["connectionString"].ConnectionString);
-    //    SqlCommand cmd = new("Select * from Clients where clientEmail=@Email", con);
-    //    cmd.Parameters.AddWithValue("@Êmail", clientEmail);
-    //    try
-    //    {
-    //        con.Open();
-    //        SqlDataReader reader = cmd.ExecuteReader();
-    //        if (reader.Read())
-    //        {
-    //            Boolean login = (strPassword.Equals(reader["Password"].ToString(), StringComparison.InvariantCulture)) ? true : false;
-    //            if (login)
-    //            {
-    //                message = "1";
-    //                clientEmail = reader["Email"].ToString();
-
-    //            }
-    //            else
-    //                message = "Invalid Credentials";
-    //        }
-    //        else
-    //            message = "Invalid Credentials";
-
-    //        reader.Close();
-    //        reader.Dispose();
-    //        cmd.Dispose();
-    //        con.Close();
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        message = ex.Message.ToString() + "Error.";
-
-    //    }
-    //    return message;
-    //}
-
-
-
 }
 
