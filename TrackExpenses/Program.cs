@@ -4,6 +4,7 @@ using TrackExpenses.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 using Microsoft.Extensions.Options;
+
 namespace TrackExpenses
 {
     public class Program
@@ -72,10 +73,10 @@ namespace TrackExpenses
             // User initialization
             using (var scope = app.Services.CreateScope())
             {
+                //rem production
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Client>>();
                 string email = "TESTE@MAIL.COM";
                 string password = "Test1234";
-                Console.WriteLine(userManager);
                 var client = await userManager.FindByEmailAsync(email);
                 if (client == null)
                 {
@@ -83,7 +84,7 @@ namespace TrackExpenses
                     {
 
                         FirstName = email,
-                        LastName = email,
+                        FamilyName = email,
                         Email = email,
                         UserName = email,
                         Password = password,

@@ -1,7 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using TrackExpenses.Models;
 using TrackExpenses.ViewModels;
+using System;
+using TrackExpenses.App_Start;
+using Microsoft.EntityFrameworkCore;
+using TrackExpenses.Models;
 
 namespace TrackExpenses.Controllers
 {
@@ -9,11 +14,13 @@ namespace TrackExpenses.Controllers
     {
         private readonly SignInManager<Client> signInManager;
         private readonly UserManager<Client> userManager;
+        private readonly FinancasDbContext _context;
 
-        public AccountController(SignInManager<Client> signInManager, UserManager<Client> userManager)
+        public AccountController(SignInManager<Client> signInManager, UserManager<Client> userManager, FinancasDbContext context)
         {
             this.signInManager = signInManager;
             this.userManager = userManager;
+            this._context = context;
         }
 
         public IActionResult Login()
@@ -46,23 +53,55 @@ namespace TrackExpenses.Controllers
         }
         [HttpPost]
 
-        public async Task<IActionResult> Register(RegisterViewModel model)
+        public async Task<IActionResult> Register(RegisterViewModel model, string? code)
         {
+
             if (ModelState.IsValid)
             {
                 Client client = new Client
                 {
 
-                    FirstName = model.Name,
-                    LastName = model.Name,
+                    FirstName = model.FirstName,
+                    FamilyName = model.FamilyName,
                     Email = model.Email,
                     UserName = model.Email,
                     Password = model.Password,
                 };
+                string role = "";
+                if (code == null)
+                {
 
+                    GroupOfClients groupOfClients = new GroupOfClients
+                    {
+                        Name = model.FamilyName,
+                        CodeInvite = GenerateCodeGroup(),
+
+                    };
+                    role = "GROUPADMINISTRATOR";
+                    _context.GroupOfClients.Add(groupOfClients);
+                    await _context.SaveChangesAsync();
+
+                }
+                else
+                {
+                    var group = _context.GroupOfClients.FirstOrDefault(x => x.CodeInvite == code);
+
+                    if (group == null)
+                    {
+                        ModelState.AddModelError("", "Code Group incorrect");
+                        return View(model);
+                    }
+                    else
+                    {
+                        client.GroupId = group.Id;
+                        role = "USER";
+
+                    }
+                }
                 var result = await userManager.CreateAsync(client, model.Password);
                 if (result.Succeeded)
                 {
+                    await userManager.AddToRoleAsync(client, role);
                     return RedirectToAction("Login", "Account");
                 }
                 else
@@ -79,6 +118,18 @@ namespace TrackExpenses.Controllers
             return View(model);
 
         }
+
+        public IActionResult CodeGroupCheck()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult CodeGroupCheck(string code)
+        {
+            return RedirectToAction("Register", "Account", new { code = code });
+        }
+
 
         public IActionResult VerifyEmail()
         {
@@ -118,7 +169,7 @@ namespace TrackExpenses.Controllers
             if (ModelState.IsValid)
             {
                 var client = await userManager.FindByNameAsync(model.Email);
-                if (User != null)
+                if (client != null)
                 {
                     var result = await userManager.RemovePasswordAsync(client);
                     if (result.Succeeded)
@@ -154,5 +205,21 @@ namespace TrackExpenses.Controllers
             await signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
         }
+
+
+        public IActionResult Profile()
+        {
+            return View();
+        }
+
+
+        private static Random random = new Random();
+        private string GenerateCodeGroup()
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, 32)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
     }
 }
