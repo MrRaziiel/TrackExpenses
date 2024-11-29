@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TrackExpenses.App_Start;
 using TrackExpenses.Models;
 
@@ -12,6 +13,7 @@ namespace TrackExpenses.Controllers
         {
             _context = context;
         }
+        [Authorize(Roles = "ADMINISTRATOR")]
         public IActionResult ListClients()
         {
             //List ALL expenses

@@ -2,10 +2,14 @@
 @inject SignInManager<Client> signInManager;
 
 
+
     <ul class="navbar-nav ms-auto">
         @if(signInManager.IsSignedIn(User))
         
     {
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Profile" asp-action="Profile">Profile</a>
+        </li>
         <li class="nav-item">
             <a class="nav-link text-dark" asp-controller="Account" asp-action="Logout">Logout</a>
         </li>

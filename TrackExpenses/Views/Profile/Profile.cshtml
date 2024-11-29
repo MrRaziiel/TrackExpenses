@@ -1,0 +1,127 @@
+﻿@using TrackExpenses.ViewModels;
+@model ProfileViewModel;
+
+<h2 class="text-center">@(Model.FirstName.ToString().ToUpper() + " " + Model.FamilyName.ToString().ToUpper())</h2>
+
+<div class="account-container">
+    <div class="account-box">
+        <dl class="col col-5">
+            <dt class="client-photo">
+                @if (Model.PhotoPath == null)
+                {
+                    <img src="~/images/No_image.jpg" />
+                }
+                else
+                {
+                    <img src="@("~/images/" + Model.PhotoPath)" />
+                }
+            </dt>
+            <dt>
+
+            </dt>
+        </dl>
+        <!-- Email Field -->
+        <div class="mb-3">
+            <label>Email:</label>
+            <span id="email-label">@Model.Email</span>
+            <input asp-for="Email" class="form-control" id="email-input" style="display: none;" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+        <!-- First Name Field -->
+        <div class="mb-3">
+            <label>First Name:</label>
+            <span id="firstName-label">@Model.FirstName</span>
+            <input asp-for="FirstName" class="form-control" id="firstName-input" style="display: none;" />
+            <span asp-validation-for="FirstName" class="text-danger"></span>
+        </div>
+
+        <!-- Family Name Field -->
+        <div class="mb-3">
+            <label>Family Name:</label>
+            <span id="familyName-label">@Model.FamilyName</span>
+            <input asp-for="FamilyName" class="form-control" id="familyName-input" style="display: none;" />
+            <span asp-validation-for="FamilyName" class="text-danger"></span>
+        </div>
+
+        <!-- Password Field -->
+        <div class="mb-3">
+            <label>Password:</label>
+            <span id="password-label">•••••••</span> <!-- Hidden password value for security -->
+            <input asp-for="Password" type="password" class="form-control" id="password-input" style="display: none;" />
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+
+        <!--Confirm Password Field -->
+        <div class="mb-3">
+            <label>Confirm Password:</label>
+            <span id="ConfirmPassword-label">•••••••</span> <!-- Hidden password value for security -->
+            <input asp-for="ConfirmPassword" type="ConfirmPassword" class="form-control" id="password-input" style="display: none;" />
+            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+        </div>
+
+        <!-- Buttons -->
+        <div class="mb-3">
+            <button id="editButton" class="btn btn-primary" onclick="enableEditMode()">Edit</button>
+            <button id="submitButton" type="submit" class="btn btn-success" style="display: none;">Submit</button>
+            <button id="cancelButton" class="btn btn-secondary" style="display: none;" onclick="cancelEdit()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function enableEditMode() {
+        // Hide all elements with IDs ending in "-label"
+        const labels = document.querySelectorAll('[id$="-label"]');
+        labels.forEach(label => {
+            if (label) {
+                label.style.display = "none";
+            }
+        });
+
+        // Show all elements with IDs ending in "-input"
+        const inputs = document.querySelectorAll('[id$="-input"]');
+        inputs.forEach(input => {
+            if (input) {
+                input.style.display = "inline";
+            }
+        });
+
+        // Show and hide buttons as needed
+        const editButton = document.getElementById("editButton");
+        const submitButton = document.getElementById("submitButton");
+        const cancelButton = document.getElementById("cancelButton");
+
+        if (editButton) editButton.style.display = "none";
+        if (submitButton) submitButton.style.display = "inline";
+        if (cancelButton) cancelButton.style.display = "inline";
+    }
+    function cancelEdit() {
+        // Show all elements with IDs ending in "-label"
+        document.querySelectorAll('[id$="-label"]').forEach(label => {
+            if (label) label.style.display = "inline";
+        });
+
+        // Hide all elements with IDs ending in "-input"
+        document.querySelectorAll('[id$="-input"]').forEach(input => {
+            if (input) input.style.display = "none";
+        });
+
+        // Toggle button visibility back to the original state
+        document.getElementById("editButton").style.display = "inline";
+        document.getElementById("submitButton").style.display = "none";
+        document.getElementById("cancelButton").style.display = "none";
+    }
+</script>
+<style>
+    .client-photo img {
+        width: 25em;
+        height: 25em;
+        border-radius: 75%;
+    }
+
+    .gradient-bg {
+        background: linear-gradient(to right, #00c6ff, #0072ff);
+        padding: 20px;
+    }
+</style>

@@ -21,6 +21,12 @@ namespace TrackExpenses.Controllers
             return View();
         }
 
+        public IActionResult UserIndex()
+        {
+            return View();
+        }
+
+
         [Authorize]
         public IActionResult Privacy()
         {
