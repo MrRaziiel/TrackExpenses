@@ -27,5 +27,8 @@ namespace TrackExpenses.ViewModels
         [Display(Name = "Confirm Password")]
         public string ConfirmPassword { get; set; }
 
+        public DateTime Birthday { get; set; }
+
+        public string? PhotoPath { get; set; }
     }
 }

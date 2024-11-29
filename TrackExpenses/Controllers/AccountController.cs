@@ -36,7 +36,7 @@ namespace TrackExpenses.Controllers
                 var result = await signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
                 if (result.Succeeded)
                 {
-                    return RedirectToAction("Index", "Home");
+                    return RedirectToAction("UserIndex", "Home");
                 }
                 else
                 {
@@ -213,7 +213,7 @@ namespace TrackExpenses.Controllers
         }
 
 
-        private static Random random = new Random();
+        private static readonly Random random = new Random();
         private string GenerateCodeGroup()
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

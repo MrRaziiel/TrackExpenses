@@ -1,11 +1,25 @@
 ﻿@using TrackExpenses.ViewModels;
 @model ProfileViewModel;
 
-<h2>User Profile</h2>
+<h2 class="text-center">@(Model.FirstName.ToString().ToUpper() + " " + Model.FamilyName.ToString().ToUpper())</h2>
 
 <div class="account-container">
     <div class="account-box">
+        <dl class="col col-5">
+            <dt class="client-photo">
+                @if (Model.PhotoPath == null)
+                {
+                    <img src="~/images/No_image.jpg" />
+                }
+                else
+                {
+                    <img src="@("~/images/" + Model.PhotoPath)" />
+                }
+            </dt>
+            <dt>
 
+            </dt>
+        </dl>
         <!-- Email Field -->
         <div class="mb-3">
             <label>Email:</label>
@@ -99,3 +113,15 @@
         document.getElementById("cancelButton").style.display = "none";
     }
 </script>
+<style>
+    .client-photo img {
+        width: 25em;
+        height: 25em;
+        border-radius: 75%;
+    }
+
+    .gradient-bg {
+        background: linear-gradient(to right, #00c6ff, #0072ff);
+        padding: 20px;
+    }
+</style>

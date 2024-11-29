@@ -9,8 +9,8 @@
     <link rel="stylesheet" href="~/Finanças.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+    <header class="border-bottom box-shadow">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white">
             <div class="container-fluid">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">TRACKEXPENSES</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
@@ -22,9 +22,12 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Expenses" asp-action="ListExpenses">Expenses</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Clients" asp-action="ListClients">GroupClients</a>
-                        </li>
+                        @if (User.IsInRole("ADMINISTRATOR"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Clients" asp-action="ListClients">Administration</a>
+                            </li>
+                        }
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
@@ -35,11 +38,21 @@
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+
+        <div class="container">
+           
+
+            <!-- Corpo da Página -->
+            <div class="main">
+                <main>
+                    @RenderBody()
+                </main>
+            </div>
+        </div>
+
+
+
+
 
     <footer class="border-top footer text-muted">
         <div class="container">
@@ -52,3 +65,4 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+

@@ -28,7 +28,9 @@ public class ProfileController : Controller
             FirstName = user.FirstName,
             FamilyName = user.FamilyName,
             Email = user.Email,
-            Password = user.Password
+            Password = user.Password,
+            PhotoPath = user.PhotoPath,
+            Birthday = user.Birthday
         };
 
         return View(model);
