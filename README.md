@@ -10,6 +10,7 @@ The project will be split at least in 4 parts:<br>
 <li>4 - Better design of the website<br></li>
 </ul>
 <h3><strong>Without loggin</strong</h3>
+<p></p>
 <img src="https://github.com/user-attachments/assets/a5e81891-a7af-4423-a734-b65f73acc11b" width=1200px height=400px/>
 
 <br>
@@ -18,6 +19,7 @@ The project will be split at least in 4 parts:<br>
 
 
 <h3><strong>With loggin</strong</h3>
+<p></p>
 <img src="https://github.com/user-attachments/assets/2f2e494c-65ae-4c8d-bedb-5e4bbe3f497d" width=1200px height=400px/>
 
 
