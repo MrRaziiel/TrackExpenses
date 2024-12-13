@@ -1,0 +1,52 @@
+﻿@{
+    ViewData["Title"] = "List Clients";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <a asp-action="CreateEditClient" class="btn btn-secondary">CREATE NEW</a>
+    <br />
+    @{
+        if (Model != null)
+        {
+            <table>
+                @foreach (var client in Model)
+                {
+                    @foreach (var property in client.GetType().GetProperties())
+                    {
+                        <tr>
+                            <td>@property.Name</td> <!-- Display Property Name (Key) -->
+                            <td>@property.GetValue(client)</td> <!-- Display Property Value -->
+                        </tr>
+
+                    }
+                    <td>
+                        <a asp-action="CreateEditClient" asp-route-id="@client.Id">EDIT</a>
+                        <a asp-action="DeleteClient" asp-route-id="@client.Id" onclick="confirmDelete('@client.Id', true)">DELETE</a>
+                    </td>
+
+                }
+            </table>
+        }
+
+    }
+
+ 
+
+</div>
+
+<script>
+    function confirmDelete(uniqueId, isTrue) {
+
+        var deleteSpan = 'deleteSpan_' + uniqueId;
+        var confirmDeleteSpan = 'confirmDeleteSpan_' + uniqueId;
+
+        if (isTrue) {
+            $('#' + deleteSpan).hide();
+            $('#' + confirmDeleteSpan).show();
+        } else {
+            $('#' + deleteSpan).show();
+            $('#' + confirmDeleteSpan).hide();
+        }
+    }
+</script>

@@ -8,6 +8,8 @@ obj/
 *.user
 *.vs/
 .vscode/
+*.editorconfig
+*ApplicationBuilderExtensions.cs
 
 # Logs
 *.log
@@ -24,6 +26,7 @@ wwwroot/
 appsettings.Development.json
 appsettings.Local.json
 appsettings.*.json
+appsettings.json
 
 # Package Folders
 packages/

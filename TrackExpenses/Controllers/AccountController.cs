@@ -4,9 +4,9 @@ using System;
 using TrackExpenses.Models;
 using TrackExpenses.ViewModels;
 using System;
-using TrackExpenses.App_Start;
 using Microsoft.EntityFrameworkCore;
 using TrackExpenses.Models;
+using TrackExpenses.Data;
 
 namespace TrackExpenses.Controllers
 {

@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TrackExpenses.App_Start;
 using TrackExpenses.Models;
+using System.Threading;
+using Microsoft.AspNetCore.Shared;
+using TrackExpenses.Data;
 
 namespace TrackExpenses.Controllers
 {
@@ -27,39 +29,7 @@ namespace TrackExpenses.Controllers
                 return View();
             }
         }
-        public IActionResult CreateEditClient(string? id)
-        {
+        
 
-            {
-
-                if (id != null)
-                {
-                    //editing  -> load an expense by Id
-                    var clientInDB = _context.Clients.SingleOrDefault(client => client.Id == id);
-                    return View(clientInDB);
-
-                }
-                return View();
-            }
-        }
-
-        public IActionResult CreateEditClientForm(Client client)
-        {
-
-            if (client.Id == null)
-            {
-                //Create
-                _context.Clients.Add(client);
-            }
-            else
-            {
-                //Editing
-                _context.Clients.Update(client);
-
-            }
-            _context.SaveChanges();
-            return RedirectToAction("ListClients");
-
-        }
-}
+    }
 }

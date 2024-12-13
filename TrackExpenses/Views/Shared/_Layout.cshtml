@@ -19,14 +19,19 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
+                        @if(User.Identity.IsAuthenticated)
+                        {
+                            
+                        
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Expenses" asp-action="ListExpenses">Expenses</a>
                         </li>
                         @if (User.IsInRole("ADMINISTRATOR"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Clients" asp-action="ListClients">Administration</a>
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Administration" asp-action="ListClients">Administration</a>
                             </li>
+                        }
                         }
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>

@@ -27,7 +27,7 @@
                         @if (User.IsInRole("ADMINISTRATOR"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Clients" asp-action="ListClients">Administration</a>
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Administration" asp-action="ListClients">Administration</a>
                             </li>
                         }
                         <li class="nav-item">
@@ -85,7 +85,7 @@
                 </li>
                 
                 <li>
-                    <a href="#" class="nav-link text-white">
+                    <a asp-controller="Expenses" asp-action="ListExpenses" class="nav-link text-white">
                         <svg class="bi me-2" width="16" height="16"><use xlink:href="#table"></use></svg>
                         Expenses
                     </a>

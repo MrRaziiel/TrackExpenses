@@ -1,7 +1,10 @@
-﻿using TrackExpenses.App_Start;
-using TrackExpenses.Models;
+﻿using TrackExpenses.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
+using Microsoft.AspNetCore.Identity;
+using TrackExpenses.Data;
+
 
 namespace TrackExpenses.Controllers
 {
@@ -9,16 +12,21 @@ namespace TrackExpenses.Controllers
     {
         // GET: Expenses
         private readonly FinancasDbContext _context;
+        private readonly UserManager<Client> _userManager;
 
-        public ExpensesController(FinancasDbContext context)
+
+        public ExpensesController(FinancasDbContext context, UserManager<Client> userManager)
         {
             _context = context;
+            _userManager = userManager;
+
         }
 
         public IActionResult ListExpenses()
         {
             //List ALL expenses
-            var allExpenses  = _context.Expenses.ToList();
+            
+        var allExpenses  = _context.Expenses.ToList();
             if (allExpenses != null)
                 {
                 return View(allExpenses);
@@ -32,13 +40,14 @@ namespace TrackExpenses.Controllers
         {
             return View();
         }
-            public IActionResult CreateEditExpense(int? id)
+        public IActionResult CreateEditExpense(int? id)
         {
 
             if (id != null) 
             {
                 //editing  -> load an expense by Id
                 var expenseInDB = _context.Expenses.SingleOrDefault(expense => expense.Id == id);
+                
                 return View(expenseInDB);
 
             }
@@ -54,12 +63,20 @@ namespace TrackExpenses.Controllers
             return RedirectToAction("ListExpenses");
         }
 
-        public IActionResult CreateEditExpenseForm(Expense model)
+        public async Task<IActionResult> CreateEditExpenseForm(Expense model)
         {
             if(model.Id == 0)
             {
                 //Create
                 _context.Expenses.Add(model);
+
+                var user = await _userManager.GetUserAsync(User);
+
+                if (user != null)
+                {
+                    user?.Expenses.Add(model);
+
+                }
             }
             else{
                 //Editing
@@ -69,6 +86,6 @@ namespace TrackExpenses.Controllers
             _context.SaveChanges();
             return RedirectToAction("ListExpenses");
         }
-
+        
     }
 }

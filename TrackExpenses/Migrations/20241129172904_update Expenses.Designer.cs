@@ -12,8 +12,8 @@ using TrackExpenses.Data;
 namespace TrackExpenses.Migrations
 {
     [DbContext(typeof(FinancasDbContext))]
-    [Migration("20241110171211_GroupAndUsersUpdate")]
-    partial class GroupAndUsersUpdate
+    [Migration("20241129172904_update Expenses")]
+    partial class updateExpenses
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -262,6 +262,9 @@ namespace TrackExpenses.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
 
                     b.Property<double>("Value")
                         .HasColumnType("float");

@@ -12,8 +12,8 @@ using TrackExpenses.Data;
 namespace TrackExpenses.Migrations
 {
     [DbContext(typeof(FinancasDbContext))]
-    [Migration("20241110171211_GroupAndUsersUpdate")]
-    partial class GroupAndUsersUpdate
+    [Migration("20241211161918_FixExpenses_And_GroupOfClients")]
+    partial class FixExpenses_And_GroupOfClients
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -256,6 +256,9 @@ namespace TrackExpenses.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("ClientId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
@@ -263,10 +266,15 @@ namespace TrackExpenses.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<double>("Value")
                         .HasColumnType("float");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
 
                     b.ToTable("Expenses");
                 });
@@ -349,6 +357,18 @@ namespace TrackExpenses.Migrations
                         .HasForeignKey("GroupId");
 
                     b.Navigation("GroupOfClients");
+                });
+
+            modelBuilder.Entity("TrackExpenses.Models.Expense", b =>
+                {
+                    b.HasOne("TrackExpenses.Models.Client", null)
+                        .WithMany("Expenses")
+                        .HasForeignKey("ClientId");
+                });
+
+            modelBuilder.Entity("TrackExpenses.Models.Client", b =>
+                {
+                    b.Navigation("Expenses");
                 });
 
             modelBuilder.Entity("TrackExpenses.Models.GroupOfClients", b =>
