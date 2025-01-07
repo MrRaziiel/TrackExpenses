@@ -111,6 +111,7 @@ namespace TrackExpenses.Controllers
                     var result = await _roleManager.UpdateAsync(role);
                     if (result.Succeeded)
                     {
+
                         return RedirectToAction("ListRoles"); // Redirect to the roles list
                     }
 
@@ -166,40 +167,6 @@ namespace TrackExpenses.Controllers
             }
         }
 
-        public IActionResult CreateEditClient(string? id)
-        {
-
-            {
-
-                if (id != null)
-                {
-                    //editing  -> load an expense by Id
-                    var clientInDB = _context.Clients.SingleOrDefault(client => client.Id == id);
-                    return View(clientInDB);
-
-                }
-                return View();
-            }
-        }
-
-        public IActionResult CreateEditClientForm(Client client)
-        {
-
-            if (client.Id == null)
-            {
-                //Create
-                _context.Clients.Add(client);
-            }
-            else
-            {
-                //Editing
-                _context.Clients.Update(client);
-
-            }
-            _context.SaveChanges();
-            return RedirectToAction("ListClients");
-
-        }
 
         public IActionResult DeleteClient(string Id)
         {

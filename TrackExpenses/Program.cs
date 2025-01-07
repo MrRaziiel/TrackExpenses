@@ -3,12 +3,15 @@ using TrackExpenses.Models;
 using Microsoft.AspNetCore.Identity;
 using TrackExpenses.Data;
 using TrackExpenses.Extensions;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace TrackExpenses
 {
     public class Program
     {
-        
+
+
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
@@ -25,7 +28,7 @@ namespace TrackExpenses
             builder.Services.AddIdentityServices();
 
 
-            builder.Services.AddControllersWithViews();
+            builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 
             var app = builder.Build();
             // Configure the HTTP request pipeline.
@@ -57,55 +60,52 @@ namespace TrackExpenses
                     if (!await roleManager.RoleExistsAsync(role))
                         await roleManager.CreateAsync(new IdentityRole(role));
                 }
+
+                var usermanager = scope.ServiceProvider.GetRequiredService<UserManager<Client>>();
+                string email = "Teste12345@mail.com";
+
+                var client = await usermanager.FindByEmailAsync(email);
+
+                if (client == null)
+                {
+
+                    client = new Client
+                    {
+
+                        FirstName = email,
+                        FamilyName = email,
+                        Email = email,
+                        UserName = email,
+                        Password = email,
+                    };
+
+                    var result = await usermanager.CreateAsync(client, email);
+                    if (result.Succeeded)
+                    {
+                        // now assign role after user is created
+                        await usermanager.AddToRoleAsync(client, "administrator");
+                    }
+                    //else
+                    //{
+                    //    // handle creation failure
+                    //    /*console.writeline("failed to create user: */" + string.join(", ", result.errors.select(e => e.description)));
+                    //}
+                }
+                else
+                {
+                    //console.writeline("user already exists, proceeding to role assignment.");
+                    await usermanager.AddToRoleAsync(client, "administrator");
+                }
             }
 
-
-
-            // User initialization
-            //    using (var scope = app.Services.CreateScope())
-            //    {
-            //        //remove production
-            //        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Client>>();
-            //        string email = "TESTE12345@MAIL.COM";
-            //        string password = "TESTE12345@MAIL.COM";
-            //        var client = await userManager.FindByEmailAsync(email);
-
-            //        if (client == null)
-            //        {
-            //            client = new Client
-            //            {
-
-            //                FirstName = email,
-            //                FamilyName = email,
-            //                Email = email,
-            //                UserName = email,
-            //                Password = password,
-            //            };
-            //            var result = await userManager.CreateAsync(client, password);
-            //            if (result.Succeeded)
-            //            {
-            //                // Now assign role after user is created
-            //                await userManager.AddToRoleAsync(client, "ADMINISTRATOR");
-            //            }
-            //            else
-            //            {
-            //                // Handle creation failure
-            //                Console.WriteLine("Failed to create user: " + string.Join(", ", result.Errors.Select(e => e.Description)));
-            //            }
-            //        }
-            //        else
-            //        {
-            //            Console.WriteLine("User already exists, proceeding to role assignment.");
-            //            await userManager.AddToRoleAsync(client, "ADMINISTRATOR");
-            //        }
-            //}
+                
             app.SetAdmin();
             await app.RunAsync();
 
-        }
-
-
     }
+
+
+}
 }
 
 

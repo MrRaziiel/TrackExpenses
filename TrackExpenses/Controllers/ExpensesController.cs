@@ -1,9 +1,8 @@
 ﻿using TrackExpenses.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
 using Microsoft.AspNetCore.Identity;
 using TrackExpenses.Data;
+
 
 
 namespace TrackExpenses.Controllers
@@ -22,20 +21,25 @@ namespace TrackExpenses.Controllers
 
         }
 
+        //REVIEW THIS PART TO NOT NEED SQL PROCEDURES
         public IActionResult ListExpenses()
         {
             //List ALL expenses
-            
-        var allExpenses  = _context.Expenses.ToList();
-            if (allExpenses != null)
-                {
-                return View(allExpenses);
-            }
-            else
-            {
-                return View();
-            }
+            var user = _context.Clients.FirstOrDefault(userToFind => userToFind.Email == User.Identity.Name);
+            if (user == null) return View();
+
+            var updateExpenses = _context?.Expenses?.ToList();
+            var client = _context.Clients.FirstOrDefault(x => x.Email == user.Email);
+            if (client == null) return View();
+
+            return View(client.Expenses);
+
+
+
         }
+
+
+
         public IActionResult CreateGroupClient()
         {
             return View();
@@ -58,32 +62,40 @@ namespace TrackExpenses.Controllers
         {
             //Deleat expense by Id
             var expenseInDB = _context.Expenses.SingleOrDefault(expense => expense.Id == id);
+            if (expenseInDB == null) return View();
             _context.Expenses.Remove(expenseInDB);
             _context.SaveChanges();
             return RedirectToAction("ListExpenses");
         }
-
+        [HttpPost]
         public async Task<IActionResult> CreateEditExpenseForm(Expense model)
         {
+ 
             if(model.Id == 0)
             {
                 //Create
                 _context.Expenses.Add(model);
 
                 var user = await _userManager.GetUserAsync(User);
+                
+                if (user == null) return RedirectToAction("ListExpenses");
 
-                if (user != null)
-                {
-                    user?.Expenses.Add(model);
+                var client = _context.Clients.FirstOrDefault(x => x.Email == user.Email);
+                if (client == null) return RedirectToAction("ListExpenses");
+                model.ClientId = client.Id;
+                model.GroupId = client.GroupId;
+                client.Expenses.Add(model);
+                _context.Clients.Update(client);
 
-                }
             }
-            else{
-                //Editing
-                _context.Expenses.Update(model);
-
+            try
+            {
+                var result = await _context.SaveChangesAsync();
             }
-            _context.SaveChanges();
+            catch (Exception ex)
+            {
+                throw;
+            }
             return RedirectToAction("ListExpenses");
         }
         

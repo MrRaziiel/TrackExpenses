@@ -4,7 +4,8 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TrackExpenses.Models
-{ 
+{
+
 
     public class GroupOfClients
     {
@@ -22,6 +23,7 @@ namespace TrackExpenses.Models
 
         // Navigation property for related clients
         public ICollection<Client> Clients { get; set; } = new List<Client>();
+
     }
 
     public class Client : IdentityUser
@@ -43,8 +45,9 @@ namespace TrackExpenses.Models
 
         public GroupOfClients? GroupOfClients { get; set; }
 
-        public IList<Expense> Expenses { get; set; } = [];
+        public ICollection<Expense> Expenses { get; set; } = new List<Expense>();
     }
+   
 
 }
 
