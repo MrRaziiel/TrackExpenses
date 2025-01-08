@@ -45,7 +45,7 @@ namespace TrackExpenses.Models
 
         public GroupOfClients? GroupOfClients { get; set; }
 
-        public ICollection<Expense> Expenses { get; set; } = new List<Expense>();
+        public List<Expense> Expenses { get; set; } = new List<Expense>();
     }
    
 
