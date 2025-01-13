@@ -5,6 +5,7 @@ using TrackExpenses.Models;
 using TrackExpenses.ViewModels;
 using System;
 using TrackExpenses.Data;
+using Microsoft.IdentityModel.Tokens;
 
 namespace TrackExpenses.Controllers
 {
@@ -56,7 +57,7 @@ namespace TrackExpenses.Controllers
 
             if(!ModelState.IsValid)  return View(model);
 
-            Client client = new Client
+            Client client = new ()
             {
 
                 FirstName = model.FirstName,
@@ -72,7 +73,7 @@ namespace TrackExpenses.Controllers
             if (code == null)
             {
 
-                GroupOfClients groupOfClients = new GroupOfClients
+                GroupOfClients groupOfClients = new()
                 {
                     Name = model.FamilyName,
                     CodeInvite = GenerateCodeGroup()
@@ -98,6 +99,14 @@ namespace TrackExpenses.Controllers
                     role = "USER";
 
                 }
+            }
+            if (string.IsNullOrEmpty(client.PhotoPath))
+            {
+                client.PhotoPath = "No_image.jpg";
+            }
+            else
+            {
+
             }
           
             var result = await _userManager.CreateAsync(client, model.Password);
@@ -214,7 +223,7 @@ namespace TrackExpenses.Controllers
         }
 
 
-        private static readonly Random random = new Random();
+        private static readonly Random random = new ();
         private string GenerateCodeGroup()
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

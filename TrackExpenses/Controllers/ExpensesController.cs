@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using TrackExpenses.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 //Controller expenses
 
@@ -39,7 +40,7 @@ namespace TrackExpenses.Controllers
 
         public IActionResult CreateEditExpense(int? id)
         {
-
+           
             if (id != null) 
             {
                 //editing  -> load an expense by Id
@@ -48,6 +49,8 @@ namespace TrackExpenses.Controllers
                 return View(expenseInDB);
 
             }
+            var categories = _context.ExpenseCategory.ToList();
+            ViewBag.Categories = new SelectList(categories, "Id", "Name");
             return View();
         }
 

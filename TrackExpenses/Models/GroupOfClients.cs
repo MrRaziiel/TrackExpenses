@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace TrackExpenses.Models
 {
@@ -46,6 +46,7 @@ namespace TrackExpenses.Models
         public GroupOfClients? GroupOfClients { get; set; }
 
         public List<Expense> Expenses { get; set; } = new List<Expense>();
+
     }
    
 

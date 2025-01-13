@@ -40,7 +40,7 @@ namespace TrackExpenses.Controllers
                 {
                     // Create the role
                     // We just need to specify a unique role name to create a new role
-                    IdentityRole identityRole = new IdentityRole
+                    IdentityRole identityRole = new ()
                     {
                         Name = roleModel?.RoleName
                     };
@@ -156,7 +156,7 @@ namespace TrackExpenses.Controllers
         [HttpGet]
         public IActionResult ListClients()
         {
-            var allClients =  _context.Clients.ToList();
+            var allClients =  _context.Clients.Include(client => client.GroupOfClients).ToList();
             if (allClients != null)
             {
                 return View(allClients);
@@ -165,6 +165,38 @@ namespace TrackExpenses.Controllers
             {
                 return View();
             }
+        }
+
+        [HttpGet]
+        public IActionResult EditClient(string? id)
+        {
+            {
+                if (id != null)
+                {
+                    //editing  -> load an expense by Id
+                    var clientInDB = _context.Clients.SingleOrDefault(client => client.Id == id);
+                    return View(clientInDB);
+                }
+                return View();
+            }
+        }
+        [HttpPost] 
+        public IActionResult EditClientForm(Client client, IFormFile Image )
+        {
+            if (Image != null)
+            {
+                // Save the image to a file or process it as needed
+                var filePath = Path.Combine("wwwroot/images", Image.FileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    Image.CopyTo(stream);
+                }
+            }
+            //Editing
+            _context.Clients.Update(client);
+            
+            _context.SaveChanges();
+            return RedirectToAction("ListClients");
         }
 
 

@@ -22,6 +22,10 @@
 
     <label class="mt-4">Description</label>
     <input class="form-control" type="text" placeholder="Add a description" asp-for="Description" />
+        <td>
+            <label for="ExpenseCategoryId">Categoria</label>
+            @Html.DropDownListFor(m => m.ExpenseCategoryId, (SelectList)ViewBag.Categories, "Selecione uma categoria", new { @class = "form-control" })
+        </td>
 
     <button class="btn btn-primary mt-4" type="submit">SAVE</button>
 </form>

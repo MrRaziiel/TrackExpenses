@@ -50,53 +50,53 @@ namespace TrackExpenses
                 pattern: "{controller=Home}/{action=Index}/{id?}");
 
             // Role initialization
-            using (var scope = app.Services.CreateScope())
-            {
-                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-                var roles = new[] { "ADMINISTRATOR", "GROUPADMINISTRATOR", "USER", "MEMBER" };
+            //using (var scope = app.Services.CreateScope())
+            //{
+            //    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            //    var roles = new[] { "ADMINISTRATOR", "GROUPADMINISTRATOR", "USER", "MEMBER" };
             
-                foreach (var role in roles)
-                {
-                    if (!await roleManager.RoleExistsAsync(role))
-                        await roleManager.CreateAsync(new IdentityRole(role));
-                }
+            //    foreach (var role in roles)
+            //    {
+            //        if (!await roleManager.RoleExistsAsync(role))
+            //            await roleManager.CreateAsync(new IdentityRole(role));
+            //    }
 
-                var usermanager = scope.ServiceProvider.GetRequiredService<UserManager<Client>>();
-                string email = "Teste12345@mail.com";
+            //    var usermanager = scope.ServiceProvider.GetRequiredService<UserManager<Client>>();
+            //    string email = "Teste12345@mail.com";
 
-                var client = await usermanager.FindByEmailAsync(email);
+            //    var client = await usermanager.FindByEmailAsync(email);
 
-                if (client == null)
-                {
+            //    if (client == null)
+            //    {
 
-                    client = new Client
-                    {
+            //        client = new Client
+            //        {
 
-                        FirstName = email,
-                        FamilyName = email,
-                        Email = email,
-                        UserName = email,
-                        Password = email,
-                    };
+            //            FirstName = email,
+            //            FamilyName = email,
+            //            Email = email,
+            //            UserName = email,
+            //            Password = email,
+            //        };
 
-                    var result = await usermanager.CreateAsync(client, email);
-                    if (result.Succeeded)
-                    {
-                        // now assign role after user is created
-                        await usermanager.AddToRoleAsync(client, "administrator");
-                    }
-                    //else
-                    //{
-                    //    // handle creation failure
-                    //    /*console.writeline("failed to create user: */" + string.join(", ", result.errors.select(e => e.description)));
-                    //}
-                }
-                else
-                {
-                    //console.writeline("user already exists, proceeding to role assignment.");
-                    await usermanager.AddToRoleAsync(client, "administrator");
-                }
-            }
+            //        var result = await usermanager.CreateAsync(client, email);
+            //        if (result.Succeeded)
+            //        {
+            //            // now assign role after user is created
+            //            await usermanager.AddToRoleAsync(client, "administrator");
+            //        }
+            //        //else
+            //        //{
+            //        //    // handle creation failure
+            //        //    /*console.writeline("failed to create user: */" + string.join(", ", result.errors.select(e => e.description)));
+            //        //}
+            //    }
+            //    else
+            //    {
+            //        //console.writeline("user already exists, proceeding to role assignment.");
+            //        await usermanager.AddToRoleAsync(client, "administrator");
+            //    }
+            //}
 
                 
             app.SetAdmin();

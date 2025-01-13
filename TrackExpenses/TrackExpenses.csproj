@@ -26,10 +26,11 @@
     <Folder Include="App_Start\" />
     <Folder Include="Migrations\" />
     <Folder Include="Views\Clients\" />
+    <Folder Include="wwwroot\images\Receipts\" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="wwwroot\images\No_image.jpg" />
+    <None Include="wwwroot\images\Users\No_image.jpg" />
   </ItemGroup>
 
   <ItemGroup>

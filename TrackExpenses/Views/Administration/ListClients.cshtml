@@ -4,26 +4,71 @@
 
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
-    <a asp-action="CreateEditClient" class="btn btn-secondary">CREATE NEW</a>
+    <a asp-action="EditClient" class="btn btn-secondary">CREATE NEW</a>
     <br />
     @{
         if (Model != null)
         {
-            <table>
+            <table width="100%">
+
+                
                 @foreach (var client in Model)
                 {
-                    @foreach (var property in client.GetType().GetProperties())
-                    {
-                        <tr>
-                            <td>@property.Name</td> <!-- Display Property Name (Key) -->
-                            <td>@property.GetValue(client)</td> <!-- Display Property Value -->
-                        </tr>
+                    <tr>
+                        <td>FirstName:</td>
+                        <td>@client.FirstName</td>
+                    </tr>
+                    <tr>
+                        <td>FamilyName:</td>
+                        <td>@client.FamilyName</td>
+                    </tr>
+                    <tr>
+                        <td>Birthday:</td>
+                        <td>@client.Birthday</td>
+                    </tr>
+                    <tr>
+                        <td>PhotoPath:</td>
+                        <td>@client.PhotoPath</td>
+                    </tr>
+                    // <tr>
+                    //     @if (client.PhotoPath != null)
+                    //     {
+                    //         <td>
+                    //             <img src="/images/Users" />
+                    //         </td>
+                    //     }
+                    //     <td>
+                    //         <img src="/images/Users" />
+                    //     </td>
+                    // </tr>
+                    <tr>
+                        <td>Password:</td>
+                        <td>@client.Password</td>
+                    </tr>
+                    <tr>
+                        <td>GroupId:</td>
+                        <td>@client.GroupId</td>
+                    </tr>
+                    <tr>
+                        <td>GroupInvite:</td>
+                        <td>@client.GroupOfClients?.CodeInvite</td>
+                    </tr>
 
-                    }
-                    <td>
-                        <a asp-action="CreateEditClient" asp-route-id="@client.Id">EDIT</a>
-                        <a asp-action="DeleteClient" asp-route-id="@client.Id" onclick="confirmDelete('@client.Id', true)">DELETE</a>
-                    </td>
+
+                    // @foreach (var property in client.GetType().GetProperties())
+                    // {
+                    //     <tr>
+                    //         <td>@property.Name</td> <!-- Display Property Name (Key) -->
+                    //         <td>@property.GetValue(client)</td> <!-- Display Property Value -->
+                    //     </tr>
+
+                    // }
+                    <tr>
+                        <td>
+                            <a asp-action="EditClient" asp-controller="Administration" asp-route-id="@client.Id">EDIT</a>
+                            <a asp-action="DeleteClient" asp-controller="Administration" asp-route-id="@client.Id" onclick="confirmDelete('@client.Id', true)">DELETE</a>
+                        </td>
+                    </tr>
 
                 }
             </table>

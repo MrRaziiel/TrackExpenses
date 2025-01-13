@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
-using TrackExpenses.Data;
 
 namespace TrackExpenses.Models
 {
@@ -18,6 +17,7 @@ namespace TrackExpenses.Models
         public double? PayAmount { get; set; }
         public double Value {  get; set; }
 
+        public int ExpenseCategoryId { get; set; }
         // Method to find an expense by ID
         public static List<Expense> GetExpenseById(DbSet<Expense> expenses, String userId)
         {
