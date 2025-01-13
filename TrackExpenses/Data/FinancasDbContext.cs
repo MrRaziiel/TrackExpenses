@@ -2,8 +2,11 @@
 using TrackExpenses.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using System.Security.Claims;
+using Microsoft.Extensions.Options;
 
-namespace TrackExpenses.App_Start
+
+namespace TrackExpenses.Data
 {
 
     public class FinancasDbContext : IdentityDbContext<Client>
@@ -11,16 +14,13 @@ namespace TrackExpenses.App_Start
         public DbSet<Expense> Expenses { get; set; }
         public DbSet<GroupOfClients> GroupOfClients { get; set; }
         public DbSet<Client> Clients { get; set; }
-        public FinancasDbContext(DbContextOptions<FinancasDbContext> options) : base(options) 
+
+        public DbSet<ExpenseCategory> ExpenseCategory { get; set; }
+        public FinancasDbContext(DbContextOptions<FinancasDbContext> options) : base(options)
         {
 
         }
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseSqlServer("Server=" + Environment.MachineName + "; Database=TRACKEXPENSES;Trusted_Connection=True;TrustServerCertificate=True;");
-        }
 
-        // Configure relationships
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Client>()

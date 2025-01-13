@@ -1,7 +1,10 @@
 ﻿@{
     ViewData["Title"] = "Create / Edit";
+    Layout = "~/Views/Shared/_UserLayout.cshtml";
 }
+
 @model TrackExpenses.Models.Expense
+
 
 <div class="text-center">
     <h1 class="display-4">Create or edit an expense</h1>
@@ -19,6 +22,10 @@
 
     <label class="mt-4">Description</label>
     <input class="form-control" type="text" placeholder="Add a description" asp-for="Description" />
+        <td>
+            <label for="ExpenseCategoryId">Categoria</label>
+            @Html.DropDownListFor(m => m.ExpenseCategoryId, (SelectList)ViewBag.Categories, "Selecione uma categoria", new { @class = "form-control" })
+        </td>
 
     <button class="btn btn-primary mt-4" type="submit">SAVE</button>
 </form>

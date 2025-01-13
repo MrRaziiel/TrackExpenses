@@ -4,60 +4,58 @@ using Microsoft.AspNetCore.Mvc;
 using TrackExpenses.Models;
 using TrackExpenses.ViewModels;
 
-[Authorize]
-public class ProfileController : Controller
+namespace TrackExpenses.Controllers
 {
-    private readonly UserManager<Client> userManager;
-
-    public ProfileController(UserManager<Client> userManager)
+    [Authorize]
+    public class ProfileController(UserManager<Client> userManager) : Controller
     {
-        this.userManager = userManager;
-    }
+        private readonly UserManager<Client> userManager = userManager;
 
-    // GET: Profile/ViewProfile
-    public async Task<IActionResult> Profile()
-    {
-        var user = await userManager.GetUserAsync(User);
-        if (user == null)
+        // GET: Profile/ViewProfile
+        public async Task<IActionResult> Profile()
         {
-            return NotFound("User not found.");
+            var user = await userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            var model = new ProfileViewModel
+            {
+                FirstName = user.FirstName,
+                FamilyName = user.FamilyName,
+                Email = user.Email,
+                Password = user.Password,
+                PhotoPath = user.PhotoPath,
+                Birthday = user.Birthday
+            };
+
+            return View(model);
         }
 
-        var model = new ProfileViewModel
+        // POST: Profile/UpdateProfile
+        [HttpPost]
+
+        public async Task<IActionResult> UpdateProfile(ProfileViewModel model)
         {
-            FirstName = user.FirstName,
-            FamilyName = user.FamilyName,
-            Email = user.Email,
-            Password = user.Password,
-            PhotoPath = user.PhotoPath,
-            Birthday = user.Birthday
-        };
+            if (!ModelState.IsValid)
+            {
+                return View("ViewProfile", model);
+            }
 
-        return View(model);
-    }
+            var user = await userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
 
-    // POST: Profile/UpdateProfile
-    [HttpPost]
+            user.FirstName = model.FirstName;
+            user.FamilyName = model.FamilyName;
+            user.Email = model.Email;
+            user.Password = model.Password;
 
-    public async Task<IActionResult> UpdateProfile(ProfileViewModel model)
-    {
-        if (!ModelState.IsValid)
-        {
-            return View("ViewProfile", model);
+            await userManager.UpdateAsync(user);
+            return RedirectToAction("ViewProfile");
         }
-
-        var user = await userManager.GetUserAsync(User);
-        if (user == null)
-        {
-            return NotFound("User not found.");
-        }
-
-        user.FirstName = model.FirstName;
-        user.FamilyName = model.FamilyName;
-        user.Email = model.Email;
-        user.Password = model.Password;
-
-        await userManager.UpdateAsync(user);
-        return RedirectToAction("ViewProfile");
     }
 }

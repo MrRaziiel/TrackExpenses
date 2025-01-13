@@ -2,16 +2,22 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TrackExpenses.Data;
 using TrackExpenses.Models;
+
 namespace TrackExpenses.Controllers
 {
-    [Authorize(Roles = "admin")]
     public class AdministrationController : Controller
     {
         private readonly RoleManager<IdentityRole> _roleManager;
-        public AdministrationController(RoleManager<IdentityRole> roleManager)
+        private readonly UserManager<Client> _userManager;
+        private readonly FinancasDbContext _context;
+
+        public AdministrationController(RoleManager<IdentityRole> roleManager, UserManager<Client> userManager, FinancasDbContext context)
         {
             _roleManager = roleManager;
+            _userManager = userManager;
+            _context = context;
         }
         [HttpGet]
         public IActionResult CreateRole()
@@ -25,7 +31,7 @@ namespace TrackExpenses.Controllers
             if (ModelState.IsValid)
             {
                 // Check if the role already exists
-                bool roleExists = await _roleManager.RoleExistsAsync(roleModel?.RoleName);
+                bool roleExists = await _roleManager.RoleExistsAsync(roleModel.RoleName);
                 if (roleExists)
                 {
                     ModelState.AddModelError("", "Role Already Exists");
@@ -34,7 +40,7 @@ namespace TrackExpenses.Controllers
                 {
                     // Create the role
                     // We just need to specify a unique role name to create a new role
-                    IdentityRole identityRole = new IdentityRole
+                    IdentityRole identityRole = new ()
                     {
                         Name = roleModel?.RoleName
                     };
@@ -105,6 +111,7 @@ namespace TrackExpenses.Controllers
                     var result = await _roleManager.UpdateAsync(role);
                     if (result.Succeeded)
                     {
+
                         return RedirectToAction("ListRoles"); // Redirect to the roles list
                     }
 
@@ -144,6 +151,65 @@ namespace TrackExpenses.Controllers
 
             // If we reach here, something went wrong, return to the view
             return View("ListRoles", await _roleManager.Roles.ToListAsync());
+        }
+
+        [HttpGet]
+        public IActionResult ListClients()
+        {
+            var allClients =  _context.Clients.Include(client => client.GroupOfClients).ToList();
+            if (allClients != null)
+            {
+                return View(allClients);
+            }
+            else
+            {
+                return View();
+            }
+        }
+
+        [HttpGet]
+        public IActionResult EditClient(string? id)
+        {
+            {
+                if (id != null)
+                {
+                    //editing  -> load an expense by Id
+                    var clientInDB = _context.Clients.SingleOrDefault(client => client.Id == id);
+                    return View(clientInDB);
+                }
+                return View();
+            }
+        }
+        [HttpPost] 
+        public IActionResult EditClientForm(Client client, IFormFile Image )
+        {
+            if (Image != null)
+            {
+                // Save the image to a file or process it as needed
+                var filePath = Path.Combine("wwwroot/images", Image.FileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    Image.CopyTo(stream);
+                }
+            }
+            //Editing
+            _context.Clients.Update(client);
+            
+            _context.SaveChanges();
+            return RedirectToAction("ListClients");
+        }
+
+
+        public IActionResult DeleteClient(string Id)
+        {
+            var existClient = _context.Clients.SingleOrDefault(c => c.Id == Id);
+            if (existClient != null)
+            {
+                _context.Clients.Remove(existClient);
+            }
+            _context.SaveChanges();
+            return RedirectToAction("ListClients");
+
         }
     }
 

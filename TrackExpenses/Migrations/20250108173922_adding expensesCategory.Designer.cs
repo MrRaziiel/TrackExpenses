@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TrackExpenses.Data;
 
@@ -11,9 +12,11 @@ using TrackExpenses.Data;
 namespace TrackExpenses.Migrations
 {
     [DbContext(typeof(FinancasDbContext))]
-    partial class FinancasDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250108173922_adding expensesCategory")]
+    partial class addingexpensesCategory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -289,23 +292,6 @@ namespace TrackExpenses.Migrations
                     b.HasIndex("ClientId");
 
                     b.ToTable("Expenses");
-                });
-
-            modelBuilder.Entity("TrackExpenses.Models.ExpenseCategory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ExpenseCategory");
                 });
 
             modelBuilder.Entity("TrackExpenses.Models.GroupOfClients", b =>

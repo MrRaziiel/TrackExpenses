@@ -4,23 +4,22 @@ using System;
 using TrackExpenses.Models;
 using TrackExpenses.ViewModels;
 using System;
-using TrackExpenses.App_Start;
-using Microsoft.EntityFrameworkCore;
-using TrackExpenses.Models;
+using TrackExpenses.Data;
+using Microsoft.IdentityModel.Tokens;
 
 namespace TrackExpenses.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly SignInManager<Client> signInManager;
-        private readonly UserManager<Client> userManager;
+        private readonly SignInManager<Client> _signInManager;
+        private readonly UserManager<Client> _userManager;
         private readonly FinancasDbContext _context;
 
         public AccountController(SignInManager<Client> signInManager, UserManager<Client> userManager, FinancasDbContext context)
         {
-            this.signInManager = signInManager;
-            this.userManager = userManager;
-            this._context = context;
+            _signInManager = signInManager;
+            _userManager = userManager;
+            _context = context;
         }
 
         public IActionResult Login()
@@ -33,7 +32,7 @@ namespace TrackExpenses.Controllers
         {
             if (ModelState.IsValid)
             {
-                var result = await signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
+                var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
                 if (result.Succeeded)
                 {
                     return RedirectToAction("UserIndex", "Home");
@@ -56,68 +55,79 @@ namespace TrackExpenses.Controllers
         public async Task<IActionResult> Register(RegisterViewModel model, string? code)
         {
 
-            if (ModelState.IsValid)
+            if(!ModelState.IsValid)  return View(model);
+
+            Client client = new ()
             {
-                Client client = new Client
-                {
 
-                    FirstName = model.FirstName,
-                    FamilyName = model.FamilyName,
-                    Email = model.Email,
-                    UserName = model.Email,
-                    Password = model.Password,
+                FirstName = model.FirstName,
+                FamilyName = model.FamilyName,
+                Email = model.Email,
+                UserName = model.Email,
+                Password = model.Password,
+            };
+           
+
+            string role = "";
+
+            if (code == null)
+            {
+
+                GroupOfClients groupOfClients = new()
+                {
+                    Name = model.FamilyName,
+                    CodeInvite = GenerateCodeGroup()
+
                 };
-                string role = "";
-                if (code == null)
+                role = "GROUPADMINISTRATOR";
+                
+                await _context.GroupOfClients.AddAsync(groupOfClients);
+                client.GroupId = groupOfClients.Id;
+            }
+            else
+            {
+                var group = _context.GroupOfClients.FirstOrDefault(x => x.CodeInvite == code);
+
+                if (group == null)
                 {
-
-                    GroupOfClients groupOfClients = new GroupOfClients
-                    {
-                        Name = model.FamilyName,
-                        CodeInvite = GenerateCodeGroup(),
-
-                    };
-                    role = "GROUPADMINISTRATOR";
-                    _context.GroupOfClients.Add(groupOfClients);
-                    await _context.SaveChangesAsync();
-
+                    ModelState.AddModelError("", "Code Group incorrect");
+                    return View(model); 
                 }
                 else
                 {
-                    var group = _context.GroupOfClients.FirstOrDefault(x => x.CodeInvite == code);
+                    client.GroupId = group.Id;
+                    role = "USER";
 
-                    if (group == null)
-                    {
-                        ModelState.AddModelError("", "Code Group incorrect");
-                        return View(model);
-                    }
-                    else
-                    {
-                        client.GroupId = group.Id;
-                        role = "USER";
-
-                    }
                 }
-                var result = await userManager.CreateAsync(client, model.Password);
-                if (result.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(client, role);
-                    return RedirectToAction("Login", "Account");
-                }
-                else
-                {
-                    foreach (var error in result.Errors)
-                    {
-                        ModelState.AddModelError("", error.Description);
-
-                    }
-                    return View(model);
-                }
+            }
+            if (string.IsNullOrEmpty(client.PhotoPath))
+            {
+                client.PhotoPath = "No_image.jpg";
+            }
+            else
+            {
 
             }
-            return View(model);
+          
+            var result = await _userManager.CreateAsync(client, model.Password);
+            if (result.Succeeded)
+            {
+                await _context.Clients.AddAsync(client);
+                await _userManager.AddToRoleAsync(client, role);
+                await _context.SaveChangesAsync();
+                return RedirectToAction("Login", "Account");
+            }
+            else
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError("", error.Description);
 
+                }
+                return View(model);
+            }
         }
+    
 
         public IActionResult CodeGroupCheck()
         {
@@ -140,7 +150,7 @@ namespace TrackExpenses.Controllers
         {
             if (ModelState.IsValid)
             {
-                var client = await userManager.FindByNameAsync(model.Email);
+                var client = await _userManager.FindByNameAsync(model.Email);
                 if (client == null)
                 {
                     ModelState.AddModelError("", "Someting is wrong!");
@@ -168,13 +178,13 @@ namespace TrackExpenses.Controllers
         {
             if (ModelState.IsValid)
             {
-                var client = await userManager.FindByNameAsync(model.Email);
+                var client = await _userManager.FindByNameAsync(model.Email);
                 if (client != null)
                 {
-                    var result = await userManager.RemovePasswordAsync(client);
+                    var result = await _userManager.RemovePasswordAsync(client);
                     if (result.Succeeded)
                     {
-                        result = await userManager.AddPasswordAsync(client, model.NewPassword);
+                        result = await _userManager.AddPasswordAsync(client, model.NewPassword);
                         return RedirectToAction("Login", "Account");
                     }
                     else
@@ -202,7 +212,7 @@ namespace TrackExpenses.Controllers
         }
         public async Task<IActionResult> LogOut()
         {
-            await signInManager.SignOutAsync();
+            await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
         }
 
@@ -213,7 +223,7 @@ namespace TrackExpenses.Controllers
         }
 
 
-        private static readonly Random random = new Random();
+        private static readonly Random random = new ();
         private string GenerateCodeGroup()
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

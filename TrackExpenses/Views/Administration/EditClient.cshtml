@@ -1,16 +1,17 @@
 ﻿@model TrackExpenses.Models.Client
 
 @{
-    ViewData["Title"] = "CreateEditClient";
+    ViewData["Title"] = "EditClient";
+    
 }
 
-<h1>CreateEditClient</h1>
+<h1>EditClient</h1>
 
 <h4>Client</h4>
-<hr />
+
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="CreateEditClient">
+        <form asp-action="EditClient" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
                 <label asp-for="FirstName" class="control-label"></label>
@@ -38,16 +39,14 @@
                 <span asp-validation-for="Password" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="PhotoPath" class="control-label"></label>
-                <input asp-for="PhotoPath" class="form-control" />
-                <span asp-validation-for="PhotoPath" class="text-danger"></span>
+            <input type="file" name="Image" class="form-control" />
             </div>
             <div class="form-group">
                 <label asp-for="GroupId" class="control-label"></label>
                 <select asp-for="GroupId" class ="form-control" asp-items="ViewBag.GroupId"></select>
             </div>
             <div class="form-group">
-                <input asp-action="CreateEditClientForm" type="submit" value="Create" class="btn btn-primary" />
+                <input asp-action="EditClientForm" type="submit" value="Edit" class="btn btn-primary" />
             </div>
         </form>
     </div>

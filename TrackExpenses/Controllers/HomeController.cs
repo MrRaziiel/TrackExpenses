@@ -1,4 +1,4 @@
-using TrackExpenses.App_Start;
+using TrackExpenses.Data;
 using TrackExpenses.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
@@ -11,6 +11,7 @@ namespace TrackExpenses.Controllers
     {
         private readonly ILogger<HomeController> _logger;
 
+        //Home page logg
         public HomeController(ILogger<HomeController> logger)
         {
             _logger = logger;
