@@ -1,5 +1,6 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <!DOCTYPE html>
@@ -10,22 +11,7 @@
     <title>Financial Dashboard</title>
     <!-- Chart.js via CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
 
-        .stock-ticker {
-            font-size: 18px;
-            margin-bottom: 20px;
-        }
-
-        .financial-news {
-            padding: 20px;
-            background-color: #f8f9fa;
-            margin-top: 20px;
-        }
-    </style>
 </head>
 <body>
     <div class="container-fluid">

@@ -12,8 +12,8 @@ using TrackExpenses.Data;
 namespace TrackExpenses.Migrations
 {
     [DbContext(typeof(FinancasDbContext))]
-    [Migration("20250107002557_NewDataBase")]
-    partial class NewDataBase
+    [Migration("20250114155932_bd")]
+    partial class bd
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -166,7 +166,7 @@ namespace TrackExpenses.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("Birthday")
+                    b.Property<DateTime?>("Birthday")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -259,15 +259,30 @@ namespace TrackExpenses.Migrations
                     b.Property<string>("ClientId")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<DateTime?>("CreatedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ExpenseCategoryId")
+                        .HasColumnType("int");
 
                     b.Property<string>("GroupId")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ImagePath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("IsPayed")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("PayAmount")
+                        .HasColumnType("float");
 
                     b.Property<double>("Value")
                         .HasColumnType("float");
@@ -277,6 +292,23 @@ namespace TrackExpenses.Migrations
                     b.HasIndex("ClientId");
 
                     b.ToTable("Expenses");
+                });
+
+            modelBuilder.Entity("TrackExpenses.Models.ExpenseCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ExpenseCategory");
                 });
 
             modelBuilder.Entity("TrackExpenses.Models.GroupOfClients", b =>

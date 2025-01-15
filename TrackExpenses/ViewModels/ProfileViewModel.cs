@@ -27,7 +27,10 @@ namespace TrackExpenses.ViewModels
         [Display(Name = "Confirm Password")]
         public string ConfirmPassword { get; set; }
 
-        public DateTime Birthday { get; set; }
+        [Required(ErrorMessage = "Please enter your birthday.")]
+        [DisplayFormat(DataFormatString = "{dd/mm/YYYY}", ApplyFormatInEditMode = true)]
+        [DataType(DataType.Date)]
+        public DateTime? Birthday { get; set; }
 
         public string? PhotoPath { get; set; }
     }

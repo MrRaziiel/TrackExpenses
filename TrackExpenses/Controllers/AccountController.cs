@@ -5,7 +5,6 @@ using TrackExpenses.Models;
 using TrackExpenses.ViewModels;
 using System;
 using TrackExpenses.Data;
-using Microsoft.IdentityModel.Tokens;
 
 namespace TrackExpenses.Controllers
 {

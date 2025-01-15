@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using static System.Net.Mime.MediaTypeNames;
+using TrackExpenses.ViewModels;
+
 
 namespace TrackExpenses.Models
 {
@@ -35,7 +36,10 @@ namespace TrackExpenses.Models
         [MaxLength(250)]
         public required string FamilyName { get; set; }
 
-        public DateTime Birthday { get; set; }
+        [DataType(DataType.Date)]
+        [DisplayName("Birthday:")]
+        [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:dd/mm/YYYY}")]
+        public DateTime? Birthday { get; set; }
 
         public string? PhotoPath { get; set; }
         [PasswordPropertyText]
@@ -47,6 +51,16 @@ namespace TrackExpenses.Models
 
         public List<Expense> Expenses { get; set; } = new List<Expense>();
 
+        //Clone the updateClient into the client
+        public void CopyFrom(ClientUpdateAdminViewModel updateClient)
+        {
+            FirstName = updateClient.FirstName;
+            FamilyName = updateClient.FamilyName;
+            Password = updateClient.Password;
+            if (updateClient.Birthday != default) Birthday = updateClient.Birthday;
+           
+        }
+   
     }
    
 

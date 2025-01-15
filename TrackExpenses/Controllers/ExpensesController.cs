@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using TrackExpenses.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Authorization;
 
 //Controller expenses
 
@@ -23,6 +24,7 @@ namespace TrackExpenses.Controllers
 
         }
 
+        [Authorize]
         [HttpGet]
         public IActionResult ListExpenses()
         {
@@ -37,7 +39,7 @@ namespace TrackExpenses.Controllers
 
         }
 
-
+        [Authorize]
         public IActionResult CreateEditExpense(int? id)
         {
            
@@ -54,6 +56,7 @@ namespace TrackExpenses.Controllers
             return View();
         }
 
+        [Authorize]
         public IActionResult DeleteExpense(int id)
         {
             //Deleat expense by Id
@@ -64,7 +67,7 @@ namespace TrackExpenses.Controllers
             return RedirectToAction("ListExpenses");
         }
 
-        
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> CreateEditExpenseForm(Expense model)
         {

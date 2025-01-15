@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TrackExpenses.Data;
 using TrackExpenses.Models;
+using TrackExpenses.ViewModels;
+
 
 namespace TrackExpenses.Controllers
 {
@@ -175,39 +177,64 @@ namespace TrackExpenses.Controllers
                 {
                     //editing  -> load an expense by Id
                     var clientInDB = _context.Clients.SingleOrDefault(client => client.Id == id);
-                    return View(clientInDB);
+
+                    var model = ClientUpdateAdminViewModel.ClientUpdateToClient(clientInDB);
+                    return View(model);
                 }
                 return View();
             }
         }
         [HttpPost] 
-        public IActionResult EditClientForm(Client client, IFormFile Image )
+        public IActionResult EditClientForm(ClientUpdateAdminViewModel model)
         {
-            if (Image != null)
-            {
-                // Save the image to a file or process it as needed
-                var filePath = Path.Combine("wwwroot/images", Image.FileName);
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    Image.CopyTo(stream);
-                }
-            }
-            //Editing
-            _context.Clients.Update(client);
+            var clientInDB = _context.Clients.SingleOrDefault(client => client.Id == model.Id);
             
-            _context.SaveChanges();
+            if (ModelState.IsValid)
+            {
+
+                clientInDB.CopyFrom(model);
+
+                _context.Clients.Update(clientInDB);
+                _context.SaveChanges();
+
+            }
+            //if (Image != null)
+            //{
+            //    // Save the image to a file or process it as needed
+            //    var filePath = Path.Combine("wwwroot/images", Image.FileName);
+            //    using (var stream = new FileStream(filePath, FileMode.Create))
+            //    {
+            //        Image.CopyTo(stream);
+            //    }
+            //}
+            //Editing
+   
+            //_context.SaveChanges();
             return RedirectToAction("ListClients");
         }
 
 
-        public IActionResult DeleteClient(string Id)
+        public async Task<IActionResult> DeleteClient(string Id)
         {
-            var existClient = _context.Clients.SingleOrDefault(c => c.Id == Id);
+            var existClient = _context.Clients.Include(client => client.Expenses).SingleOrDefault(c => c.Id == Id);
+            if(existClient.Expenses.Count >0)
+            {
+                foreach(var clientExpense in existClient.Expenses)
+                {
+                    var bdExpense = _context.Expenses.FirstOrDefault(exp => exp.Id == clientExpense.Id);
+                    if(bdExpense != null)
+                    {
+                        _context.Expenses.Remove(bdExpense);
+                    }
+                        
+                }
+                await _context.SaveChangesAsync();
+            }
             if (existClient != null)
             {
                 _context.Clients.Remove(existClient);
             }
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return RedirectToAction("ListClients");
 
         }
