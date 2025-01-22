@@ -15,6 +15,8 @@ namespace TrackExpenses.Data
         public DbSet<GroupOfClients> GroupOfClients { get; set; }
         public DbSet<Client> Clients { get; set; }
 
+        public DbSet<ImageDB> ImagesDB { get; set; }
+
         public DbSet<ExpenseCategory> ExpenseCategory { get; set; }
         public FinancasDbContext(DbContextOptions<FinancasDbContext> options) : base(options)
         {

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TrackExpenses.Data;
 
@@ -11,9 +12,11 @@ using TrackExpenses.Data;
 namespace TrackExpenses.Migrations
 {
     [DbContext(typeof(FinancasDbContext))]
-    partial class FinancasDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250122122236_Client ImageId")]
+    partial class ClientImageId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -326,24 +329,6 @@ namespace TrackExpenses.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("GroupOfClients");
-                });
-
-            modelBuilder.Entity("TrackExpenses.Models.ImageDB", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Extension")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ImagesDB");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

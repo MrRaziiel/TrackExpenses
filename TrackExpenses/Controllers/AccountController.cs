@@ -99,9 +99,9 @@ namespace TrackExpenses.Controllers
 
                 }
             }
-            if (string.IsNullOrEmpty(client.PhotoPath))
+            if (string.IsNullOrEmpty(client.ProfileImageId))
             {
-                client.PhotoPath = "No_image.jpg";
+                client.ProfileImageId = "No_image.jpg";
             }
             else
             {

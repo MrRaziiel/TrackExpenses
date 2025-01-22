@@ -32,6 +32,6 @@ namespace TrackExpenses.ViewModels
         [DataType(DataType.Date)]
         public DateTime? Birthday { get; set; }
 
-        public string? PhotoPath { get; set; }
+        public string? ProfileImageId { get; set; }
     }
 }

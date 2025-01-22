@@ -1,4 +1,8 @@
 ﻿@using TrackExpenses.ViewModels;
+@{
+    ViewData["Title"] = (Model.FirstName.ToString().ToUpper() + " " + Model.FamilyName.ToString().ToUpper());
+
+}
 @model ProfileViewModel;
 
 <h2 class="text-center">@(Model.FirstName.ToString().ToUpper() + " " + Model.FamilyName.ToString().ToUpper())</h2>
@@ -7,13 +11,13 @@
     <div class="account-box">
         <dl class="col col-5">
             <dt class="client-photo">
-                @if (Model.PhotoPath == null)
+                @if (Model.ProfileImageId == null)
                 {
                     <img src="~/images/No_image.jpg" />
                 }
                 else
                 {
-                    <img src="@("~/images/" + Model.PhotoPath)" />
+                    <img src="@("~/images/" + Model.ProfileImageId)" />
                 }
             </dt>
             <dt>

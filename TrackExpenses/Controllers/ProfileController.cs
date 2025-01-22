@@ -26,7 +26,7 @@ namespace TrackExpenses.Controllers
                 FamilyName = user.FamilyName,
                 Email = user.Email,
                 Password = user.Password,
-                PhotoPath = user.PhotoPath,
+                ProfileImageId = user.ProfileImageId,
                 Birthday = user.Birthday
             };
 

@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TrackExpenses.Data;
@@ -159,36 +158,79 @@ namespace TrackExpenses.Controllers
         public IActionResult ListClients()
         {
             var allClients =  _context.Clients.Include(client => client.GroupOfClients).ToList();
-            if (allClients != null)
-            {
-                return View(allClients);
-            }
-            else
-            {
-                return View();
-            }
+            if (allClients == null) return View();
+            
+            return View(allClients);
+       
+
         }
 
         [HttpGet]
         public IActionResult EditClient(string? id)
         {
             {
-                if (id != null)
-                {
-                    //editing  -> load an expense by Id
-                    var clientInDB = _context.Clients.SingleOrDefault(client => client.Id == id);
+                if (id == null) return View();
+                
+                //editing  -> load an expense by Id
+                var clientInDB = _context.Clients.SingleOrDefault(client => client.Id.Equals(id));
 
-                    var model = ClientUpdateAdminViewModel.ClientUpdateToClient(clientInDB);
-                    return View(model);
+                if (clientInDB == null) return View();
+
+
+                var model = AdminClientUpdateViewModel.ClientUpdateToClient(clientInDB);
+                if (clientInDB.ProfileImageId != null)
+                {
+                    var imageBd = _context.ImagesDB.SingleOrDefault(imgId => imgId.Id.Equals(clientInDB.ProfileImageId));
+                    string rootPath = "\\images/Users/";
+
+
+
+
+                    if (imageBd != null)
+                    {
+                        var nameWithExtensio = imageBd.Name + imageBd.Extension;
+                        model.ProfileImagePath = Path.Combine(rootPath,imageBd.Name, nameWithExtensio);
+                    }
+                    else
+                    {
+                        model.ProfileImagePath = Path.Combine(rootPath,"No_image.jpg");
+                    }
                 }
-                return View();
+                return View(model);
+                
+            
             }
         }
+
         [HttpPost] 
-        public IActionResult EditClientForm(ClientUpdateAdminViewModel model)
+        public IActionResult EditClientForm(AdminClientUpdateViewModel model, IFormFile? Image) //Editing Client
         {
             var clientInDB = _context.Clients.SingleOrDefault(client => client.Id == model.Id);
-            
+            if (Image != null)
+            {
+                // Save the image to a file or process it as needed
+                var extension = Path.GetExtension(Image.FileName); // Use the original file name
+
+                string nameNewFile = clientInDB.Id + extension;
+                var foldPath = Path.Combine(nameNewFile, nameNewFile);
+
+                var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "Users", clientInDB.Id);
+
+
+
+                // Construct the file path
+                var fileExist = System.IO.File.Exists(uploadPath);
+              
+                ImageDB.UpdateProfileImgDb(uploadPath, nameNewFile, Image);
+                if (!fileExist) {
+                    
+                    ImageDB newImage = new ImageDB(clientInDB.Id, extension);
+                    clientInDB.ProfileImageId = newImage.Id;
+                    _context.ImagesDB.Add(newImage);
+                }
+
+
+            }
             if (ModelState.IsValid)
             {
 
@@ -198,16 +240,8 @@ namespace TrackExpenses.Controllers
                 _context.SaveChanges();
 
             }
-            //if (Image != null)
-            //{
-            //    // Save the image to a file or process it as needed
-            //    var filePath = Path.Combine("wwwroot/images", Image.FileName);
-            //    using (var stream = new FileStream(filePath, FileMode.Create))
-            //    {
-            //        Image.CopyTo(stream);
-            //    }
-            //}
-            //Editing
+
+            
    
             //_context.SaveChanges();
             return RedirectToAction("ListClients");

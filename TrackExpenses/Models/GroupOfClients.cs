@@ -41,7 +41,7 @@ namespace TrackExpenses.Models
         [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:dd/mm/YYYY}")]
         public DateTime? Birthday { get; set; }
 
-        public string? PhotoPath { get; set; }
+        public string? ProfileImageId { get; set; }
         [PasswordPropertyText]
         public required string Password { get; set; }
 
@@ -52,12 +52,12 @@ namespace TrackExpenses.Models
         public List<Expense> Expenses { get; set; } = new List<Expense>();
 
         //Clone the updateClient into the client
-        public void CopyFrom(ClientUpdateAdminViewModel updateClient)
+        public void CopyFrom(AdminClientUpdateViewModel updateClient)
         {
             FirstName = updateClient.FirstName;
             FamilyName = updateClient.FamilyName;
             Password = updateClient.Password;
-            if (updateClient.Birthday != default) Birthday = updateClient.Birthday;
+            if (updateClient.Birthday != default || updateClient.Birthday != null ) Birthday = updateClient.Birthday;
            
         }
    

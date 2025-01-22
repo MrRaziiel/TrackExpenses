@@ -26,7 +26,6 @@
   <ItemGroup>
     <Folder Include="App_Start\" />
     <Folder Include="Migrations\" />
-    <Folder Include="Views\Clients\" />
     <Folder Include="wwwroot\images\Receipts\" />
   </ItemGroup>
 

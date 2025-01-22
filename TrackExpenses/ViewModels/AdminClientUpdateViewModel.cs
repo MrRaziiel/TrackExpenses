@@ -5,9 +5,9 @@ using TrackExpenses.Models;
 
 namespace TrackExpenses.ViewModels
 {
-    public class ClientUpdateAdminViewModel
+    public class AdminClientUpdateViewModel
     {
-        public ClientUpdateAdminViewModel() { }
+        public AdminClientUpdateViewModel() { }
 
         public string Id { get; set; }
 
@@ -24,21 +24,22 @@ namespace TrackExpenses.ViewModels
 
         public required string Email { get; set; }
 
-        public string? PhotoPath { get; set; }
+        public string? ProfileImageId { get; set; }
+        public string? ProfileImagePath { get; set; }
         [PasswordPropertyText]
         public required string Password { get; set; }
 
 
-        public static ClientUpdateAdminViewModel ClientUpdateToClient(Client client)
+        public static AdminClientUpdateViewModel ClientUpdateToClient(Client client)
         {
-            return new ClientUpdateAdminViewModel()
+            return new AdminClientUpdateViewModel()
             {
                 Id = client.Id,
                 FirstName = client.FirstName,
                 FamilyName = client.FamilyName,
                 Birthday = client.Birthday,
                 Email = client.Email,
-                PhotoPath = client.PhotoPath,
+                ProfileImageId = client.ProfileImageId,
                 Password = client.Password
             };
             
