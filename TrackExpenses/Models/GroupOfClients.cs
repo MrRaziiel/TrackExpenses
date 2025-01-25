@@ -52,18 +52,10 @@ namespace TrackExpenses.Models
         public List<Expense> Expenses { get; set; } = new List<Expense>();
 
         //Clone the updateClient into the client
-        public void CopyFrom(AdminClientUpdateViewModel updateClient)
-        {
-            FirstName = updateClient.FirstName;
-            FamilyName = updateClient.FamilyName;
-            Password = updateClient.Password;
-            if (updateClient.Birthday != default || updateClient.Birthday != null ) Birthday = updateClient.Birthday;
-           
-        }
-   
-    }
-   
 
+
+
+    }
 }
 
 

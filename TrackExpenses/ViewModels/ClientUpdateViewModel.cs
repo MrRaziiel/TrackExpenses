@@ -1,14 +1,11 @@
-﻿using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using TrackExpenses.Models;
 
 namespace TrackExpenses.ViewModels
 {
-    public class AdminClientUpdateViewModel
+    public abstract class ClientViewModel
     {
-        public AdminClientUpdateViewModel() { }
-
         public string Id { get; set; }
 
         [MaxLength(250)]
@@ -29,10 +26,42 @@ namespace TrackExpenses.ViewModels
         [PasswordPropertyText]
         public required string Password { get; set; }
 
+        public virtual void CopyTo(Client updateClient)
+        {
+            updateClient.FirstName = FirstName;
+            updateClient.FamilyName = FamilyName;
+            updateClient.Password = Password;
+            if (Birthday != default || Birthday != null) updateClient.Birthday = Birthday;
+        }
+    }
 
-        public static AdminClientUpdateViewModel ClientUpdateToClient(Client client)
+    public class AdminClientUpdateViewModel : ClientViewModel {
+
+        public static AdminClientUpdateViewModel FromClient(Client client)
         {
             return new AdminClientUpdateViewModel()
+            {
+                Id = client.Id,
+                FirstName = client.FirstName,
+                FamilyName = client.FamilyName,
+                Birthday = client.Birthday,
+                Email = client.Email,
+                ProfileImageId = client.ProfileImageId,
+                Password = client.Password
+            };
+        }
+        //public override void CopyTo(Client updateClient)
+        //{
+        //    base.CopyTo(updateClient);
+
+        //}
+    }
+
+    public class ClientUpdateViewModel : ClientViewModel
+    {
+        public static ClientUpdateViewModel FromClient(Client client)
+        {
+            return new ClientUpdateViewModel()
             {
                 Id = client.Id,
                 FirstName = client.FirstName,
@@ -45,6 +74,5 @@ namespace TrackExpenses.ViewModels
             
         }
 
-        
     }
 }

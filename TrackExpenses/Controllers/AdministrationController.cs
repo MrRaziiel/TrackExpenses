@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 using TrackExpenses.Data;
 using TrackExpenses.Models;
 using TrackExpenses.ViewModels;
@@ -165,6 +166,7 @@ namespace TrackExpenses.Controllers
 
         }
 
+        
         [HttpGet]
         public IActionResult EditClient(string? id)
         {
@@ -176,15 +178,11 @@ namespace TrackExpenses.Controllers
 
                 if (clientInDB == null) return View();
 
-
-                var model = AdminClientUpdateViewModel.ClientUpdateToClient(clientInDB);
+                var model = AdminClientUpdateViewModel.FromClient(clientInDB);
                 if (clientInDB.ProfileImageId != null)
                 {
                     var imageBd = _context.ImagesDB.SingleOrDefault(imgId => imgId.Id.Equals(clientInDB.ProfileImageId));
-                    string rootPath = "\\images/Users/";
-
-
-
+                    var rootPath = Path.Combine("/","images", "Users");
 
                     if (imageBd != null)
                     {
@@ -196,9 +194,7 @@ namespace TrackExpenses.Controllers
                         model.ProfileImagePath = Path.Combine(rootPath,"No_image.jpg");
                     }
                 }
-                return View(model);
-                
-            
+                return View(model)
             }
         }
 
@@ -234,7 +230,7 @@ namespace TrackExpenses.Controllers
             if (ModelState.IsValid)
             {
 
-                clientInDB.CopyFrom(model);
+                model.CopyTo(clientInDB);
 
                 _context.Clients.Update(clientInDB);
                 _context.SaveChanges();
