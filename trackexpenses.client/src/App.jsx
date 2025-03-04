@@ -9,23 +9,34 @@ import { theme } from "./components/Theme/Theme";
 import GlobalStyle from "./components/Theme/GlobalStyle";
 import Login from "./components/Pages/Login";
 import SignIn from "./components/Pages/SignIn";
+import Footer from "./components/Footer/Footer";
+import Sidebar from "./components/Menu/Sidebar";
+import { AuthProvider } from "./components/Authentication/AuthContext";
 
 function App() {
     return (
+        <AuthProvider>
         <ThemeProvider theme={theme}>
-      <GlobalStyle />
-        <div className='App'>
-            <Header />
-            <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/Home" element={<Home />} />
-                <Route path="/Expenses" element={<Expenses />} />
-                <Route path="/Login" element={<Login />} />
-                <Route path="/SignIn" element={<SignIn />} />
-            </Routes>
-        </div>
+            <GlobalStyle />
+            <div className="flex flex-col min-h-screen">
+                <Header />
+                <main className="flex-grow">
+                    <Sidebar/>
+                    <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/Home" element={<Home />} />
+                    <Route path="/Expenses" element={<Expenses />} />
+                    <Route path="/Login" element={<Login />} />
+                    <Route path="/SignIn" element={<SignIn />} />
+                    </Routes>
+                </main>
+            </div>
+            <Footer/>
+
         </ThemeProvider>
+        </AuthProvider>
     );
 }
 
 export default App;
+
