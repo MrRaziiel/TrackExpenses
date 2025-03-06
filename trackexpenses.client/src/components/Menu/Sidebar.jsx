@@ -7,13 +7,8 @@ const Sidebar = () => {
         return null;
     }
     return (
-        
-            <div>
-    <div className="rounded-r bg-gray-900 xl:hidden flex justify-between w-full p-6 items-center ">
-      
-
-    </div>
-    <div id="Main"  className="xl:rounded-r transform  xl:translate-x-0  ease-in-out transition duration-500 flex justify-start items-start h-full  w-full sm:w-64 bg-gray-900 flex-col">
+     
+    <div className="xl:rounded-r transform  xl:translate-x-0  ease-in-out transition duration-500 flex justify-start items-start h-full  w-full sm:w-64 bg-gray-900 flex-col">
 
         <div className="mt-6 flex flex-col justify-start items-center  pl-4 w-full border-gray-600 border-b space-y-3 pb-5 ">
             <button className="flex jusitfy-start items-center space-x-6 w-full  focus:outline-none  focus:text-indigo-400  text-white rounded ">
@@ -219,7 +214,6 @@ const Sidebar = () => {
                     <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                     
-            </div>
         </div>
     </div>
     </div>
