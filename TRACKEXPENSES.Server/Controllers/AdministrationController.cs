@@ -7,21 +7,13 @@ using TRACKEXPENSES.Server.Models;
 
 namespace TRACKEXPENSES.Server.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/Clients/getAllClients")]
     [ApiController]
-    public class AdministrationController : ControllerBase
+    public class AdministrationController(RoleManager<IdentityRole> roleManager, UserManager<Client> userManager, FinancasDbContext context) : ControllerBase
     {
-        private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly UserManager<Client> _userManager;
-        private readonly FinancasDbContext _context;
-
-
-        public AdministrationController(RoleManager<IdentityRole> roleManager, UserManager<Client> userManager, FinancasDbContext context)
-        {
-            _roleManager = roleManager;
-            _userManager = userManager;
-            _context = context;
-        }
+        private readonly RoleManager<IdentityRole> _roleManager = roleManager;
+        private readonly UserManager<Client> _userManager = userManager;
+        private readonly FinancasDbContext _context = context;
 
         [HttpGet]
 

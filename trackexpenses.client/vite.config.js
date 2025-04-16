@@ -52,7 +52,12 @@ export default defineConfig({
             '^/weatherforecast': {
                 target: 'https://localhost:64306/',
                 secure: false
-            }
+            },
+            '/api': {
+        target: 'https://localhost:7209',
+        changeOrigin: true,
+        secure: false
+      }
         },
         port: 64306,
         https: {

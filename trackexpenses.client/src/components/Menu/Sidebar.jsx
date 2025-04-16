@@ -1,4 +1,5 @@
 import { useAuth } from "../Authentication/AuthContext";
+import { Link } from "react-router-dom";
 
 const Sidebar = () => {
     const { user } = useAuth();
@@ -17,7 +18,7 @@ const Sidebar = () => {
             </button>
             <button className="flex jusitfy-start items-center w-full  space-x-6 focus:outline-none text-white focus:text-indigo-400   rounded ">
                 <img className="fill-stroke" src="https://tuk-cdn.s3.amazonaws.com/can-uploader/sidebar2-svg5.svg" alt="users" />    
-                    <p className="text-base leading-4 ">Users</p>                    
+                    <Link to="/AdminListClients"><p className="text-base leading-4 ">Users</p></Link>
             </button>
         </div>
         <div className="flex flex-col justify-start items-center   px-6 border-b border-gray-600 w-full  ">

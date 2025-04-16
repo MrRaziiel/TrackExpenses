@@ -13,6 +13,7 @@ import Footer from "./components/Footer/Footer";
 import Sidebar from "./components/Menu/Sidebar";
 import { AuthProvider } from "./components/Authentication/AuthContext";
 import Dashboard from "./components/Pages/Administrador/Dashboard";
+import ClientList from "./components/Pages/Administrador/ListClients";
 
 function App() {
     return (
@@ -36,6 +37,7 @@ function App() {
                                 <Route path="/Expenses" element={<Dashboard />} />
                                 <Route path="/Login" element={<Login />} />
                                 <Route path="/SignIn" element={<SignIn />} />
+                                <Route path="/AdminListClients" element={<ClientList />} />
                             </Routes>
                             </div>
                         </main>

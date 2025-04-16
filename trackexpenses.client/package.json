@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "proxy": "https://localhost:7209",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -11,7 +12,9 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.0.9",
+    "axios": "^0.24.0",
     "bootstrap": "^5.3.3",
+    "cors": "^2.8.5",
     "flowbite": "^3.1.2",
     "react": "^19.0.0",
     "react-bootstrap": "^2.10.9",
