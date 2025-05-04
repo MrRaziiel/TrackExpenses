@@ -9,7 +9,7 @@ namespace TRACKEXPENSES.Server.Extensions
     {
         public static IServiceCollection AddIdentityServices(this IServiceCollection services)
         {
-            services.AddIdentity<Client, IdentityRole>(options =>
+            services.AddIdentity<Users, IdentityRole>(options =>
             {
                 options.Password.RequireNonAlphanumeric = false;
                 options.Password.RequiredLength = 8;

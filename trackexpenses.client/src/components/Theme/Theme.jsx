@@ -1,21 +1,109 @@
-export const theme = {
+import React, { createContext, useContext, useState, useEffect } from 'react';
+
+const ThemeContext = createContext();
+
+const lightTheme = {
   colors: {
-    primary: "#0047AB",       // Azul forte para botões e destaques
-    secondary: "#008000",     // Verde para elementos secundários
-    background: "#F4F4F4",    // Cinza claro para o fundo
-    backgroundMenus: "#111827",    // Cinza claro para o fundo
-    text: "#222222",          // Preto suave para texto principal
-    textSecondary: "#F4F4F4", // Cinza escuro para texto secundário
-    highlight: "#FFD700",     // Dourado para realces
-    border: "#DDDDDD",        // Cinza claro para bordas
-    button: "#0047AB",        // Azul forte para botões principais
-    buttonHover: "#003580",   // Azul mais escuro no hover
-    dangerRed: "#DC2626",     // Vermelho para ações perigosas (ex: Logout)
-    darkRed: "#B91C1C",       // Vermelho mais escuro para hover de botões de perigo
-    inputBg: "#FFFFFF",       // Fundo dos inputs
-    inputBorder: "#CCCCCC"    // Borda dos inputs
+    primary: {
+      main: '#3B82F6',
+      light: '#93C5FD',
+      dark: '#1D4ED8',
+    },
+    secondary: {
+      main: '#6B7280',
+      light: '#E5E7EB',
+      dark: '#374151',
+    },
+    background: {
+      default: '#F9FAFB',
+      paper: '#FFFFFF',
+    },
+    text: {
+      primary: '#111827',
+      secondary: '#6B7280',
+    },
+    success: {
+      main: '#10B981',
+      light: '#D1FAE5',
+    },
+    error: {
+      main: '#EF4444',
+      light: '#FEE2E2',
+    }
   },
-  fonts: {
-    main: "'Roboto', sans-serif",
+  breakpoints: {
+    sm: '640px',
+    md: '768px',
+    lg: '1024px',
+    xl: '1280px',
   }
 };
+
+const darkTheme = {
+  colors: {
+    primary: {
+      main: '#60A5FA',
+      light: '#93C5FD',
+      dark: '#2563EB',
+    },
+    secondary: {
+      main: '#9CA3AF',
+      light: '#4B5563',
+      dark: '#1F2937',
+    },
+    background: {
+      default: '#111827',
+      paper: '#1F2937',
+    },
+    text: {
+      primary: '#F9FAFB',
+      secondary: '#D1D5DB',
+    },
+    success: {
+      main: '#34D399',
+      light: '#064E3B',
+    },
+    error: {
+      main: '#F87171',
+      light: '#7F1D1D',
+    }
+  },
+  breakpoints: {
+    sm: '640px',
+    md: '768px',
+    lg: '1024px',
+    xl: '1280px',
+  }
+};
+
+export function ThemeProvider({ children }) {
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem('theme');
+    return savedTheme === 'dark';
+  });
+
+  const theme = isDarkMode ? darkTheme : lightTheme;
+
+  useEffect(() => {
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    document.documentElement.classList.toggle('dark', isDarkMode);
+  }, [isDarkMode]);
+
+  const toggleTheme = () => {
+    setIsDarkMode(prev => !prev);
+  };
+
+  return (
+    <ThemeContext.Provider value={{ theme, isDarkMode, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
+export function useTheme() {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
+}

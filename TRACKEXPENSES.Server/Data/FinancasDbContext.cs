@@ -7,15 +7,15 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 namespace TRACKEXPENSES.Server.Data
 {
 
-    public class FinancasDbContext : IdentityDbContext<Client>
+    public class FinancasDbContext : IdentityDbContext<Users>
     {
         public FinancasDbContext(DbContextOptions<FinancasDbContext> options) : base(options)
         {
 
         }
         public DbSet<Expense> Expenses { get; set; }
-        public DbSet<GroupOfClients> GroupOfClients { get; set; }
-        public DbSet<Client> Clients { get; set; }
+        public DbSet<GroupOfUsers> GroupOfClients { get; set; }
+        public DbSet<Users> Clients { get; set; }
 
         public DbSet<ImageDB> ImagesDB { get; set; }
 
@@ -24,9 +24,9 @@ namespace TRACKEXPENSES.Server.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Client>()
-            .HasOne(c => c.GroupOfClients)
-            .WithMany(g => g.Clients)
+            modelBuilder.Entity<Users>()
+            .HasOne(c => c.GroupOfUsers)
+            .WithMany(g => g.Users)
             .HasForeignKey(c => c.GroupId);
 
             // Call the base method to ensure any default behavior is applied

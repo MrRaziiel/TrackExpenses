@@ -1,2 +1,11 @@
 @import "tailwindcss";
 @import "flowbite/src/themes/default";
+
+
+:root {
+    color-scheme: light;
+  }
+  
+  .dark {
+    color-scheme: dark;
+  }

@@ -7,24 +7,22 @@ using TRACKEXPENSES.Server.Models;
 
 namespace TRACKEXPENSES.Server.Controllers
 {
-    [Route("api/Clients/getAllClients")]
+
     [ApiController]
-    public class AdministrationController(RoleManager<IdentityRole> roleManager, UserManager<Client> userManager, FinancasDbContext context) : ControllerBase
+    public class AdministrationController(RoleManager<IdentityRole> roleManager, UserManager<Users> userManager, FinancasDbContext context) : ControllerBase
     {
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
-        private readonly UserManager<Client> _userManager = userManager;
+        private readonly UserManager<Users> _userManager = userManager;
         private readonly FinancasDbContext _context = context;
 
+        [Route("api/Users/getAllUsers")]
         [HttpGet]
-
         public IActionResult ListClients()
         {
-            var allClients = _context.Clients.Include(client => client.GroupOfClients).ToList();
+            var allClients = _context.Clients.Include(client => client.GroupOfUsers).ToList();
             if (allClients == null) return BadRequest("Dados inválidos.");
 
             return Ok(allClients);
-
-
         }
     }
 }

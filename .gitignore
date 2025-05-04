@@ -26,7 +26,11 @@ wwwroot/
 appsettings.Development.json
 appsettings.Local.json
 appsettings.*.json
-appsettings.json
+Snapshots.*
+Migration.*
+Migration*.*
+*Migration*.*
+
 
 # Package Folders
 packages/
