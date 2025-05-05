@@ -1,22 +1,20 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { useContext } from 'react';
+import { AuthContext } from '../auth/AuthContext';
 
-const AuthContext = createContext();
+export default function Dashboard() {
+  const { user, setUser } = useContext(AuthContext);
 
-export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
+  const logout = async () => {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include'
+    });
+    setUser(null);
+  };
 
-    useEffect(() => {
-        const fakeUser = { name: "User Test", email: "test@email.com" };
-        setUser(fakeUser);
-    }, []);
-
-    return (
-        <AuthContext.Provider value={{ user }}>
-            {children}
-        </AuthContext.Provider>
-    );
-};
-
-export const useAuth = () => {
-    return useContext(AuthContext);
-};
+  return (
+    <AuthContext.Provider value={{ user }}>
+    {children}
+</AuthContext.Provider>
+  );
+}

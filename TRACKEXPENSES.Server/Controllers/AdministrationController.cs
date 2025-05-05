@@ -9,17 +9,17 @@ namespace TRACKEXPENSES.Server.Controllers
 {
 
     [ApiController]
-    public class AdministrationController(RoleManager<IdentityRole> roleManager, UserManager<Users> userManager, FinancasDbContext context) : ControllerBase
+    public class AdministrationController(RoleManager<IdentityRole> roleManager, UserManager<User> userManager, FinancasDbContext context) : ControllerBase
     {
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
-        private readonly UserManager<Users> _userManager = userManager;
+        private readonly UserManager<User> _userManager = userManager;
         private readonly FinancasDbContext _context = context;
 
-        [Route("api/Users/getAllUsers")]
+        [Route("api/User/getAllUsers")]
         [HttpGet]
         public IActionResult ListClients()
         {
-            var allClients = _context.Clients.Include(client => client.GroupOfUsers).ToList();
+            var allClients = _context.UsersList.Include(client => client.GroupOfUsers).ToList();
             if (allClients == null) return BadRequest("Dados inválidos.");
 
             return Ok(allClients);

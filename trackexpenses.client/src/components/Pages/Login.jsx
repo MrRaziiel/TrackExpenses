@@ -1,13 +1,20 @@
 import { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+  function handleClick() {
+    navigate("/signin");
+  }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-lg max-w-sm w-full">
-        <h2 className="text-2xl font-bold text-gray-900 text-center mb-6">Login</h2>
+    <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+    <div className="p-8">
+      <h2 className="text-2xl font-bold text-center mb-8">
+        Login</h2>
         <div className="mb-4">
           <label className="block text-gray-800 font-semibold">Email</label>
           <input
@@ -28,10 +35,19 @@ const Login = () => {
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
-        <button className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">
-          Login
+        <button 
+        className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">
+          login
         </button>
       </div>
+      <div className="mt-6 text-center">
+          <button
+            onClick={handleClick}
+            className="text-blue-500 hover:text-blue-600"
+          >
+            Don't have an account? Sign Up"
+          </button>
+        </div>
     </div>
   );
 };

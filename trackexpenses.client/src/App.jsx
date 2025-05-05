@@ -8,6 +8,8 @@ import { useLanguage } from './Translate/LanguageContext';
 import Welcome from './components/Pages/Welcome';
 import UsersList from './components/Pages/Administrador/ListClients';
 import Auth from './components/Authentication/Auth';
+import Login from './components/Pages/Login';
+import SignIn from './components/Pages/SignIn';
 import Dashboard from './components/Pages/Administrador/Dashboard';
 import Expenses from './components/Pages/Expenses/AllExpenses';
 import Incomes from './components/Pages/Incomes/AllIncomes';
@@ -60,6 +62,13 @@ function App() {
                       >
                         {t('common.login')}
                       </Link>
+                      <Link
+                        to="/login"
+                        className="block px-4 py-2 hover:bg-blue-600 transition-colors"
+                        onClick={() => setIsAuthMenuOpen(false)}
+                      >
+                        {t('common.login')}
+                      </Link>
                     </div>
                   )}
                 </div>
@@ -79,7 +88,7 @@ function App() {
               {/* Desktop Navigation */}
               <div className="hidden md:flex items-center space-x-4">
                 {!isAuthenticated ? (
-                  <Link to="/auth" className="flex items-center space-x-1 hover:text-blue-100">
+                  <Link to="/login" className="flex items-center space-x-1 hover:text-blue-100">
                     <LogIn className="h-5 w-5" />
                     <span>{t('common.login')}</span>
                   </Link>
@@ -231,6 +240,8 @@ function App() {
               path="/auth"
               element={<Auth onLogin={() => setIsAuthenticated(true)} />}
             />
+            <Route path='/login' element={< Login />} />
+            <Route path="/signin" element={<SignIn />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/expenses" element={<Expenses />} />
             <Route path="/expenses/add" element={<AddExpense />} />

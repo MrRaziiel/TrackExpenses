@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using TRACKEXPENSES.Server.Data;
 using TRACKEXPENSES.Server.Extensions;
@@ -47,5 +46,6 @@ app.MapControllers();
 
 app.MapFallbackToFile("/index.html");
 
+app.SetRoles();
 app.SetAdmin();
 app.Run();

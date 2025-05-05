@@ -25,12 +25,12 @@ namespace TRACKEXPENSES.Server.Models
         public string? CodeInvite { get; set; } // Unique constraint to be applied in DbContext configuration
 
 
-        // Navigation property for related clients
-        public ICollection<Users> Users { get; set; } = new List<Users>();
+        // Navigation property for related users
+        public ICollection<User> Users { get; set; } = new List<User>();
 
     }
 
-    public class Users : IdentityUser
+    public class User : IdentityUser
     {
         private DateTime? birthday;
 

@@ -155,7 +155,111 @@ namespace TRACKEXPENSES.Server.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("TRACKEXPENSES.Server.Models.Users", b =>
+            modelBuilder.Entity("TRACKEXPENSES.Server.Models.Expense", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClientId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ExpenseCategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("GroupId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImagePath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("IsPayed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("PayAmount")
+                        .HasColumnType("float");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<double>("Value")
+                        .HasColumnType("float");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Expenses");
+                });
+
+            modelBuilder.Entity("TRACKEXPENSES.Server.Models.ExpenseCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ExpenseCategory");
+                });
+
+            modelBuilder.Entity("TRACKEXPENSES.Server.Models.GroupOfUsers", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CodeInvite")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GroupOfUsers");
+                });
+
+            modelBuilder.Entity("TRACKEXPENSES.Server.Models.ImageDB", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Extension")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ImagesDB");
+                });
+
+            modelBuilder.Entity("TRACKEXPENSES.Server.Models.User", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -248,107 +352,6 @@ namespace TRACKEXPENSES.Server.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("TRACKEXPENSES.Server.Models.Expense", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ClientId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime?>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ExpenseCategoryId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("GroupId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ImagePath")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool?>("IsPayed")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<double?>("PayAmount")
-                        .HasColumnType("float");
-
-                    b.Property<double>("Value")
-                        .HasColumnType("float");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ClientId");
-
-                    b.ToTable("Expenses");
-                });
-
-            modelBuilder.Entity("TRACKEXPENSES.Server.Models.ExpenseCategory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ExpenseCategory");
-                });
-
-            modelBuilder.Entity("TRACKEXPENSES.Server.Models.GroupOfUsers", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("CodeInvite")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("GroupOfUsers");
-                });
-
-            modelBuilder.Entity("TRACKEXPENSES.Server.Models.ImageDB", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Extension")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ImagesDB");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -360,7 +363,7 @@ namespace TRACKEXPENSES.Server.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("TRACKEXPENSES.Server.Models.Users", null)
+                    b.HasOne("TRACKEXPENSES.Server.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -369,7 +372,7 @@ namespace TRACKEXPENSES.Server.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("TRACKEXPENSES.Server.Models.Users", null)
+                    b.HasOne("TRACKEXPENSES.Server.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -384,7 +387,7 @@ namespace TRACKEXPENSES.Server.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("TRACKEXPENSES.Server.Models.Users", null)
+                    b.HasOne("TRACKEXPENSES.Server.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -393,14 +396,21 @@ namespace TRACKEXPENSES.Server.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("TRACKEXPENSES.Server.Models.Users", null)
+                    b.HasOne("TRACKEXPENSES.Server.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("TRACKEXPENSES.Server.Models.Users", b =>
+            modelBuilder.Entity("TRACKEXPENSES.Server.Models.Expense", b =>
+                {
+                    b.HasOne("TRACKEXPENSES.Server.Models.User", null)
+                        .WithMany("Expenses")
+                        .HasForeignKey("UserId");
+                });
+
+            modelBuilder.Entity("TRACKEXPENSES.Server.Models.User", b =>
                 {
                     b.HasOne("TRACKEXPENSES.Server.Models.GroupOfUsers", "GroupOfUsers")
                         .WithMany("Users")
@@ -409,21 +419,14 @@ namespace TRACKEXPENSES.Server.Migrations
                     b.Navigation("GroupOfUsers");
                 });
 
-            modelBuilder.Entity("TRACKEXPENSES.Server.Models.Expense", b =>
-                {
-                    b.HasOne("TRACKEXPENSES.Server.Models.Users", null)
-                        .WithMany("Expenses")
-                        .HasForeignKey("ClientId");
-                });
-
-            modelBuilder.Entity("TRACKEXPENSES.Server.Models.Users", b =>
-                {
-                    b.Navigation("Expenses");
-                });
-
             modelBuilder.Entity("TRACKEXPENSES.Server.Models.GroupOfUsers", b =>
                 {
                     b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("TRACKEXPENSES.Server.Models.User", b =>
+                {
+                    b.Navigation("Expenses");
                 });
 #pragma warning restore 612, 618
         }
