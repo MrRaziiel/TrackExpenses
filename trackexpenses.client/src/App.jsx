@@ -7,7 +7,6 @@ import { useLanguage } from './Translate/LanguageContext';
 // Pages
 import Welcome from './components/Pages/Welcome';
 import UsersList from './components/Pages/Administrador/ListClients';
-import Auth from './components/Authentication/Auth';
 import Login from './components/Pages/Login';
 import SignIn from './components/Pages/SignIn';
 import Dashboard from './components/Pages/Administrador/Dashboard';
@@ -55,13 +54,6 @@ function App() {
                       className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg py-1"
                       style={{ backgroundColor: theme?.colors?.primary?.main }}
                     >
-                      <Link
-                        to="/auth"
-                        className="block px-4 py-2 hover:bg-blue-600 transition-colors"
-                        onClick={() => setIsAuthMenuOpen(false)}
-                      >
-                        {t('common.login')}
-                      </Link>
                       <Link
                         to="/login"
                         className="block px-4 py-2 hover:bg-blue-600 transition-colors"
@@ -236,10 +228,6 @@ function App() {
         <div className={`flex-1 ${isAuthenticated ? 'p-4 md:p-8' : 'py-8 px-4'} min-h-[calc(100vh-4rem)]`}>
           <Routes>
             <Route path="/" element={<Welcome />} />
-            <Route
-              path="/auth"
-              element={<Auth onLogin={() => setIsAuthenticated(true)} />}
-            />
             <Route path='/login' element={< Login />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/dashboard" element={<Dashboard />} />

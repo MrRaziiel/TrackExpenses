@@ -18,9 +18,11 @@ namespace TRACKEXPENSES.Server.Controllers
         private readonly FinancasDbContext _context = context;
 
 
+
         [HttpPost("signin")]
         public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
             User user = new()
             {
@@ -30,7 +32,11 @@ namespace TRACKEXPENSES.Server.Controllers
                 Email = model.Email,
                 UserName = model.Email,
                 Password = model.Password,
+                PhoneNumber = model.PhoneNumber != null ? model.PhoneNumber : "000000000",
+
             };
+            if (model.Birthday != null) user.Birthday = model.Birthday;
+
 
             string role = "";
 
@@ -69,12 +75,10 @@ namespace TRACKEXPENSES.Server.Controllers
 
             var result = await _userManager.CreateAsync(user, user.Password);
             if (!result.Succeeded) return BadRequest(result.Errors);
-            if (result.Succeeded)
-            {
-                await _context.UsersList.AddAsync(user);
-                await _userManager.AddToRoleAsync(user, role);
-                await _context.SaveChangesAsync();
-            }
+
+            await _context.UsersList.AddAsync(user);
+            await _userManager.AddToRoleAsync(user, role);
+            await _context.SaveChangesAsync();
             return Ok();
         }
 
@@ -85,85 +89,95 @@ namespace TRACKEXPENSES.Server.Controllers
             return new string(Enumerable.Repeat(chars, 32)
                 .Select(s => s[random.Next(s.Length)]).ToArray());
         }
-    }
 
+        [HttpGet("AlreadyInDb")]
+        public async Task<IActionResult> AlreadyInDb([FromQuery] string email)
+        {
+            if (string.IsNullOrEmpty(email)) BadRequest(false);
+            var user = await _userManager.FindByNameAsync(email);
+            var exists = user != null;
+            return Ok(exists);
+
+        }
+
+    }
 
 }
         //public async Task<IActionResult> Register(RegisterViewModel model, string? code)
         //{
 
-        //    if (!ModelState.IsValid) return View(model);
+//    if (!ModelState.IsValid) return View(model);
 
-        //    User user = new()
-        //    {
+//    User user = new()
+//    {
 
-        //        FirstName = model.FirstName,
-        //        FamilyName = model.FamilyName,
-        //        Email = model.Email,
-        //        UserName = model.Email,
-        //        Password = model.Password,
-        //    };
+//        FirstName = model.FirstName,
+//        FamilyName = model.FamilyName,
+//        Email = model.Email,
+//        UserName = model.Email,
+//        Password = model.Password,
+//    };
 
 
-        //    string role = "";
+//    string role = "";
 
-        //    if (code == null)
-        //    {
+//    if (code == null)
+//    {
 
-        //        GroupOfUsers groupOfUsers = new()
-        //        {
-        //            Name = model.FamilyName,
-        //            CodeInvite = GenerateCodeGroup()
+//        GroupOfUsers groupOfUsers = new()
+//        {
+//            Name = model.FamilyName,
+//            CodeInvite = GenerateCodeGroup()
 
-        //        };
-        //        role = "GROUPADMINISTRATOR";
+//        };
+//        role = "GROUPADMINISTRATOR";
 
-        //        await _context.GroupOfUsers.AddAsync(groupOfUsers);
-        //        user.GroupId = groupOfUsers.Id;
-        //    }
-        //    else
-        //    {
-        //        var group = _context.GroupOfUsers.FirstOrDefault(x => x.CodeInvite == code);
+//        await _context.GroupOfUsers.AddAsync(groupOfUsers);
+//        user.GroupId = groupOfUsers.Id;
+//    }
+//    else
+//    {
+//        var group = _context.GroupOfUsers.FirstOrDefault(x => x.CodeInvite == code);
 
-        //        if (group == null)
-        //        {
-        //            ModelState.AddModelError("", "Code Group incorrect");
-        //            return View(model);
-        //        }
-        //        else
-        //        {
-        //            user.GroupId = group.Id;
-        //            role = "USER";
+//        if (group == null)
+//        {
+//            ModelState.AddModelError("", "Code Group incorrect");
+//            return View(model);
+//        }
+//        else
+//        {
+//            user.GroupId = group.Id;
+//            role = "USER";
 
-        //        }
-        //    }
-        //    if (string.IsNullOrEmpty(user.ProfileImageId))
-        //    {
-        //        user.ProfileImageId = "No_image.jpg";
-        //    }
-        //    else
-        //    {
+//        }
+//    }
+//    if (string.IsNullOrEmpty(user.ProfileImageId))
+//    {
+//        user.ProfileImageId = "No_image.jpg";
+//    }
+//    else
+//    {
 
-        //    }
+//    }
 
-        //    var result = await _userManager.CreateAsync(user, model.Password);
-        //    if (result.Succeeded)
-        //    {
-        //        await _context.UsersList.AddAsync(user);
-        //        await _userManager.AddToRoleAsync(user, role);
-        //        await _context.SaveChangesAsync();
-        //        return RedirectToAction("Login", "Account");
-        //    }
-        //    else
-        //    {
-        //        foreach (var error in result.Errors)
-        //        {
-        //            ModelState.AddModelError("", error.Description);
+//    var result = await _userManager.CreateAsync(user, model.Password);
+//    if (result.Succeeded)
+//    {
+//        await _context.UsersList.AddAsync(user);
+//        await _userManager.AddToRoleAsync(user, role);
+//        await _context.SaveChangesAsync();
+//        return RedirectToAction("Login", "Account");
+//    }
+//    else
+//    {
+//        foreach (var error in result.Errors)
+//        {
+//            ModelState.AddModelError("", error.Description);
 
-        //        }
-        //        return View(model);
-        //    }
-        //}
+//        }
+//        return View(model);
+//    }
+//}
 
 
 //        public IActionResult CodeGroupCheck()

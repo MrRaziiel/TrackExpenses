@@ -15,8 +15,7 @@ namespace TRACKEXPENSES.Server.Controllers
         private readonly UserManager<User> _userManager = userManager;
         private readonly FinancasDbContext _context = context;
 
-        [Route("api/User/getAllUsers")]
-        [HttpGet]
+        [HttpGet("api/User/getAllUsers")]
         public IActionResult ListClients()
         {
             var allClients = _context.UsersList.Include(client => client.GroupOfUsers).ToList();
