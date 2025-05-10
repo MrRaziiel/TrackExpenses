@@ -2,7 +2,7 @@ import React from 'react';
 import { Plus, Search, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../Theme/Theme';
-import { useLanguage } from '../../../Translate/LanguageContext';
+import { useLanguage } from '../../../utilis/Translate/LanguageContext';
 
 function Incomes() {
   const theme = useTheme();

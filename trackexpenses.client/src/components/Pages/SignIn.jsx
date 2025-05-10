@@ -3,7 +3,8 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import apiCall from '../../hooks/apiCall';
 import { AuthContext } from '../Authentication/AuthContext';  // correct path to AuthContext
-import { Flashlight } from 'lucide-react';
+import { getPasswordValidation } from '../../utilis/configurations/SigninConfiguration';
+import { Check, X } from "lucide-react";
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -49,62 +50,23 @@ const SignIn = () => {
   };
 
   function validPassword() {
-    //rethinking
-    const minLengthPassword = 16;
-    const errorFigure = " ❌";
-    const writeFigure = " ✅";
-
-    // Mensagens base
-    const lengthProblem = "Password must be at least 16 characters " + errorFigure;
-    const lowerCaseProblem = "Password must have 1 lowercase character " + errorFigure;
-    const upperCaseProblem = "Password must have 1 uppercase character " + errorFigure;
-    const digitProblem = "Password must have 1 digit " + errorFigure;
-    const specialCharProblem = "Password must have at least 1 special character " + errorFigure;
-
-    // Regex checks
-    const hasLowerCase = /[a-z]/;
-    const hasUpperCase = /[A-Z]/;
-    const hasDigit = /\d/;
-    const hasSpecialChar = /[\W_]/;
-
-    // Validação com ternários
-    const password = formData.password || ""; // ou formData.password, dependendo do campo correto
-
-    const lengthMessage =
-      password.length >= minLengthPassword
-        ? lengthProblem.replace(errorFigure, writeFigure) 
-        : lengthProblem;
-
-    const lowerCaseMessage =
-      hasLowerCase.test(password)
-        ? lowerCaseProblem.replace(errorFigure, writeFigure)
-        : lowerCaseProblem;
-
-    const upperCaseMessage =
-      hasUpperCase.test(password)
-        ? upperCaseProblem.replace(errorFigure, writeFigure)
-        : upperCaseProblem;
-
-    const digitMessage =
-      hasDigit.test(password)
-        ? digitProblem.replace(errorFigure, writeFigure)
-        : digitProblem;
-
-    const specialCharMessage =
-      hasSpecialChar.test(password)
-        ? specialCharProblem.replace(errorFigure, writeFigure)
-        : specialCharProblem;
-      const messageSend = [lengthMessage, lowerCaseMessage, upperCaseMessage, digitMessage, specialCharMessage]
-
-
-      if (messageSend.some(str => str.includes("❌")))
-      {
-        setErrorPasswordCheck(messageSend);
-        return false
-      }
-      setErrorPasswordCheck(null);
-      return true
-
+ 
+    const password = formData.password || ""; 
+    const validateList = getPasswordValidation(password);
+    const errors = validateList.some(item => item.rule !=false);
+    if (errors != null)
+    {
+      var messageError = "";
+      var messageErrorArray = [];
+      validateList.forEach(item => {
+        messageError = item.label
+        messageError = (!item.rule) ? messageError += item.error : messageError += item.valid
+        messageErrorArray.push(messageError);
+      });
+      console.log(messageErrorArray);
+      setErrorPasswordCheck(messageErrorArray);
+    }
+ 
     }
 
 const verifyEmailBd = async () => {

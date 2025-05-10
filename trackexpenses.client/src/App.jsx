@@ -3,7 +3,7 @@ import { Routes, Route, Link } from 'react-router-dom';
 import { Wallet, PiggyBank, Users, LogIn, Menu, X, LayoutDashboard, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { useTheme } from './components/Theme/Theme';
-import { useLanguage } from './Translate/LanguageContext';
+import { useLanguage } from './utilis/Translate/LanguageContext';
 // Pages
 import Welcome from './components/Pages/Welcome';
 import UsersList from './components/Pages/Administrador/ListClients';

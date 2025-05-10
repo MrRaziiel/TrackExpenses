@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Pencil, Trash2 } from 'lucide-react';
 import { useTheme } from '../../Theme/Theme';
-import { useLanguage } from '../../../Translate/LanguageContext';
+import { useLanguage } from '../../../utilis/Translate/LanguageContext';
 import { getUsers } from "../../../services/UserService";
 
 const arrayPropertiesToShow = ["name", "email", "birthday"];

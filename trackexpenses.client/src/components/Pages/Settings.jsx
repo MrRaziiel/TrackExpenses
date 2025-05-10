@@ -1,7 +1,7 @@
 import React from 'react';
 import { Moon, Sun, Bell, Globe, Lock, CreditCard, PaintBucket } from 'lucide-react';
 import { useTheme } from '../Theme/Theme';
-import { useLanguage } from '../../Translate/LanguageContext';
+import { useLanguage } from '../../utilis/Translate/LanguageContext';
 
 function Settings() {
   const { theme, isDarkMode, toggleTheme } = useTheme();

@@ -2,7 +2,7 @@ import React from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { useTheme } from '../../Theme/Theme';
-import { useLanguage } from '../../../Translate/LanguageContext';
+import { useLanguage } from '../../../utilis/Translate/LanguageContext';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
