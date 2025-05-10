@@ -1,20 +1,27 @@
+import { useTheme } from "../../components/Theme/Theme";
+import { Lock, Mail, User, Phone, Calendar } from 'lucide-react';
+
 
 export function pageConfigurations(){
-    const firstConfigurationPage =
-    [
-    { label: "Email", lower: "email", placeholder: "me@example.org", Required: true, type: "email" , value: "" },
-    { label: "Password", lower: "password", placeholder: "****************", Required: true, type: "password", pattern: "(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}", value: "" },
-    { label: "ConfirmPassword", lower: "confirmpassword", placeholder: "****************", Required: true, type: "password", pattern:"", value: "" },
-    ]
-    const secondconfigurationPage = 
-    [
-    { label: "FirstName", lower: "firstname", placeholder: "First Name", Required: true, type: "text" , pattern:"", value: "" },
-    { label: "FamilyName", lower: "familyname", placeholder: "Family Name", Required: true, type: "text", pattern:"", value: "" },
-    { label: "Date", lower: "date", placeholder: "Date", Required: false, type: "date" , pattern:"", value: "" },
-    { label: "Phone", lower: "phone", placeholder: "Phone", Required: false, type: "tel", pattern:"[0-9]{3}-[0-9]{2}-[0-9]{3}", value: "" },
-    { label: "Photopath", lower: "Photopath", placeholder: "Photopath", Required: false, pattern:"", value: "" },
-    { label: "GroupCode", lower: "groupcode", placeholder: "Group Code", type: "Text" , Required: false, pattern:"", value: "" },
-  ]
+  const { theme } = useTheme();
+  return(
+      {
+        firstConfigurationPage :
+        [
+        { label: "Email", lower: "email", placeholder: "me@example.org", Required: true, type: "email" , value: "", icon: <Mail className="h-5 w-5" style={{ color: theme?.colors?.text?.secondary }} />},
+        { label: "Password", lower: "password", placeholder: "****************", Required: true, type: "password", pattern: "(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}", value: "", icon: <Lock className="h-5 w-5" style={{ color: theme?.colors?.text?.secondary }} />, },
+        { label: "Confirm Password", lower: "confirmpassword", placeholder: "****************", Required: true, type: "password", pattern:"", value: "", icon: <Lock className="h-5 w-5" style={{ color: theme?.colors?.text?.secondary }} />, },
+        ],
+      secondconfigurationPage : 
+        [
+        { label: "First Name", lower: "firstname", placeholder: "First Name", Required: true, type: "text" , pattern:"", value: "", icon: <User className="h-5 w-5" style={{ color: theme?.colors?.text?.secondary }} />, },
+        { label: "Family Name", lower: "familyname", placeholder: "Family Name", Required: true, type: "text", pattern:"", value: "",icon: <User className="h-5 w-5" style={{ color: theme?.colors?.text?.secondary }} />, },
+        { label: "Date", lower: "date", placeholder: "Date", Required: false, type: "date" , pattern:"", value: "", icon: <Calendar className="h-5 w-5" style={{ color: theme?.colors?.text?.secondary }} />, },
+        { label: "Phone", lower: "phone", placeholder: "Phone", Required: false, type: "tel", pattern:"^\d+$", value: "" },
+        { label: "Code Invite", lower: "code_invite", placeholder: "Group Code", type: "Text" , Required: false, pattern:"", value: "", icon: "" },
+        ]
+      }
+    )
 }
 
 

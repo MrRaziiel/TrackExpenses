@@ -3,32 +3,45 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import apiCall from '../../hooks/apiCall';
 import { AuthContext } from '../Authentication/AuthContext';  // correct path to AuthContext
-import { getPasswordValidation } from '../../utilis/configurations/SigninConfiguration';
-import { Check, X } from "lucide-react";
+import { getPasswordValidation, pageConfigurations } from '../../utilis/configurations/SigninConfiguration';
+import { useTheme } from '../Theme/Theme';
+import { useLanguage } from '../../utilis/Translate/LanguageContext';
+import { HelpCircle } from 'lucide-react';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 
 const SignIn = () => {
   const navigate = useNavigate();
   const { setUser } = useContext(AuthContext);
+  const { theme } = useTheme();
+  const { t } = useLanguage();
+
   const [step, setStep] = useState(1);
   const [errorEmail, setErrorEmail] = useState(null);
+  const [errorCodeGroup, setErrorCodeGroup] = useState(null);
   const [errorPasswordCheck, setErrorPasswordCheck] = useState(null);
   const [errorPasswordMatch, setErrorPasswordMatch] = useState(null);
   const [errorSubmit, setErrorSubmit] = useState(null);
   const [formData, setFormData] = useState({});
-  const [firstConfigurationPage] = useState([
-    { label: "Email", lower: "email", placeholder: "me@example.org", Required: true, type: "email" , value: "" },
-    { label: "Password", lower: "password", placeholder: "****************", Required: true, type: "password", pattern: "(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}", value: "" },
-    { label: "ConfirmPassword", lower: "confirmpassword", placeholder: "****************", Required: true, type: "password", pattern:"", value: "" },
-  ]);
-  const [secondconfigurationPage] = useState([
-    { label: "FirstName", lower: "firstname", placeholder: "First Name", Required: true, type: "text" , pattern:"", value: "" },
-    { label: "FamilyName", lower: "familyname", placeholder: "Family Name", Required: true, type: "text", pattern:"", value: "" },
-    { label: "Date", lower: "date", placeholder: "Date", Required: false, type: "date" , pattern:"", value: "" },
-    { label: "Phone", lower: "phone", placeholder: "Phone", Required: false, type: "tel", pattern:"[0-9]{3}-[0-9]{2}-[0-9]{3}", value: "" },
-    { label: "Photopath", lower: "Photopath", placeholder: "Photopath", Required: false, pattern:"", value: "" },
-    { label: "GroupCode", lower: "groupcode", placeholder: "Group Code", type: "Text" , Required: false, pattern:"", value: "" },
-  ]);
 
+  const pagesConfigurations = pageConfigurations();
+  const [firstConfigurationPage] = useState(pagesConfigurations.firstConfigurationPage);
+  const [secondconfigurationPage] = useState(pagesConfigurations.secondconfigurationPage);
+
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+
+  const handleTooltipEnter = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+    setTooltipPosition({
+      top: rect.top + scrollTop,
+      left: rect.left + scrollLeft
+    });
+    setShowTooltip(true);
+  };
   function verifyEmail(){
   if (formData.email == null || !String(formData.email)
       .toLowerCase()
@@ -53,8 +66,8 @@ const SignIn = () => {
  
     const password = formData.password || ""; 
     const validateList = getPasswordValidation(password);
-    const errors = validateList.some(item => item.rule !=false);
-    if (errors != null)
+    const errors = validateList.some(item => item.rule == false);
+    if (errors)
     {
       var messageError = "";
       var messageErrorArray = [];
@@ -63,17 +76,20 @@ const SignIn = () => {
         messageError = (!item.rule) ? messageError += item.error : messageError += item.valid
         messageErrorArray.push(messageError);
       });
-      console.log(messageErrorArray);
+
       setErrorPasswordCheck(messageErrorArray);
+      return false
     }
+    setErrorPasswordCheck(null);
+    return true
  
     }
 
 const verifyEmailBd = async () => {
   try {
     setErrorEmail(null);
-    console.log("aqui");
-    const res = await apiCall.get("/auth/AlreadyInDb", {params: { email: formData.email }
+    const res = await apiCall.get("/auth/EmailCheckInDb", {params: { email: formData.email }
+
 });
     // Exemplo: lidar com o resultado
     if (res.data) {
@@ -89,6 +105,27 @@ const verifyEmailBd = async () => {
   }
 };
 
+const verifyGroupCodeBd = async () => {
+  try {
+
+    console.log("flkdshofisdehsfd");
+    setErrorCodeGroup(null);
+    const res = await apiCall.get("/auth/CodeGroupCheckBd", {params: { code: formData.code_invite }
+});
+    // Exemplo: lidar com o resultado
+    
+    if (!res.data) {
+      setErrorCodeGroup("Group Code já existe na base de dados.");
+    } else {
+      setErrorCodeGroup(null);
+    }
+    return (res.data);
+  } catch (err) {
+    console.error("Erro ao verificar Group Code:", err);
+    setErrorCodeGroup(err.message || "Erro ao verificar o GroupCode.");
+    return false;
+  }
+};
 
 const handleChange = (e) => {
   const { name, value } = e.target;
@@ -115,6 +152,9 @@ const handleChange = (e) => {
     setErrorEmail(null);
     setErrorPasswordCheck(null);
     setErrorPasswordMatch(null);
+    const isValidCode = await verifyGroupCodeBd();
+    console.log("valid code" ,isValidCode);
+    if (!isValidCode) return
     const allFields = [...firstConfigurationPage, ...secondconfigurationPage];
     const payload = allFields.reduce((acc, field) => {
       acc[field.lower] = formData[field.lower] ?? ""; // pega os dados reais do formulário
@@ -132,37 +172,146 @@ const handleChange = (e) => {
   };
   
 
-  const renderFields = (fields) =>
-    fields.map((field) => (
-      <div key={field.lower} className="mb-4">
-        <label className="block text-sm font-medium text-gray-700">
-          {field.label}
+const renderFields = (fields) => (
+  <div className="space-y-6">
+    {fields.map((field) => (
+      <div key={field.lower} className="space-y-2">
+        <label
+          className="block text-sm font-medium"
+          style={{ color: theme?.colors?.text?.secondary }}
+        >
+          {field.label !== "Code_Invite" ? (
+            field.label
+          ) : (
+            <div className="flex items-center space-x-2">
+              <span>{field.label.replace("_", " ")}</span>
+              <div className="relative inline-block">
+                <button
+                  type="button"
+                  className="focus:outline-none focus:ring-2 focus:ring-offset-2 rounded-full"
+                  style={{ color: theme?.colors?.primary?.main }}
+                  onMouseEnter={handleTooltipEnter}
+                  onMouseLeave={() => setShowTooltip(false)}
+                  onFocus={handleTooltipEnter}
+                  onBlur={() => setShowTooltip(false)}
+                  aria-label="Group code information"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                </button>
+                {showTooltip && (
+                  <div
+                    role="tooltip"
+                    className="absolute z-50 w-64 p-3 text-sm rounded-lg shadow-lg"
+                    style={{
+                      backgroundColor: theme?.colors?.background?.paper,
+                      color: theme?.colors?.text?.primary,
+                      border: `1px solid ${theme?.colors?.secondary?.light}`,
+                      top: '100%',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      marginTop: '0.5rem',
+                    }}
+                  >
+                    <div className="relative">
+                      <div
+                        className="absolute -top-2 left-1/2 transform -translate-x-1/2"
+                        style={{
+                          borderLeft: '8px solid transparent',
+                          borderRight: '8px solid transparent',
+                          borderBottom: `8px solid ${theme?.colors?.secondary?.light}`,
+                        }}
+                      />
+                      <div
+                        className="absolute -top-1.5 left-1/2 transform -translate-x-1/2"
+                        style={{
+                          borderLeft: '7px solid transparent',
+                          borderRight: '7px solid transparent',
+                          borderBottom: `7px solid ${theme?.colors?.background?.paper}`,
+                        }}
+                      />
+                      You can ask your financial administrator that is already registered to give you. <br />
+                      <b>Leave blank if you don't have a group code (you can add or change anytime)</b>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </label>
-        <input
-          type={field.type || "email"}
-          name={field.lower}
-          placeholder={`${field.placeholder}`}
-          value={formData[field.lower] ?? ""}
-          onChange={handleChange}
-          className="w-full p-3 border border-inputBorder rounded-lg focus:outline-none focus:ring-2 focus:ring-inputFocus text-text"
-          required={field.Required}
-          pattern={field.pattern || undefined}
-        />
-        {field.label == "Email" && errorEmail &&  <p className="text-red-500 mt-2">{errorEmail}</p>   }
-        {field.label == "Password" && errorPasswordCheck  && !errorPasswordMatch && errorPasswordCheck.map((error) =>(
-          <p className="text-red-500 mt-2">{error}</p>
-        ))
-        }
-        {field.label == "ConfirmPassword" && errorPasswordMatch && <p className="text-red-500 mt-2">Erro: {errorPasswordMatch}</p>}
-
+        
+        <div className="relative">
+        {field.label !== "Phone" && (
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            {field.icon}
+          </div>
+        )}
+        {field.label === "Phone" ? (
+            <PhoneInput
+              defaultCountry="US"
+              value={formData[field.lower] ?? ""}
+              onChange={(value) =>
+                handleChange({ target: { name: field.lower, value } })
+              }
+              className="w-full pl-3 pr-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              required={field.Required}
+            />
+          ) : (
+            <input
+              type={field.type || "text"}
+              name={field.lower}
+              placeholder={field.placeholder}
+              value={formData[field.lower] ?? ""}
+              onChange={handleChange}
+              className="w-full pl-12 pr-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              required={field.Required}
+              pattern={field.pattern || undefined}
+              label={field.label}
+            />
+          )}
+        </div>
+        {field.label === "Email" && errorEmail && (
+          <p
+            className="text-sm"
+            style={{ color: theme?.colors?.error?.main }}
+          >
+            {errorEmail}
+          </p>
+        )}
+        {field.lower === "password" &&
+          errorPasswordCheck &&
+          !errorPasswordMatch &&
+          errorPasswordCheck.map((error, index) => (
+            <p
+              key={index}
+              className="text-sm"
+              style={{ color: theme?.colors?.error?.main }}
+            >
+              {error}
+            </p>
+          ))}
+        {field.lower === "confirmpassword" && errorPasswordMatch && (
+          <p
+            className="text-sm"
+            style={{ color: theme?.colors?.error?.main }}
+          >
+            Erro: {errorPasswordMatch}
+          </p>
+        )}
+        {field.lower === "code_invite" && errorCodeGroup &&  <p className="text-red-500 mt-2">{errorCodeGroup}</p>   }
       </div>
-    ));
+    ))}
+  </div>
+);
+    
 
 
   return (
-    <div className="max-w mx-auto bg-white rounded-xl shadow-md overflow-hidden">
-      <div className="p-8">
-        <h2 className="text-2xl font-bold text-center mb-8">Sign In</h2>
+    <div className="flex items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden" style={{ backgroundColor: theme?.colors?.background?.paper }}>
+        <div className="p-8">
+          <h2 className="text-3xl font-bold text-center mb-8" style={{ color: theme?.colors?.text?.primary }}>
+            SIGN IN
+          </h2>
         <form className="space-y-6" onSubmit={handleSubmit}>
           {step ===1 && (
             <>
@@ -170,7 +319,12 @@ const handleChange = (e) => {
           <button
             type="button"
             onClick={handleNext}
-            className="bg-blue-500 text-white px-4 py-2 rounded"
+            className="w-full sm:w-1/2 py-3 px-4 rounded-xl font-medium border transition-all duration-200 hover:bg-gray-50"
+                    style={{
+                      backgroundColor: theme?.colors?.background?.paper,
+                      color: theme?.colors?.text?.primary,
+                      borderColor: theme?.colors?.secondary?.light
+                    }}
           >
             Próximo
           </button>
@@ -179,46 +333,50 @@ const handleChange = (e) => {
           )}
            {step ===2 && (
             <>
-        <h2>Está quase feito! Só falta mais um step</h2>
-
-        <div className="grid grid-cols-3 gap-4 auto-cols-[5]">
+        <p className="text-center text-lg mb-6" style={{ color: theme?.colors?.text?.secondary }}>
+                  Just one more step to complete your registration
+                </p>
         {renderFields(secondconfigurationPage)}
-          <div className="flex justify-between">
-            <button
-              type="button"
-              onClick={() => setStep(1)}
-              className="bg-gray-300 px-4 py-2 rounded"
-            >
-              Voltar
-            </button>
-            <button
-              type="submit"
-              className="bg-green-500 text-white px-4 py-2 rounded"
-            >
-              Finalizar
-            </button>
-          </div>
-          </div>
-
+          
+          <div className="flex flex-col sm:flex-row gap-4 mt-6">
 
           <button
-            type="submit"
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            Sign In
-          </button>
+              type="button"
+              onClick={() => setStep(1)}
+              className="w-full sm:w-1/2 py-3 px-4 rounded-xl font-medium border transition-all duration-200 hover:bg-gray-50"
+              style={{
+                backgroundColor: theme?.colors?.background?.paper,
+                color: theme?.colors?.text?.primary,
+                borderColor: theme?.colors?.secondary?.light
+              }}
+            >
+              Back
+            </button>
+          <button
+                    type="submit"
+                    className="w-full sm:w-1/2 py-3 px-4 rounded-xl text-white font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+                    style={{ backgroundColor: theme?.colors?.primary?.main }}
+                  >
+                    Complete Sign In
+                  </button>
+          </div>
+          
           {errorSubmit &&  <p className="text-red-500 mt-2">{errorSubmit}</p>   }
           </>
           
         )}
         </form>
 
-        <div className="mt-6 text-center">
-          <Link className="text-blue-500 hover:text-blue-600" to="/login">
+        <div className="mt-8 text-center">
+          <Link 
+            to="/login"
+            className="text-sm font-medium hover:underline transition-colors duration-200"
+            style={{ color: theme?.colors?.primary?.main }}>
             Don’t have an account? Sign Up
           </Link>
         </div>
       </div>
+    </div>
     </div>
   );
 };

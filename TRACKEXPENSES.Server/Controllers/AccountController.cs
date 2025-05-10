@@ -22,6 +22,7 @@ namespace TRACKEXPENSES.Server.Controllers
         [HttpPost("signin")]
         public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
         {
+            return Ok();
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             User user = new()
@@ -90,8 +91,8 @@ namespace TRACKEXPENSES.Server.Controllers
                 .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
-        [HttpGet("AlreadyInDb")]
-        public async Task<IActionResult> AlreadyInDb([FromQuery] string email)
+        [HttpGet("EmailCheckInDb")]
+        public async Task<IActionResult> EmailCheckInDb([FromQuery] string email)
         {
             if (string.IsNullOrEmpty(email)) BadRequest(false);
             var user = await _userManager.FindByNameAsync(email);
@@ -99,97 +100,21 @@ namespace TRACKEXPENSES.Server.Controllers
             return Ok(exists);
 
         }
+        [HttpGet("CodeGroupCheckBd")]
+        public IActionResult CodeGroupCheckBd([FromQuery] string code)
+        {
+            if (string.IsNullOrEmpty(code)) BadRequest(false);
+            var user = _context?.GroupOfUsers.FirstOrDefault(userToFind => userToFind.CodeInvite == code);
+            var exists = user != null;
+            return Ok(exists);
+        }
+
+    }
+        
 
     }
 
-}
-        //public async Task<IActionResult> Register(RegisterViewModel model, string? code)
-        //{
 
-//    if (!ModelState.IsValid) return View(model);
-
-//    User user = new()
-//    {
-
-//        FirstName = model.FirstName,
-//        FamilyName = model.FamilyName,
-//        Email = model.Email,
-//        UserName = model.Email,
-//        Password = model.Password,
-//    };
-
-
-//    string role = "";
-
-//    if (code == null)
-//    {
-
-//        GroupOfUsers groupOfUsers = new()
-//        {
-//            Name = model.FamilyName,
-//            CodeInvite = GenerateCodeGroup()
-
-//        };
-//        role = "GROUPADMINISTRATOR";
-
-//        await _context.GroupOfUsers.AddAsync(groupOfUsers);
-//        user.GroupId = groupOfUsers.Id;
-//    }
-//    else
-//    {
-//        var group = _context.GroupOfUsers.FirstOrDefault(x => x.CodeInvite == code);
-
-//        if (group == null)
-//        {
-//            ModelState.AddModelError("", "Code Group incorrect");
-//            return View(model);
-//        }
-//        else
-//        {
-//            user.GroupId = group.Id;
-//            role = "USER";
-
-//        }
-//    }
-//    if (string.IsNullOrEmpty(user.ProfileImageId))
-//    {
-//        user.ProfileImageId = "No_image.jpg";
-//    }
-//    else
-//    {
-
-//    }
-
-//    var result = await _userManager.CreateAsync(user, model.Password);
-//    if (result.Succeeded)
-//    {
-//        await _context.UsersList.AddAsync(user);
-//        await _userManager.AddToRoleAsync(user, role);
-//        await _context.SaveChangesAsync();
-//        return RedirectToAction("Login", "Account");
-//    }
-//    else
-//    {
-//        foreach (var error in result.Errors)
-//        {
-//            ModelState.AddModelError("", error.Description);
-
-//        }
-//        return View(model);
-//    }
-//}
-
-
-//        public IActionResult CodeGroupCheck()
-//        {
-//            return View();
-//        }
-
-//        [HttpPost]
-//        public IActionResult CodeGroupCheck(string code)
-//        {
-//            return RedirectToAction("Register", "Account", new { code = code });
-//        }
 
 
 //        public IActionResult VerifyEmail()
