@@ -55,7 +55,7 @@ function App() {
                       style={{ backgroundColor: theme?.colors?.primary?.main }}
                     >
                       <Link
-                        to="/login"
+                        to="/Login"
                         className="block px-4 py-2 hover:bg-blue-600 transition-colors"
                         onClick={() => setIsAuthMenuOpen(false)}
                       >
@@ -80,7 +80,7 @@ function App() {
               {/* Desktop Navigation */}
               <div className="hidden md:flex items-center space-x-4">
                 {!isAuthenticated ? (
-                  <Link to="/login" className="flex items-center space-x-1 hover:text-blue-100">
+                  <Link to="/Login" className="flex items-center space-x-1 hover:text-blue-100">
                     <LogIn className="h-5 w-5" />
                     <span>{t('common.login')}</span>
                   </Link>
@@ -228,9 +228,9 @@ function App() {
         <div className={`flex-1 ${isAuthenticated ? 'p-4 md:p-8' : 'py-8 px-4'} min-h-[calc(100vh-4rem)]`}>
           <Routes>
             <Route path="/" element={<Welcome />} />
-            <Route path='/login' element={< Login />} />
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path='/Login' element={< Login />} />
+            <Route path="/Register" element={<SignIn />} />
+            <Route path="/Dashboard" element={<Dashboard />} />
             <Route path="/expenses" element={<Expenses />} />
             <Route path="/expenses/add" element={<AddExpense />} />
             <Route path="/incomes" element={<Incomes />} />

@@ -1,6 +1,12 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using TRACKEXPENSES.Server.Data;
 using TRACKEXPENSES.Server.Extensions;
+using TRACKEXPENSES.Server.Models;
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,7 +20,30 @@ builder.Services.AddDbContext<FinancasDbContext>(options =>
 });
 
 
+
+
 builder.Services.AddIdentityServices();
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+    .AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(secretKey)
+    };
+});
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -38,8 +67,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+//app.MapIdentityApi<IdentityUser>();
+
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

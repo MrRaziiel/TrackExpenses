@@ -2,7 +2,6 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import apiCall from '../../hooks/apiCall';
-import { AuthContext } from '../Authentication/AuthContext';  // correct path to AuthContext
 import { getPasswordValidation, pageConfigurations } from '../../utilis/configurations/SigninConfiguration';
 import { useTheme } from '../Theme/Theme';
 import { useLanguage } from '../../utilis/Translate/LanguageContext';
@@ -12,9 +11,7 @@ import 'react-phone-number-input/style.css';
 
 const SignIn = () => {
   const navigate = useNavigate();
-  const { setUser } = useContext(AuthContext);
   const { theme } = useTheme();
-  const { t } = useLanguage();
 
   const [step, setStep] = useState(1);
   const [errorEmail, setErrorEmail] = useState(null);
@@ -108,7 +105,7 @@ const verifyEmailBd = async () => {
 const verifyGroupCodeBd = async () => {
   try {
 
-    console.log("flkdshofisdehsfd");
+    if (!formData.code_invite) return true;
     setErrorCodeGroup(null);
     const res = await apiCall.get("/auth/CodeGroupCheckBd", {params: { code: formData.code_invite }
 });
@@ -160,7 +157,7 @@ const handleChange = (e) => {
       acc[field.lower] = formData[field.lower] ?? ""; // pega os dados reais do formulário
       return acc;
     }, {});
-    const path = '/auth/signin';
+    const path = '/auth/register';
     try {
       const res = await apiCall.post(path, payload);
 
@@ -254,6 +251,7 @@ const renderFields = (fields) => (
               }
               className="w-full pl-3 pr-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 transition-all duration-200"
               required={field.Required}
+              placeholder={field.placeholder}
             />
           ) : (
             <input
@@ -310,7 +308,7 @@ const renderFields = (fields) => (
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden" style={{ backgroundColor: theme?.colors?.background?.paper }}>
         <div className="p-8">
           <h2 className="text-3xl font-bold text-center mb-8" style={{ color: theme?.colors?.text?.primary }}>
-            SIGN IN
+             Create your account
           </h2>
         <form className="space-y-6" onSubmit={handleSubmit}>
           {step ===1 && (

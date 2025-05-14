@@ -1,28 +1,33 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using TRACKEXPENSES.Server.Models;
 using TRACKEXPENSES.Server.ViewModels;
-using System;
 using TRACKEXPENSES.Server.Data;
 using System.Data;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
 
 namespace TRACKEXPENSES.Server.Controllers
 {
     //[ApiController]
     [Route("api/auth")]
-    public class AccountController(SignInManager<User> signInManager, UserManager<User> userManager, FinancasDbContext context) : Controller
+    public class AccountController(SignInManager<User> signInManager, UserManager<User> userManager, FinancasDbContext context, IConfiguration configuration) : Controller
     {
         private readonly SignInManager<User> _signInManager = signInManager;
         private readonly UserManager<User> _userManager = userManager;
         private readonly FinancasDbContext _context = context;
+        private readonly IConfiguration _configuration = configuration;
 
 
 
-        [HttpPost("signin")]
+        [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
         {
-            return Ok();
+            return null;
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             User user = new()
@@ -34,6 +39,7 @@ namespace TRACKEXPENSES.Server.Controllers
                 UserName = model.Email,
                 Password = model.Password,
                 PhoneNumber = model.PhoneNumber != null ? model.PhoneNumber : "000000000",
+                ProfileImageId = "No_image.jpg",
 
             };
             if (model.Birthday != null) user.Birthday = model.Birthday;
@@ -65,15 +71,6 @@ namespace TRACKEXPENSES.Server.Controllers
                 role = "USER";
 
             }
-            if (string.IsNullOrEmpty(user.ProfileImageId))
-            {
-                user.ProfileImageId = "No_image.jpg";
-            }
-            else
-            {
-
-            }
-
             var result = await _userManager.CreateAsync(user, user.Password);
             if (!result.Succeeded) return BadRequest(result.Errors);
 
@@ -81,7 +78,7 @@ namespace TRACKEXPENSES.Server.Controllers
             await _userManager.AddToRoleAsync(user, role);
             await _context.SaveChangesAsync();
             return Ok();
-        }
+        user.ProfileImageId = "No_image.jpg";}
 
         private static readonly Random random = new();
         private string GenerateCodeGroup()
@@ -94,7 +91,7 @@ namespace TRACKEXPENSES.Server.Controllers
         [HttpGet("EmailCheckInDb")]
         public async Task<IActionResult> EmailCheckInDb([FromQuery] string email)
         {
-            if (string.IsNullOrEmpty(email)) BadRequest(false);
+            if (string.IsNullOrEmpty(email)) return BadRequest(false);
             var user = await _userManager.FindByNameAsync(email);
             var exists = user != null;
             return Ok(exists);
@@ -103,16 +100,62 @@ namespace TRACKEXPENSES.Server.Controllers
         [HttpGet("CodeGroupCheckBd")]
         public IActionResult CodeGroupCheckBd([FromQuery] string code)
         {
-            if (string.IsNullOrEmpty(code)) BadRequest(false);
+            if (string.IsNullOrEmpty(code)) return Ok();
             var user = _context?.GroupOfUsers.FirstOrDefault(userToFind => userToFind.CodeInvite == code);
             var exists = user != null;
             return Ok(exists);
         }
 
-    }
-        
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginViewModel model)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var user = await userManager.FindByEmailAsync(model.Email);
+            if (user is null)
+            {
+                return NoContent();
+            }
 
+            var result = await signInManager.CheckPasswordSignInAsync(user, model.Password, false);
+            if (!result.Succeeded)
+            {
+                return NoContent();
+            }
+
+            var authClaims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            };
+
+            var jwtSettings = configuration.GetSection("JwtSettings");
+            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]));
+            var expirationTimeInMinutes = 0.0;
+            double.TryParse(jwtSettings["ExpirationTimeInMinutes"], out expirationTimeInMinutes);
+
+            var token = new JwtSecurityToken(
+            issuer: jwtSettings["Issuer"],
+            audience: jwtSettings["Audience"],
+            expires: DateTime.Now.AddMinutes(expirationTimeInMinutes),
+            claims: authClaims,
+            signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+            );
+            return Ok(new
+            {
+                token = new JwtSecurityTokenHandler().WriteToken(token),
+                expiration = token.ValidTo,
+                user = new
+                {
+                    id = user.Id,
+                    email = user.Email
+                    // Adicione outras propriedades conforme necessário
+                }
+            });
+
+        }
     }
+}
+   
 
 
 

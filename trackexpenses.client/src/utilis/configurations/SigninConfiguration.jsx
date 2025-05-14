@@ -17,7 +17,7 @@ export function pageConfigurations(){
         { label: "First Name", lower: "firstname", placeholder: "First Name", Required: true, type: "text" , pattern:"", value: "", icon: <User className="h-5 w-5" style={{ color: theme?.colors?.text?.secondary }} />, },
         { label: "Family Name", lower: "familyname", placeholder: "Family Name", Required: true, type: "text", pattern:"", value: "",icon: <User className="h-5 w-5" style={{ color: theme?.colors?.text?.secondary }} />, },
         { label: "Date", lower: "date", placeholder: "Date", Required: false, type: "date" , pattern:"", value: "", icon: <Calendar className="h-5 w-5" style={{ color: theme?.colors?.text?.secondary }} />, },
-        { label: "Phone", lower: "phone", placeholder: "Phone", Required: false, type: "tel", pattern:"^\d+$", value: "" },
+        { label: "Phone", lower: "phone", placeholder: "00000000000", Required: false, type: "tel", pattern:"^\d+$", value: "" },
         { label: "Code Invite", lower: "code_invite", placeholder: "Group Code", type: "Text" , Required: false, pattern:"", value: "", icon: "" },
         ]
       }

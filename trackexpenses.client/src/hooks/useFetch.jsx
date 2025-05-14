@@ -18,7 +18,6 @@ export function useFetch(url, options = {}) {
 
     let cancelled = false;
     setLoading(true);
-
     const fetchData = async () => {
       try {
         let res;
