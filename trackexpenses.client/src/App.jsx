@@ -1,9 +1,11 @@
 import React from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import { Wallet, PiggyBank, Users, LogIn, Menu, X, LayoutDashboard, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useContext } from "react";
 import { useTheme } from './components/Theme/Theme';
 import { useLanguage } from './utilis/Translate/LanguageContext';
+import AuthContext  from './components/Authentication/AuthContext';
+
 // Pages
 import Welcome from './components/Pages/Welcome';
 import UsersList from './components/Pages/Administrador/ListClients';
@@ -16,16 +18,21 @@ import AddExpense from './components/Pages/Expenses/AddExpenses';
 import AddIncome from './components/Pages/Incomes/AddIncomes';
 import EditUser from './components/Pages/Administrador/EditUser';
 import SettingsPage from './components/Pages/Settings';
-
+import RequireAuth from './components/Authentication/Require';
+import useLogout from './components/Authentication/Logout';
 
 function App() {
   const { theme } = useTheme();
   const { t } = useLanguage();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthMenuOpen, setIsAuthMenuOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { isAuthenticated, setIsAuthenticated } = useContext(AuthContext);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const logout = useLogout();
+  const { loading } = useContext(AuthContext);
 
+  console.log(isAuthenticated);
+  if (loading) return <div>Loading...</div>;
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: theme?.colors?.background?.default || '#F9FAFB' }}>
       {/* Top Navigation */}
@@ -82,11 +89,13 @@ function App() {
                 {!isAuthenticated ? (
                   <Link to="/Login" className="flex items-center space-x-1 hover:text-blue-100">
                     <LogIn className="h-5 w-5" />
-                    <span>{t('common.login')}</span>
+                    <span>Login</span>
                   </Link>
                 ) : (
                   <button
-                    onClick={() => setIsAuthenticated(false)}
+                    onClick={() => 
+                      logout()  
+                    }
                     className="flex items-center space-x-1 hover:text-blue-100"
                   >
                     <LogIn className="h-5 w-5" />
@@ -149,6 +158,7 @@ function App() {
                 onClick={() => {
                   setIsAuthenticated(false);
                   setIsMenuOpen(false);
+                  navigate('/login');
                 }}
                 className="flex items-center space-x-2 py-2 px-4 w-full text-left rounded-lg hover:bg-blue-600 transition-colors"
                 style={{ backgroundColor: theme?.colors?.primary?.dark }}
@@ -230,14 +240,16 @@ function App() {
             <Route path="/" element={<Welcome />} />
             <Route path='/Login' element={< Login />} />
             <Route path="/Register" element={<SignIn />} />
-            <Route path="/Dashboard" element={<Dashboard />} />
-            <Route path="/expenses" element={<Expenses />} />
-            <Route path="/expenses/add" element={<AddExpense />} />
-            <Route path="/incomes" element={<Incomes />} />
-            <Route path="/incomes/add" element={<AddIncome />} />
-            <Route path="/users" element={<UsersList />} />
-            <Route path="/users/edit/:id" element={<EditUser />} />
-            <Route path="/settings" element={<SettingsPage />} />
+            <Route element={<RequireAuth />}>
+              <Route path="/Dashboard" element={<Dashboard />} />
+              <Route path="/expenses" element={<Expenses />} />
+              <Route path="/expenses/add" element={<AddExpense />} />
+              <Route path="/incomes" element={<Incomes />} />
+              <Route path="/incomes/add" element={<AddIncome />} />
+              <Route path="/users" element={<UsersList />} />
+              <Route path="/users/edit/:id" element={<EditUser />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Route>
           </Routes>
         </div>
       </div>

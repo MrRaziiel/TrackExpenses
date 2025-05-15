@@ -8,6 +8,8 @@ function Incomes() {
   const theme = useTheme();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const textColor = theme?.colors?.text?.primary || '#1a1a1a';
+  const primaryColor = theme?.colors?.primary?.main || '#3b82f6';
 
   return (
     <div className="space-y-6">
@@ -18,7 +20,7 @@ function Incomes() {
         <button 
           onClick={() => navigate('/incomes/add')}
           className="flex items-center px-4 py-2 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          style={{ backgroundColor: theme?.colors?.primary?.main }}
+          style={{ backgroundColor: primaryColor }}
         >
           <Plus className="h-5 w-5 mr-2" />
           {t('common.add')} {t('common.income')}

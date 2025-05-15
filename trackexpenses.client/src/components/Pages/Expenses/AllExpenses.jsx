@@ -16,7 +16,7 @@ function Expenses() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold" style={{ color: textColor }}>
+        <h1 className="text-2xl font-bold" style={{ color: theme?.colors?.text?.primary }}>
           {t('common.expenses')}
         </h1>
         <button 

@@ -177,7 +177,7 @@ const renderFields = (fields) => (
           className="block text-sm font-medium"
           style={{ color: theme?.colors?.text?.secondary }}
         >
-          {field.label !== "Code_Invite" ? (
+          {field.lower !== "Code_Invite" ? (
             field.label
           ) : (
             <div className="flex items-center space-x-2">
@@ -324,7 +324,7 @@ const renderFields = (fields) => (
                       borderColor: theme?.colors?.secondary?.light
                     }}
           >
-            Próximo
+            Next
           </button>
 
             </>

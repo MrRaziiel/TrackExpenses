@@ -35,7 +35,7 @@ function Dashboard() {
     ],
     datasets: [
       {
-        data: [300, 150, 200, 400, 100],
+        data: [300, 2000, 200, 400, 100],
         backgroundColor: [
           colors.error,
           colors.primary,
@@ -94,7 +94,7 @@ function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold" style={{ color: colors.text.primary }}>
+      <h1 className="text-2xl font-bold" style={{ color: theme?.colors?.text?.primary }}>
         {t('common.dashboard')}
       </h1>
       

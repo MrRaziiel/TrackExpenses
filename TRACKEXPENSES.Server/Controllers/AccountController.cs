@@ -27,7 +27,7 @@ namespace TRACKEXPENSES.Server.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
         {
-            return null;
+            
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             User user = new()

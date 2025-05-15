@@ -7,13 +7,12 @@ import apiCall from "../../hooks/apiCall";
 import AuthContext from "../Authentication/AuthContext";
 
 const Login = () => {
-  const { setAuth } = useContext(AuthContext);
+  const { auth, setAuth, isAuthenticated, setIsAuthenticated } = useContext(AuthContext);
   const { theme } = useTheme();
   const { t } = useLanguage();
   const [formData, setFormData] = useState({});
   const [errorSubmit, setErrorSubmit] = useState(null);
   const navigate = useNavigate();
-  const [user, setUser] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,13 +27,12 @@ const Login = () => {
         setErrorSubmit('Email or Password incorrect');
         return;
       }
-      const pwd = response.password;
-      const accessToken = response?.data?.accessToken;
-      const roles = response?.data?.roles;
-      setAuth({ user, pwd, accessToken });
-
+      const accessToken = response?.data?.token;
+      const email = formData?.email
+      setAuth({ email, accessToken });
+      setIsAuthenticated(true);
+      localStorage.setItem('auth', JSON.stringify({ email, accessToken }));
       navigate('/dashboard');
-
 
     } catch (err) {
       setErrorSubmit(err.message || 'Login failed');
