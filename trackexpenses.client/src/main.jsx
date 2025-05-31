@@ -8,7 +8,6 @@ import { AuthProvider } from './components/Authentication/AuthContext.jsx';
 import GlobalStyles from './components/Theme/GlobalStyle.jsx';
 import App from './App.jsx';
 import './index.css';
-
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ThemeProvider>

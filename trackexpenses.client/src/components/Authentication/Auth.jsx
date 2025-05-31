@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 
 function Auth({ onLogin }) {
+  console.log("Auth", onLogin);
   const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
 

@@ -7,7 +7,8 @@ import apiCall from "../../hooks/apiCall";
 import AuthContext from "../Authentication/AuthContext";
 
 const Login = () => {
-  const { auth, setAuth, isAuthenticated, setIsAuthenticated } = useContext(AuthContext);
+  console.log("login");
+  const { auth, setAuth, isAuthenticated, setIsAuthenticated, role, setRole } = useContext(AuthContext);
   const { theme } = useTheme();
   const { t } = useLanguage();
   const [formData, setFormData] = useState({});
@@ -27,14 +28,19 @@ const Login = () => {
         setErrorSubmit('Email or Password incorrect');
         return;
       }
-      const accessToken = response?.data?.token;
-      const email = formData?.email
+      const accessToken = response.data.token;
+      const email = formData.email
+      var role = response.data.user.role;
+      const user = {email,accessToken, role}
+
+      setRole(role);
       setAuth({ email, accessToken });
       setIsAuthenticated(true);
-      localStorage.setItem('auth', JSON.stringify({ email, accessToken }));
+      localStorage.setItem('auth', JSON.stringify({user}));
       navigate('/dashboard');
 
     } catch (err) {
+      console.log("err login", err)
       setErrorSubmit(err.message || 'Login failed');
     }
   };

@@ -1,12 +1,7 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using TRACKEXPENSES.Server.Data;
 using TRACKEXPENSES.Server.Extensions;
-using TRACKEXPENSES.Server.Models;
-
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,29 +15,10 @@ builder.Services.AddDbContext<FinancasDbContext>(options =>
 });
 
 
-
-
 builder.Services.AddIdentityServices();
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-    .AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(secretKey)
-    };
-});
+builder.Services.AddAuthentications(builder);
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -55,19 +31,24 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+
 var app = builder.Build();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    await using(var serviceScope = app.Services.CreateAsyncScope())
+    await using(var dbContext = serviceScope.ServiceProvider.GetRequiredService<FinancasDbContext>())
+    {
+       await dbContext.Database.EnsureCreatedAsync();
+
+    }
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-//app.MapIdentityApi<IdentityUser>();
 
 app.UseHttpsRedirection();
 
@@ -78,6 +59,6 @@ app.MapControllers();
 
 app.MapFallbackToFile("/index.html");
 
-app.SetRoles();
-app.SetAdmin();
+await app.SetRoles();
+await app.SetAdmin();
 app.Run();

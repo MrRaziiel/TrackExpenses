@@ -4,6 +4,7 @@ import { ArrowRight, PieChart, Shield, TrendingUp } from 'lucide-react';
 import { useTheme } from '../Theme/Theme';
 
 function Welcome() {
+  console.log("Welcome");
   const { theme } = useTheme();
 
   return (

@@ -3,6 +3,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 import AuthContext from './AuthContext';
 
 const RequireAuth = () => {
+  console.log("RequireAuth");
   const { auth } = useContext(AuthContext);
 
   return auth?.accessToken

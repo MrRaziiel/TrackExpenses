@@ -9,13 +9,16 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.EntityFrameworkCore.SqlServer.Query.Internal;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace TRACKEXPENSES.Server.Controllers
 {
     //[ApiController]
     [Route("api/auth")]
-    public class AccountController(SignInManager<User> signInManager, UserManager<User> userManager, FinancasDbContext context, IConfiguration configuration) : Controller
+    public class RegisterController(SignInManager<User> signInManager, UserManager<User> userManager, FinancasDbContext context, IConfiguration configuration) : Controller
     {
         private readonly SignInManager<User> _signInManager = signInManager;
         private readonly UserManager<User> _userManager = userManager;
@@ -27,7 +30,7 @@ namespace TRACKEXPENSES.Server.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
         {
-            
+
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             User user = new()
@@ -71,6 +74,7 @@ namespace TRACKEXPENSES.Server.Controllers
                 role = "USER";
 
             }
+            
             var result = await _userManager.CreateAsync(user, user.Password);
             if (!result.Succeeded) return BadRequest(result.Errors);
 
@@ -78,7 +82,7 @@ namespace TRACKEXPENSES.Server.Controllers
             await _userManager.AddToRoleAsync(user, role);
             await _context.SaveChangesAsync();
             return Ok();
-        user.ProfileImageId = "No_image.jpg";}
+        }
 
         private static readonly Random random = new();
         private string GenerateCodeGroup()
@@ -106,20 +110,20 @@ namespace TRACKEXPENSES.Server.Controllers
             return Ok(exists);
         }
 
-        [HttpPost("login")]
+        [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] LoginViewModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
             var user = await userManager.FindByEmailAsync(model.Email);
             if (user is null)
             {
-                return NoContent();
+                return NotFound();
             }
 
             var result = await signInManager.CheckPasswordSignInAsync(user, model.Password, false);
             if (!result.Succeeded)
             {
-                return NoContent();
+                return NotFound();
             }
 
             var authClaims = new List<Claim>
@@ -140,6 +144,9 @@ namespace TRACKEXPENSES.Server.Controllers
             claims: authClaims,
             signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
             );
+            var roleNameResponse = await _userManager.GetRolesAsync(user);
+            var roleName = roleNameResponse.IsNullOrEmpty() ? null : roleNameResponse[0];
+
             return Ok(new
             {
                 token = new JwtSecurityTokenHandler().WriteToken(token),
@@ -147,108 +154,18 @@ namespace TRACKEXPENSES.Server.Controllers
                 user = new
                 {
                     id = user.Id,
-                    email = user.Email
-                    // Adicione outras propriedades conforme necessário
+                    email = user.Email,
+                    role = roleName,
+                    path = user.ProfileImageId,
                 }
             });
 
         }
+       
     }
 }
+
    
 
 
 
-
-//        public IActionResult VerifyEmail()
-//        {
-//            return View();
-//        }
-//        [HttpPost]
-//        public async Task<IActionResult> VerifyEmail(VerifyEmailViewModel model)
-//        {
-//            if (ModelState.IsValid)
-//            {
-//                var user = await _userManager.FindByNameAsync(model.Email);
-//                if (user == null)
-//                {
-//                    ModelState.AddModelError("", "Someting is wrong!");
-//                    return View(model);
-//                }
-//                else
-//                {
-//                    return RedirectToAction("ChangePassword", "Account", new { username = user.UserName });
-//                }
-//            }
-//            return View(model);
-//        }
-
-
-//        public IActionResult ChangePassword(string username)
-//        {
-//            if (string.IsNullOrEmpty(username))
-//            {
-//                return RedirectToAction("VerifyEmail", "Account");
-//            }
-//            return View(new ChangePasswordViewModel { Email = username });
-//        }
-//        [HttpPost]
-//        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
-//        {
-//            if (ModelState.IsValid)
-//            {
-//                var user = await _userManager.FindByNameAsync(model.Email);
-//                if (user != null)
-//                {
-//                    var result = await _userManager.RemovePasswordAsync(user);
-//                    if (result.Succeeded)
-//                    {
-//                        result = await _userManager.AddPasswordAsync(user, model.NewPassword);
-//                        return RedirectToAction("Login", "Account");
-//                    }
-//                    else
-//                    {
-//                        foreach (var error in result.Errors)
-//                        {
-//                            ModelState.AddModelError("", error.Description);
-
-//                        }
-//                        return View(model);
-//                    }
-//                }
-//                else
-//                {
-//                    ModelState.AddModelError("", "Email not found!");
-//                    return View(model);
-
-//                }
-//            }
-//            else
-//            {
-//                ModelState.AddModelError("", "Something wen wrong. Try again");
-//                return View(model);
-//            }
-//        }
-//        public async Task<IActionResult> LogOut()
-//        {
-//            await _signInManager.SignOutAsync();
-//            return RedirectToAction("Index", "Home");
-//        }
-
-
-//        public IActionResult Profile()
-//        {
-//            return View();
-//        }
-
-
-//        private static readonly Random random = new();
-//        private string GenerateCodeGroup()
-//        {
-//            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-//            return new string(Enumerable.Repeat(chars, 32)
-//                .Select(s => s[random.Next(s.Length)]).ToArray());
-//        }
-
-//    }
-//}

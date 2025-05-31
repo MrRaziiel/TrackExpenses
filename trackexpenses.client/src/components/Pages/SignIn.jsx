@@ -150,7 +150,6 @@ const handleChange = (e) => {
     setErrorPasswordCheck(null);
     setErrorPasswordMatch(null);
     const isValidCode = await verifyGroupCodeBd();
-    console.log("valid code" ,isValidCode);
     if (!isValidCode) return
     const allFields = [...firstConfigurationPage, ...secondconfigurationPage];
     const payload = allFields.reduce((acc, field) => {

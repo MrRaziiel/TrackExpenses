@@ -18,5 +18,6 @@ namespace TRACKEXPENSES.Server.ViewModels
 
         public DateTime? Birthday { get; internal set; }
         public string? PhoneNumber { get; internal set; }
+
     }
 }

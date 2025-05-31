@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.4",
     "@tailwindcss/postcss": "^4.1.4",
     "autoprefixer": "^10.4.21",
     "axios": "^0.24.0",
