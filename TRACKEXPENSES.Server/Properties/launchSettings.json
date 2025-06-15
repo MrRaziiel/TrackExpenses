@@ -13,7 +13,7 @@
     },
     "https": {
       "commandName": "Project",
-      "workingDirectory": "D:\\Projectos\\TrackExpenses\\TRACKEXPENSES.Server",
+      "workingDirectory": "D:\\Projectos\\TrackExpensesReact\\TRACKEXPENSES.Server",
       "launchBrowser": true,
       "launchUrl": "swagger",
       "environmentVariables": {

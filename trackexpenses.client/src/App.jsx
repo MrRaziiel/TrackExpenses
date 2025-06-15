@@ -18,6 +18,7 @@ import Incomes from './components/Pages/Incomes/AllIncomes';
 import AddExpense from './components/Pages/Expenses/AddExpenses';
 import AddIncome from './components/Pages/Incomes/AddIncomes';
 import EditUser from './components/Pages/Administrador/EditUser';
+import ProfilePage from './components/Pages/Profile';
 import SettingsPage from './components/Pages/Settings';
 import RequireAuth from './components/Authentication/Require';
 import useLogout from './components/Authentication/Logout';
@@ -52,7 +53,7 @@ function App() {
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
-<Link to="/profile">
+<Link to="/Profile">
   {auth?.path ? (
     <img
       src={auth.path}
@@ -236,6 +237,7 @@ function App() {
               <Link
                 to="/Users"
                 className="flex items-center space-x-2 px-2 py-1.5 text-gray-700 hover:bg-blue-50 rounded-lg"
+                
               >
                 <Users className="h-4 w-4" />
                 {!isSidebarCollapsed && <span className="text-sm">{t('common.users')}</span>}
@@ -244,10 +246,12 @@ function App() {
               </div>
             )
            }
-           <div className="p-2 border-t border-b">
+           <div className="p-2 border-t border-b ">
               <Link
                 to="/dashboard"
                 className="flex items-center space-x-2 px-2 py-1.5 text-gray-700 hover:bg-blue-50 rounded-lg"
+
+                
               >
                 <LayoutDashboard className="h-4 w-4" />
                 {!isSidebarCollapsed && <span className="text-sm">{t('common.dashboard')}</span>}
@@ -288,6 +292,7 @@ function App() {
               <Route path="/Users" element={<UsersList />} />
               <Route path="/Users/edit/:id" element={<EditUser />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/Profile" element={<ProfilePage />} />
             </Route>
           </Routes>
         </div>

@@ -4,6 +4,7 @@ import { useTheme } from '../../Theme/Theme';
 import { useLanguage } from '../../../utilis/Translate/LanguageContext';
 import apiCall from '../../../hooks/apiCall';
 import AuthContext from '../../Authentication/AuthContext';
+import {  useNavigate } from 'react-router-dom';
 
 const arrayPropertiesToShow = ["firstName", "familyName", "email", "birthday"];
 
@@ -16,7 +17,7 @@ function UsersList() {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [errorSubmit, setErrorSubmit] = useState(null);
-
+  const navigate = useNavigate();
   // Buscar utilizadores ao montar
   useEffect(() => {
     const fetchData = async () => {
@@ -46,8 +47,8 @@ function UsersList() {
 
   const handleEdit = (userId) => {
     console.log('Editar utilizador:', userId);
-    // Coloca aqui a lógica de edição
-  };
+    navigate("edit/:  ", userId);
+  }
 
   const handleDelete = async (userId) => {
     if (!isAuthenticated || role !== "ADMINISTRATOR") return;
@@ -150,7 +151,7 @@ function UsersList() {
                   {t('common.firstName')}
                 </th>
                  <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-center" style={{ color: theme?.colors?.text?.secondary }}>
-                  {t('common.lastName')}
+                  {t('common.familyName')}
                 </th>
                 <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-center" style={{ color: theme?.colors?.text?.secondary }}>
                   {t('common.email')}

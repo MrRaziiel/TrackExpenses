@@ -1,20 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Save, X } from 'lucide-react';
+import apiCall from '../../../hooks/apiCall';
+import AuthContext from '../../Authentication/AuthContext';
+
 
 function EditUser() {
   const navigate = useNavigate();
+  const [users, setUsers] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     status: 'Active'
   });
 
+
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Save user:', formData);
-    navigate('/users');
+    navigate('/ListClients');
   };
+
+    useEffect(() => {
+    const fetchData = async () => {
+     
+      try {
+        const res = await apiCall.get('api/User/GetProfile');
+        if (res.data) {
+          console.log(res.data)
+          setUsers(res.data.$values);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar utilizadores:", err);
+        setUsers([]);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <div className="max-w-2xl mx-auto">
