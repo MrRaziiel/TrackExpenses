@@ -22,6 +22,7 @@ import ProfilePage from './components/Pages/Profile';
 import SettingsPage from './components/Pages/Settings';
 import RequireAuth from './components/Authentication/Require';
 import useLogout from './components/Authentication/Logout';
+import ForgotPassword from "./components/Pages/ForgotPassword"
 
 function App() {
   const { theme } = useTheme();
@@ -283,6 +284,8 @@ function App() {
             <Route path="/" element={<Welcome />} />
             <Route path='/Login' element={< Login />} />
             <Route path="/Register" element={<SignIn />} />
+            <Route path="/ForgotPassword" element={<ForgotPassword />} />
+            
             <Route element={<RequireAuth />}>
               <Route path="/Dashboard" element={<Dashboard />} />
               <Route path="/expenses" element={<Expenses />} />

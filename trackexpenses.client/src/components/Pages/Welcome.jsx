@@ -18,7 +18,7 @@ function Welcome() {
           Track your expenses, monitor your income, and achieve your financial goals with our comprehensive financial management platform.
         </p>
         <Link
-          to="/auth"
+          to="/Register"
           className="inline-flex items-center px-6 py-3 text-lg font-medium text-white rounded-lg hover:bg-blue-600 transition-colors"
           style={{ backgroundColor: theme?.colors?.primary?.main }}
         >

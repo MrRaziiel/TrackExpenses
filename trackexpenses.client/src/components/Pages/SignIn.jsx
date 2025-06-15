@@ -244,7 +244,7 @@ const renderFields = (fields) => (
         )}
         {field.label === "Phone" ? (
             <PhoneInput
-              defaultCountry="US"
+              defaultCountry="PT"
               value={formData[field.lower] ?? ""}
               onChange={(value) =>
                 handleChange({ target: { name: field.lower, value } })
