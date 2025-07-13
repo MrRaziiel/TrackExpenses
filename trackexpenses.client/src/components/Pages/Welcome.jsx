@@ -1,11 +1,19 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, PieChart, Shield, TrendingUp } from 'lucide-react';
+import { useContext } from "react";
 import { useTheme } from '../Theme/Theme';
+import AuthContext from "../Authentication/AuthContext";
+import { Navigate } from "react-router-dom";
 
+
+  
 function Welcome() {
   console.log("Welcome");
   const { theme } = useTheme();
+  const { isAuthenticated } = useContext(AuthContext);
+
+  if (isAuthenticated)  return <Navigate to="/Dashboard" replace />;
 
   return (
     <div className="space-y-12">
@@ -18,7 +26,7 @@ function Welcome() {
           Track your expenses, monitor your income, and achieve your financial goals with our comprehensive financial management platform.
         </p>
         <Link
-          to="/auth"
+          to="/Register"
           className="inline-flex items-center px-6 py-3 text-lg font-medium text-white rounded-lg hover:bg-blue-600 transition-colors"
           style={{ backgroundColor: theme?.colors?.primary?.main }}
         >

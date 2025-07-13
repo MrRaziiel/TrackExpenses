@@ -39,6 +39,8 @@ const translations = {
       termsOfService: 'Terms of Service',
       contact: 'Contact',
       name: 'Name',
+      firstName: 'First Name',
+      familyName: 'Family Name',
       email: 'Email'
     },
     settings: {

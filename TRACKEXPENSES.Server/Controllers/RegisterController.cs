@@ -27,12 +27,13 @@ namespace TRACKEXPENSES.Server.Controllers
 
 
 
-        [HttpPost("register")]
+        [HttpPost("Register")]
         public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
         {
-
+           //Problems with DATE
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
+            Console.WriteLine(model.Birthday.GetType());
             User user = new()
             {
 
@@ -43,9 +44,17 @@ namespace TRACKEXPENSES.Server.Controllers
                 Password = model.Password,
                 PhoneNumber = model.PhoneNumber != null ? model.PhoneNumber : "000000000",
                 ProfileImageId = "No_image.jpg",
+                Birthday = model.Birthday != null ? model.Birthday : DateTime.Now,
 
             };
-            if (model.Birthday != null) user.Birthday = model.Birthday;
+            try
+            {
+                if (model.Birthday != null) user.Birthday = model.Birthday;
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
 
 
             string role = "";

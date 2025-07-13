@@ -32,7 +32,7 @@ namespace TRACKEXPENSES.Server.Models
 
     public class User : IdentityUser
     {
-        private DateTime? birthday;
+       
 
         private event PropertyChangedEventHandler? PropertyChanged;
 
@@ -45,20 +45,19 @@ namespace TRACKEXPENSES.Server.Models
         [MaxLength(250)]
         public required string FamilyName { get; set; }
 
-        [DataType(DataType.Date)]
-        [DisplayName("Birthday:")]
-        [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:dd/mm/YYYY}")]
+        private DateTime? birthday;
+
         public DateTime? Birthday
         {
-            get => birthday; set
+            get => birthday;
+            set
             {
-                Birthday = value;
+                birthday = value; // usar a variável privada!
                 OnPropertyChanged(nameof(Birthday));
-                if (Birthday != null)
+                if (birthday != null)
                 {
-                    BirthdayString = Birthday.Value.ToString("dd/MM/yyyy", new CultureInfo("pt-PT"));
+                    BirthdayString = birthday.Value.ToString("dd/MM/yyyy", new CultureInfo("pt-PT"));
                 }
-
             }
         }
 
@@ -67,6 +66,7 @@ namespace TRACKEXPENSES.Server.Models
 
 
         public string? ProfileImageId { get; set; }
+
         [PasswordPropertyText]
         public required string Password { get; set; }
 

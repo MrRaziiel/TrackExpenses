@@ -30,7 +30,7 @@ namespace TRACKEXPENSES.Server.Controllers
         [HttpPost("User/DeleteUser")]
         public async Task<IActionResult> DeleteUser([FromBody] string UserID)
         {
-            return Ok("User Deleted");
+
             if (UserID == null) return NotFound("No user found");
 
             var existUser = context.Users.Include(user => user.Expenses).SingleOrDefault(c => c.Id == UserID);
@@ -53,5 +53,6 @@ namespace TRACKEXPENSES.Server.Controllers
             return Ok("User Deleted");
 
         }
+
     }
 }

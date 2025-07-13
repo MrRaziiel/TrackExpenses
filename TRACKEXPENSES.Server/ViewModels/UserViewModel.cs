@@ -24,14 +24,20 @@ namespace TRACKEXPENSES.Server.ViewModels
         public string? ProfileImageId { get; set; }
         public string? ProfileImagePath { get; set; }
         [PasswordPropertyText]
-        public required string Password { get; set; }
+        public string? Password { get; set; }
+
+        public string? PhoneNumber { get; set; }
 
         public virtual void CopyTo(User updateUser)
         {
-            updateUser.FirstName = FirstName;
-            updateUser.FamilyName = FamilyName;
-            updateUser.Password = Password;
+            if (FirstName != default || FirstName != null) updateUser.FirstName = FirstName;
+            if (FamilyName != default || FamilyName != null) updateUser.FamilyName = FamilyName;
+            if (Password != default || Password != null) updateUser.Password = Password;
             if (Birthday != default || Birthday != null) updateUser.Birthday = Birthday;
+            if (Email != default || Email != null) updateUser.Email = Email;
+            if (ProfileImageId != default || ProfileImageId != null) updateUser.ProfileImageId = ProfileImageId;
+            if (PhoneNumber != default || PhoneNumber != null) updateUser.PhoneNumber = ProfileImagePath;
+            if (Password != default || Password != null) updateUser.Password = Password;
         }
     }
 
@@ -48,14 +54,11 @@ namespace TRACKEXPENSES.Server.ViewModels
                 Birthday = user.Birthday,
                 Email = user.Email,
                 ProfileImageId = user.ProfileImageId,
-                Password = user.Password
+                Password = user.Password,
+                PhoneNumber = user.PhoneNumber,
             };
         }
-        //public override void CopyTo(Client updateUser)
-        //{
-        //    base.CopyTo(updateUser);
 
-        //}
     }
 
     public class UserUpdateViewModel : UserViewModel
@@ -70,7 +73,8 @@ namespace TRACKEXPENSES.Server.ViewModels
                 Birthday = User.Birthday,
                 Email = User.Email,
                 ProfileImageId = User.ProfileImageId,
-                Password = User.Password
+                Password = User.Password,
+                PhoneNumber = User.PhoneNumber,
             };
 
         }

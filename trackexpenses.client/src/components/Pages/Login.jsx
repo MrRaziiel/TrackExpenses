@@ -111,6 +111,15 @@ const Login = () => {
 
           <form className="space-y-6" onSubmit={handleSubmit}>
             {renderFields(fields)}
+            <div className="mt-6 text-center">
+  <Link
+    to="/ForgotPassword" 
+    className="text-sm font-medium hover:underline transition-colors duration-200"
+    style={{ color: theme?.colors?.primary?.main }}
+  >
+    Forgot your password?
+  </Link>
+</div>
             <button
               type="submit"
               className="w-full py-3 px-4 rounded-xl text-white font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
@@ -125,11 +134,13 @@ const Login = () => {
                 {errorSubmit}
               </p>
             )}
+            
+
           </form>
 
           <div className="mt-8 text-center">
             <Link
-              to="/register"
+              to="/Register"
               className="text-sm font-medium hover:underline transition-colors duration-200"
               style={{ color: theme?.colors?.primary?.main }}
             >
