@@ -66,6 +66,7 @@ namespace TRACKEXPENSES.Server.Models
 
 
         public string? ProfileImageId { get; set; }
+
         [PasswordPropertyText]
         public required string Password { get; set; }
 

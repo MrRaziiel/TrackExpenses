@@ -1,11 +1,19 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, PieChart, Shield, TrendingUp } from 'lucide-react';
+import { useContext } from "react";
 import { useTheme } from '../Theme/Theme';
+import AuthContext from "../Authentication/AuthContext";
+import { Navigate } from "react-router-dom";
 
+
+  
 function Welcome() {
   console.log("Welcome");
   const { theme } = useTheme();
+  const { isAuthenticated } = useContext(AuthContext);
+
+  if (isAuthenticated)  return <Navigate to="/Dashboard" replace />;
 
   return (
     <div className="space-y-12">

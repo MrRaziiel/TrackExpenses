@@ -64,7 +64,7 @@ function App() {
     />
   ) : (
     <div className="h-10 w-10 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-semibold border-2 border-blue-500 cursor-pointer">
-      {(auth?.firstName && auth.firstName[0]?.toUpperCase()) || 'U'}
+      {(auth?.firstName && auth.firstName[0]?.toUpperCase()) || 'A'}
     </div>
   )}
 </Link>
@@ -249,7 +249,7 @@ function App() {
            }
            <div className="p-2 border-t border-b ">
               <Link
-                to="/dashboard"
+                to="/Dashboard"
                 className="flex items-center space-x-2 px-2 py-1.5 text-gray-700 hover:bg-blue-50 rounded-lg"
 
                 

@@ -1,149 +1,269 @@
 import React from 'react';
+import { useContext, useState, useEffect, useRef } from 'react';
 import AuthContext from '../Authentication/AuthContext';
 import { useTheme } from '../Theme/Theme';
-import { useState, useContext, useEffect } from "react";
 import apiCall from '../../hooks/apiCall';
-import { Edit3, Save, X, User, Mail, Calendar, Phone, Lock, Users, Shield, Key } from 'lucide-react';
+import { Edit3, Save, X, User, Mail, Calendar, Phone, Lock, Users, Shield, Key, Camera } from 'lucide-react';
+import { formatNumber } from 'chart.js/helpers';
 
 function ProfilePage() {
-const [user, setUser] = useState([]);
+  const [user, setUser] = useState({});
   const { auth, isAuthenticated, role } = useContext(AuthContext);
   const { theme } = useTheme();
-const [errorSubmit, setErrorSubmit] = useState(null);
+  const [errorSubmit, setErrorSubmit] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({ });
+  const [formData, setFormData] = useState({});
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageError, setImageError] = useState(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
-  if (user) {
-    const defaultFormData = Object.fromEntries(
-      Object.entries(user).map(([key, value]) => [key, value || ''])
-    );
-    setFormData(defaultFormData);
-  }
-}, [user]);
+    if (user) {
+      const defaultFormData = Object.fromEntries(
+        Object.entries(user).map(([key, value]) => [key, value || ''])
+      );
+      setFormData(defaultFormData);
+    }
+  }, [user]);
 
-
-   useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       setErrorSubmit(null);
       try {
-        const res = await apiCall.get('/User/GetProfile', {params: { UserEmail: auth.email }})
-        console.log(res.data);
+        const res = await apiCall.get('/User/GetProfile', {params: { UserEmail: auth.email }});
         if (res.data) {
           setUser(res.data);
+          try {
+      
+      console.log(res.data.id);
+      const res2 = await apiCall.get(`/User/GetPhotoProfile/${res.data.id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+       });
+          setSelectedImage(res2);
+           } catch (err) {
+        console.error("Erro ao buscar photo:", err);
+        setSelectedImage({});
+      }
         }
+        
       } catch (err) {
         console.error("Erro ao buscar utilizadores:", err);
-        setUser([]);
+        setUser({});
       }
+
+      
     };
 
     fetchData();
   }, []);
 
-  const handleSave = async (e) => {
-  e.preventDefault();
-  setErrorSubmit(null);
-
-  const payload = {
-    ...formData,
-     birthday: formData.birthday || undefined,
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    setImageError(null);
+    
+    if (!file) return;
+    
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      setImageError('Please select a valid image file (JPG, PNG, or GIF)');
+      return;
+    }
+    
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError('Image size must be less than 5MB');
+      return;
+    }
+    
+    setSelectedImage(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
   };
 
+const uploadImage = async () => {
+  console.log("uploadImage");
+  console.log("selectedImage", selectedImage);
+
+  if (!selectedImage) return null;
+
+  const formData = new FormData();
+  formData.append('Photo', selectedImage); // "Photo" deve bater com o nome do parâmetro no controller
+
   try {
-    console.log("payload",payload.email);
-    const response = await apiCall.put('/User/EditUser', payload, {
-  headers: {
-    'Content-Type': 'application/json'
+    console.log('USERID', user.id);
+    const response = await apiCall.post(`/User/UploadProfileImage/${user.id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    
+    const updatedUser = { ...formData, profileImage: response.data.photoPath };
+    setUser(updatedUser);
+    return response.data.photoPath;
+
+  } catch (error) {
+    console.error('Error to upload image:', error);
+    setImageError('Error to upload image');
+    return null;
   }
-});
-    if (!response.data) {
-      setErrorSubmit('Erro ao atualizar os dados do usuário');
+};
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setErrorSubmit(null);
+    setImageError(null);
+
+    console.log(user.profileImage);
+    let imageUrl = user.profileImage;
+    
+    // Upload image first if a new one was selected
+     if (selectedImage) {
+      imageUrl = await uploadImage();
+      if (!imageUrl && selectedImage) {
+        return; // Stop if image upload failed
+      }
+    }
+      
+
+    const payload = {
+      ...formData,
+      birthday: formData.birthday || undefined,
+      profileImage: imageUrl
+    };
+
+    try {
+      console.log("payload", payload.email);
+      const response = await apiCall.put('/User/EditUser', payload, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.data) {
+        setErrorSubmit('Error to update user data');
+        return;
+      }
+
+      
+      // Update local user state
+      const updatedUser = { ...formData, profileImage: imageUrl };
+      setUser(updatedUser);
+      
+      const resetFormData = Object.fromEntries(
+        Object.entries(updatedUser).map(([key, value]) => {
+          if (Array.isArray(value)) return [key, [...value]];
+          if (typeof value === 'object' && value !== null) return [key, { ...value }];
+          return [key, value ?? ''];
+        })
+      );
+      
+      setFormData(resetFormData);
+      setIsEditing(false);
+      setSelectedImage(null);
+      setImagePreview(null);
+      
+    } catch (error) {
+      setErrorSubmit(error?.response?.data?.message || 'Error to save user data');
+    }
+  };
+
+  const handleCancel = () => {
+    if (!user) {
+      setFormData({});
       return;
     }
 
-    // Sucesso: faça algo como notificar ou atualizar o estado
-    console.log("Usuário atualizado com sucesso:", response.data);
-  } catch (error) {
-    setErrorSubmit(error?.response?.data?.message || 'Erro ao salvar os dados do usuário');
-  }
-  const updatedUser = { ...formData }; 
-  setUser(updatedUser);
-  const resetFormData = Object.fromEntries(
-  Object.entries(updatedUser).map(([key, value]) => {
-    if (Array.isArray(value)) return [key, [...value]];
-    if (typeof value === 'object' && value !== null) return [key, { ...value }];
-    return [key, value ?? ''];
-    })
+    const resetFormData = Object.fromEntries(
+      Object.entries(user).map(([key, value]) => {
+        if (Array.isArray(value)) return [key, [...value]];
+        if (typeof value === 'object' && value !== null) return [key, { ...value }];
+        return [key, value ?? ''];
+      })
     );
+
     setFormData(resetFormData);
-    setIsEditing(false); 
-};
-
-const handleCancel = () => {
-  if (!user) {
-    setFormData({});
-    return;
-  }
-
-  const resetFormData = Object.fromEntries(
-    Object.entries(user).map(([key, value]) => {
-      if (Array.isArray(value)) return [key, [...value]]; // clone arrays
-      if (typeof value === 'object' && value !== null) return [key, { ...value }]; // shallow clone objects
-      return [key, value ?? ''];
-    })
-  );
-
-  setFormData(resetFormData);
-  setIsEditing(false); // exit editing mode
-};
-
+    setIsEditing(false);
+    setSelectedImage(null);
+    setImagePreview(null);
+    setImageError(null);
+  };
 
   const removeGroupMember = (index) => {
-    const newMembers = formData.groupMembers.filter((_, i) => i !== index);
+    const newMembers = (formData.groupMembers || []).filter((_, i) => i !== index);
     setFormData({
       ...formData,
       groupMembers: newMembers
     });
   };
 
+  const handleImageClick = () => {
+    if (isEditing && fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const removeImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    setFormData({ ...formData, profileImage: '' });
+  };
+
   const displayName = `${user?.firstName || ''} ${user?.familyName || ''}`.trim() || 'User';
-const currentGroupMembers = isEditing ? (formData.groupMembers || []) : (user?.groupMembers || []);
+  const currentGroupMembers = isEditing ? (formData.groupMembers || []) : (user?.groupMembers || []);
+  const currentImageUrl = imagePreview || user?.profileImage;
+
   return (
+    
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold" style={{ color: theme.colors.text.primary }}>
           Profile
         </h1>
-        {!isEditing ? (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-white font-medium hover:opacity-90 transition-colors duration-200"
-            style={{ backgroundColor: theme.colors.primary.main }}
-          >
-            <Edit3 className="h-5 w-5 mr-2" />
-            Edit Profile
-          </button>
-        ) : (
-          <div className="flex space-x-3">
-            <button
-              onClick={handleCancel}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
-            >
-              <X className="h-5 w-5 mr-2" />
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-white font-medium hover:opacity-90 transition-colors duration-200"
-              style={{ backgroundColor: theme.colors.success.main }}
-            >
-              <Save className="h-5 w-5 mr-2" />
-              Save Changes
-            </button>
-          </div>
-        )}
+      {!isEditing ? (
+  <button
+    onClick={() => setIsEditing(true)}
+    className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-white font-medium hover:opacity-90 transition-colors duration-200"
+    style={{ backgroundColor: theme.colors.primary.main }}
+  >
+    <Edit3 className="h-5 w-5 mr-2" />
+    Edit Profile
+  </button>
+) : (
+  <div className="flex space-x-3">
+    <button
+      onClick={handleCancel}
+      className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
+    >
+      <X className="h-5 w-5 mr-2" />
+      Cancel
+    </button>
+    <button
+      onClick={handleSave}
+      className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-white font-medium hover:opacity-90 transition-colors duration-200"
+      style={{ backgroundColor: theme.colors.success.main }}
+    >
+      <Save className="h-5 w-5 mr-2" />
+      Save Changes
+    </button>
+  </div>
+)}
       </div>
+
+      {errorSubmit && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800">{errorSubmit}</p>
+        </div>
+      )}
 
       <div 
         className="bg-white rounded-xl shadow-md overflow-hidden"
@@ -152,12 +272,47 @@ const currentGroupMembers = isEditing ? (formData.groupMembers || []) : (user?.g
         {/* Profile Header */}
         <div className="px-6 py-8 border-b" style={{ borderColor: theme.colors.secondary.light }}>
           <div className="flex items-center space-x-6">
-            <div 
-              className="h-24 w-24 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-lg"
-              style={{ backgroundColor: theme.colors.primary.main }}
-            >
-              {displayName.charAt(0).toUpperCase()}
+            <div className="relative">
+              <div 
+                className={`h-24 w-24 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-lg overflow-hidden ${isEditing ? 'cursor-pointer' : ''}`}
+                style={{ backgroundColor: theme.colors.primary.main }}
+                onClick={handleImageClick}
+              >
+                {currentImageUrl ? (
+                  <img 
+                    src={currentImageUrl} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  displayName.charAt(0).toUpperCase()
+                )}
+                
+                {isEditing && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 rounded-full">
+                    <Camera className="h-6 w-6 text-white" />
+                  </div>
+                )}
+              </div>
+              
+              {isEditing && currentImageUrl && (
+                <button
+                  onClick={removeImage}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+              
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="hidden"
+              />
             </div>
+            
             <div className="flex-1">
               <h2 className="text-2xl font-bold mb-2" style={{ color: theme.colors.text.primary }}>
                 {displayName}
@@ -177,6 +332,16 @@ const currentGroupMembers = isEditing ? (formData.groupMembers || []) : (user?.g
                   {user?.groupRole || 'Member'}
                 </span>
               </div>
+              
+              {isEditing && (
+                <p className="text-sm mt-2" style={{ color: theme.colors.text.secondary }}>
+                  Click on your profile picture to change it
+                </p>
+              )}
+              
+              {imageError && (
+                <p className="text-sm mt-2 text-red-600">{imageError}</p>
+              )}
             </div>
           </div>
         </div>
@@ -207,7 +372,7 @@ const currentGroupMembers = isEditing ? (formData.groupMembers || []) : (user?.g
                 ) : (
                   <input
                     type="text"
-                    value={formData.firstName}
+                    value={formData.firstName || ''}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                     className="w-full px-3 py-2 rounded-md border focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     style={{
@@ -240,7 +405,7 @@ const currentGroupMembers = isEditing ? (formData.groupMembers || []) : (user?.g
                 ) : (
                   <input
                     type="text"
-                    value={formData.familyName}
+                    value={formData.familyName || ''}
                     onChange={(e) => setFormData({ ...formData, familyName: e.target.value })}
                     className="w-full px-3 py-2 rounded-md border focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     style={{
@@ -266,11 +431,9 @@ const currentGroupMembers = isEditing ? (formData.groupMembers || []) : (user?.g
                 <h4 className="text-sm font-medium mb-1" style={{ color: theme.colors.text.secondary }}>
                   Email Address
                 </h4>
-                
-                  <p className="text-base" style={{ color: theme.colors.text.primary }}>
-                    {user?.email || 'Not provided'}
-                  </p>
-                
+                <p className="text-base" style={{ color: theme.colors.text.primary }}>
+                  {user?.email || 'Not provided'}
+                </p>
               </div>
             </div>
 
@@ -293,8 +456,8 @@ const currentGroupMembers = isEditing ? (formData.groupMembers || []) : (user?.g
                 ) : (
                   <input
                     type="date"
-                    value={formData.birthday}
-onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
+                    value={formData.birthday || ''}
+                    onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
                     className="w-full px-3 py-2 rounded-md border focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     style={{
                       backgroundColor: theme.colors.background.paper,
@@ -325,7 +488,7 @@ onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
                 ) : (
                   <input
                     type="tel"
-                    value={formData.phoneNumber}
+                    value={formData.phoneNumber || ''}
                     onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                     className="w-full px-3 py-2 rounded-md border focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     style={{
@@ -354,7 +517,7 @@ onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
                   </h4>
                   <input
                     type="password"
-                    value={formData.password}
+                    value={formData.password || ''}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     className="w-full px-3 py-2 rounded-md border focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     style={{
@@ -376,6 +539,24 @@ onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
             </h3>
             
             <div className="grid gap-6 md:grid-cols-2">
+              {/* Group Name */}
+              <div className="flex items-start space-x-4">
+                <div 
+                  className="p-2 rounded-lg"
+                  style={{ backgroundColor: theme.colors.success.light + '20' }}
+                >
+                  <Shield className="h-5 w-5" style={{ color: theme.colors.success.main }} />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium mb-1" style={{ color: theme.colors.text.secondary }}>
+                    Group Name
+                  </h4>
+                  <p className="text-base" style={{ color: theme.colors.text.primary }}>
+                    {user?.groupName || 'Member'}
+                  </p>
+                </div>
+              </div>
+
               {/* Code Invite */}
               <div className="flex items-start space-x-4">
                 <div 
@@ -388,24 +569,9 @@ onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
                   <h4 className="text-sm font-medium mb-1" style={{ color: theme.colors.text.secondary }}>
                     Invite Code
                   </h4>
-                  {!isEditing ? (
-                    <p className="text-base font-mono" style={{ color: theme.colors.text.primary }}>
-                      {user?.codeInvite || 'Not provided'}
-                    </p>
-                  ) : (
-                    <input
-                      type="text"
-                      value={formData.codeInvite}
-                      onChange={(e) => setFormData({ ...formData, codeInvite: e.target.value })}
-                      className="w-full px-3 py-2 rounded-md border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
-                      style={{
-                        backgroundColor: theme.colors.background.paper,
-                        borderColor: theme.colors.secondary.light,
-                        color: theme.colors.text.primary
-                      }}
-                      placeholder="Enter invite code"
-                    />
-                  )}
+                  <p className="text-base font-mono" style={{ color: theme.colors.text.primary }}>
+                    {user?.groupId || 'Not provided'}
+                  </p>
                 </div>
               </div>
 
@@ -421,27 +587,9 @@ onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
                   <h4 className="text-sm font-medium mb-1" style={{ color: theme.colors.text.secondary }}>
                     Group Role
                   </h4>
-                  {!isEditing ? (
-                    <p className="text-base" style={{ color: theme.colors.text.primary }}>
-                      {user?.groupRole || 'Member'}
-                    </p>
-                  ) : (
-                    <select
-                      value={formData.groupRole}
-                      onChange={(e) => setFormData({ ...formData, groupRole: e.target.value })}
-                      className="w-full px-3 py-2 rounded-md border focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      style={{
-                        backgroundColor: theme.colors.background.paper,
-                        borderColor: theme.colors.secondary.light,
-                        color: theme.colors.text.primary
-                      }}
-                    >
-                      <option value="Member">Member</option>
-                      <option value="Admin">Admin</option>
-                      <option value="Owner">Owner</option>
-                      <option value="Moderator">Moderator</option>
-                    </select>
-                  )}
+                  <p className="text-base" style={{ color: theme.colors.text.primary }}>
+                    {user?.groupRole || 'Member'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -460,24 +608,22 @@ onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
                     Group Members ({currentGroupMembers.length})
                   </h4>
                 </div>
-            
               </div>
               
               <div className="space-y-2 ml-12">
                 {currentGroupMembers.length === 0 ? (
-                  <p className="text-sm\" style={{ color: theme.colors.text.secondary }}>
+                  <p className="text-sm" style={{ color: theme.colors.text.secondary }}>
                     No group members
                   </p>
                 ) : (
                   currentGroupMembers.map((member, index) => (
                     <div key={index} className="flex items-center space-x-2">
                       {!isEditing ? (
-                        <p className="text-base\" style={{ color: theme.colors.text.primary }}>
+                        <p className="text-base" style={{ color: theme.colors.text.primary }}>
                           • {member}
                         </p>
                       ) : (
                         <>
-                          
                           <button
                             onClick={() => removeGroupMember(index)}
                             className="px-2 py-1 text-sm rounded-md text-white"
@@ -499,4 +645,4 @@ onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
   );
 }
 
-export default ProfilePage
+export default ProfilePage;
