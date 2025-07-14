@@ -69,7 +69,7 @@ const translations = {
       dashboard: 'Painel',
       expenses: 'Despesas',
       incomes: 'Receitas',
-      users: 'Usuários',
+      users: 'Utilizadores',
       settings: 'Configurações',
       logout: 'Sair',
       save: 'Salvar',

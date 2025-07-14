@@ -51,84 +51,80 @@ namespace TRACKEXPENSES.Server.Controllers
         public async Task<IActionResult> UploadProfileImage(string id, IFormFile photo)
         {
             var existUser = await context.Users.Include(user => user.Expenses).SingleOrDefaultAsync(c => c.Id == id);
-            if (existUser == null) return NotFound();
-            if (photo == null || photo.Length == 0)
-                return BadRequest("invalid file.");
-            
+            if (existUser == null) return NotFound("User not found");
+            if (photo == null || photo.Length == 0) return BadRequest("Invalid file.");
+
             var extension = Path.GetExtension(photo.FileName);
-            var nameFile = id;
-            var partialPath = Path.Combine("Images", "Users", nameFile);
+            var fileName = id + extension;
+            var relativePath = Path.Combine("Images", "Users");
+            var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", relativePath);
+            var fullPath = Path.Combine(folderPath, fileName);
+            var partialPathFile = Path.Combine(relativePath, fileName).Replace("\\", "/");
 
-            var existPhoto = await context.ImagesDB.SingleOrDefaultAsync(c => c.Name == partialPath);
+            Directory.CreateDirectory(folderPath); 
 
+            
+            var existPhoto = await context.ImagesDB.SingleOrDefaultAsync(c => c.Name == partialPathFile);
             if (existPhoto != null)
             {
                 existPhoto.Extension = extension;
-                _context.Users.Update(existUser);
+                await using (var stream = new FileStream(fullPath, FileMode.Create))
+                {
+                    await photo.CopyToAsync(stream);
+                }
+
+                context.ImagesDB.Update(existPhoto);
                 await context.SaveChangesAsync();
 
-                return Ok(new { partialPath });
-
+                return Ok(new { partialPath = partialPathFile });
             }
 
-            ImageDB newImage = new(partialPath, extension);
+  
+            var newImage = new ImageDB
+            {
+                Name = partialPathFile,
+                Extension = extension,
 
-            Directory.CreateDirectory(Path.GetDirectoryName(partialPath));
-            using (var stream = new FileStream(partialPath + extension, FileMode.Create))
+            };
+
+            await using (var stream = new FileStream(fullPath, FileMode.Create))
             {
                 await photo.CopyToAsync(stream);
             }
-            var saveImage = await context.ImagesDB.AddAsync(newImage);
-            if (saveImage == null) NotFound("Error saving photo");
-            existUser.ProfileImageId = newImage.Id.ToString();
+
+            await context.ImagesDB.AddAsync(newImage);
+            existUser.ProfileImageId = newImage.Id.ToString(); 
             context.Users.Update(existUser);
             await context.SaveChangesAsync();
 
-            partialPath = partialPath.Replace("\\", "/");
-
-            return Ok(new { partialPath });
-
-
-
-
-
-
+            return Ok(new { partialPath = partialPathFile });
         }
 
-        [HttpGet("GetPhotoProfile/{id}")]
-        public async Task<string> GetPhotoProfile(string id)
+
+        [HttpGet("GetPhotoProfile/{email}")]
+        public async Task<IActionResult> GetPhotoProfile(string email)
         {
-            if (id == null) return null;
-
-            var existUser = await context.Users.Include(user => user.Expenses).SingleOrDefaultAsync(c => c.Id == id);
-
-            if (existUser == null) return null;
+            if (string.IsNullOrEmpty(email))
+                return BadRequest("Invalid user ID");
 
 
-            if (existUser.ProfileImageId == "No_image.jpg") return "NoPhoto";
-            
-            var imageBd = _context.ImagesDB.SingleOrDefault(imgId => imgId.Id.Equals(existUser.ProfileImageId));
+            var existUser = await context.Users
+                .Include(user => user.Expenses)
+                .SingleOrDefaultAsync(c => c.Email == email);
 
-            return imageBd.Name;
+            if (existUser == null)
+                return NotFound("User not found");
 
+            if (existUser.ProfileImageId == "No_image.jpg")
+                return Ok(new { photoPath = "NoPhoto" });
 
+            var imageBd = await context.ImagesDB.SingleOrDefaultAsync(imgId => imgId.Id == existUser.ProfileImageId);
+
+            if (imageBd == null)
+                return Ok(new { firstName = existUser.FirstName });
+
+            return Ok(new { photoPath = imageBd.Name });
         }
-                //        var rootPath = Path.Combine("/", "images", "Users");
 
-                //        if (imageBd != null)
-                //        {
-                //            var nameWithExtensio = imageBd.Name + imageBd.Extension;
-                //            model.ProfileImagePath = Path.Combine(rootPath, imageBd.Name, nameWithExtensio);
-                //        }
-                //        else
-                //        {
-                //            model.ProfileImagePath = Path.Combine(rootPath, "No_image.jpg");
-                //        }
-                //    }
-
-
-                //    return Ok(existUser);
-                //}
-
-            }
+    }
 }

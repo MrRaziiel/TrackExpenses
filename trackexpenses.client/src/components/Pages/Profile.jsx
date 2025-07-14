@@ -1,15 +1,16 @@
-import React from 'react';
-import { useContext, useState, useEffect, useRef } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import AuthContext from '../Authentication/AuthContext';
 import { useTheme } from '../Theme/Theme';
 import apiCall from '../../hooks/apiCall';
-import { Edit3, Save, X, User, Mail, Calendar, Phone, Lock, Users, Shield, Key, Camera } from 'lucide-react';
-import { formatNumber } from 'chart.js/helpers';
+import {
+  Edit3, Save, X, User, Mail, Calendar, Phone, Lock, Users, Shield, Key, Camera
+} from 'lucide-react';
 
 function ProfilePage() {
   const [user, setUser] = useState({});
-  const { auth, isAuthenticated, role } = useContext(AuthContext);
+  const { auth } = useContext(AuthContext);
   const { theme } = useTheme();
+
   const [errorSubmit, setErrorSubmit] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({});
@@ -19,122 +20,101 @@ function ProfilePage() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    if (user) {
-      const defaultFormData = Object.fromEntries(
-        Object.entries(user).map(([key, value]) => [key, value || ''])
-      );
-      setFormData(defaultFormData);
-    }
-  }, [user]);
-
-  useEffect(() => {
     const fetchData = async () => {
       setErrorSubmit(null);
       try {
-        const res = await apiCall.get('/User/GetProfile', {params: { UserEmail: auth.email }});
+        const res = await apiCall.get('/User/GetProfile', {
+          params: { UserEmail: auth.email }
+        });
+
         if (res.data) {
-          setUser(res.data);
+          const userData = res.data;
+          setUser(userData);
+          setFormData({
+            ...userData,
+            birthday: userData.birthDay || ''
+          });
+
           try {
-      
-      console.log(res.data.id);
-      const res2 = await apiCall.get(`/User/GetPhotoProfile/${res.data.id}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-       });
-          setSelectedImage(res2);
-           } catch (err) {
-        console.error("Erro ao buscar photo:", err);
-        setSelectedImage({});
-      }
+            const res2 = await apiCall.get(`/User/GetPhotoProfile/${auth.email}`);
+            const photoPath = res2.data?.photoPath;
+            const firstName = res2.data?.firstName;
+            if (photoPath && photoPath !== 'NoPhoto') {
+           setUser(prev => ({ ...prev, profileImage: res2.data?.photoPath || '' }));
         }
-        
+        if (firstName)
+          console.log('firstName');
+              auth.firstName = firstName;
+            
+          } catch (err) {
+            console.error("Erro ao buscar photo:", err);
+          }
+        }
       } catch (err) {
         console.error("Erro ao buscar utilizadores:", err);
         setUser({});
       }
-
-      
     };
 
     fetchData();
-  }, []);
+  }, [auth.email]);
 
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
     setImageError(null);
-    
     if (!file) return;
-    
-    // Validate file type
+
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
     if (!validTypes.includes(file.type)) {
       setImageError('Please select a valid image file (JPG, PNG, or GIF)');
       return;
     }
-    
-    // Validate file size (5MB max)
+
     if (file.size > 5 * 1024 * 1024) {
       setImageError('Image size must be less than 5MB');
       return;
     }
-    
+
     setSelectedImage(file);
-    
-    // Create preview
+
     const reader = new FileReader();
-    reader.onload = (e) => {
-      setImagePreview(e.target.result);
-    };
+    reader.onload = (e) => setImagePreview(e.target.result);
     reader.readAsDataURL(file);
   };
 
-const uploadImage = async () => {
-  console.log("uploadImage");
-  console.log("selectedImage", selectedImage);
+ 
+  const uploadImage = async () => {
+    if (!selectedImage) return null;
 
-  if (!selectedImage) return null;
+    const imageFormData = new FormData();
+    imageFormData.append('Photo', selectedImage);
 
-  const formData = new FormData();
-  formData.append('Photo', selectedImage); // "Photo" deve bater com o nome do parâmetro no controller
+    try {
+      const response = await apiCall.post(`/User/UploadProfileImage/${user.id}`, imageFormData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
 
-  try {
-    console.log('USERID', user.id);
-    const response = await apiCall.post(`/User/UploadProfileImage/${user.id}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-
-    
-    const updatedUser = { ...formData, profileImage: response.data.photoPath };
-    setUser(updatedUser);
-    return response.data.photoPath;
-
-  } catch (error) {
-    console.error('Error to upload image:', error);
-    setImageError('Error to upload image');
-    return null;
-  }
-};
+      return response.data.partialPath;
+    } catch (error) {
+      console.error('Error to upload image:', error);
+      setImageError('Error to upload image');
+      return null;
+    }
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
     setErrorSubmit(null);
     setImageError(null);
 
-    console.log(user.profileImage);
     let imageUrl = user.profileImage;
-    
-    // Upload image first if a new one was selected
-     if (selectedImage) {
-      imageUrl = await uploadImage();
-      if (!imageUrl && selectedImage) {
-        return; // Stop if image upload failed
-      }
-    }
-      
 
+    if (selectedImage) {
+      imageUrl = await uploadImage();
+      if (!imageUrl) return;
+    }
+
+    
     const payload = {
       ...formData,
       birthday: formData.birthday || undefined,
@@ -142,54 +122,31 @@ const uploadImage = async () => {
     };
 
     try {
-      console.log("payload", payload.email);
       const response = await apiCall.put('/User/EditUser', payload, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Content-Type': 'application/json' }
       });
-      
+
       if (!response.data) {
         setErrorSubmit('Error to update user data');
         return;
       }
 
-      
-      // Update local user state
       const updatedUser = { ...formData, profileImage: imageUrl };
       setUser(updatedUser);
-      
-      const resetFormData = Object.fromEntries(
-        Object.entries(updatedUser).map(([key, value]) => {
-          if (Array.isArray(value)) return [key, [...value]];
-          if (typeof value === 'object' && value !== null) return [key, { ...value }];
-          return [key, value ?? ''];
-        })
-      );
-      
-      setFormData(resetFormData);
+      setFormData(updatedUser);
       setIsEditing(false);
       setSelectedImage(null);
       setImagePreview(null);
-      
     } catch (error) {
       setErrorSubmit(error?.response?.data?.message || 'Error to save user data');
     }
   };
 
   const handleCancel = () => {
-    if (!user) {
-      setFormData({});
-      return;
-    }
-
-    const resetFormData = Object.fromEntries(
-      Object.entries(user).map(([key, value]) => {
-        if (Array.isArray(value)) return [key, [...value]];
-        if (typeof value === 'object' && value !== null) return [key, { ...value }];
-        return [key, value ?? ''];
-      })
-    );
+    const resetFormData = {
+      ...user,
+      birthday: user.birthDay || ''
+    };
 
     setFormData(resetFormData);
     setIsEditing(false);
@@ -200,10 +157,7 @@ const uploadImage = async () => {
 
   const removeGroupMember = (index) => {
     const newMembers = (formData.groupMembers || []).filter((_, i) => i !== index);
-    setFormData({
-      ...formData,
-      groupMembers: newMembers
-    });
+    setFormData({ ...formData, groupMembers: newMembers });
   };
 
   const handleImageClick = () => {
@@ -218,9 +172,12 @@ const uploadImage = async () => {
     setFormData({ ...formData, profileImage: '' });
   };
 
-  const displayName = `${user?.firstName || ''} ${user?.familyName || ''}`.trim() || 'User';
+  const displayName = `${user?.firstName || ''}`.trim() || 'User';
   const currentGroupMembers = isEditing ? (formData.groupMembers || []) : (user?.groupMembers || []);
-  const currentImageUrl = imagePreview || user?.profileImage;
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5285";
+  const currentImageUrl = imagePreview 
+  || (user?.profileImage ? `${API_BASE}/${user.profileImage}` : null);
+
 
   return (
     
@@ -279,14 +236,14 @@ const uploadImage = async () => {
                 onClick={handleImageClick}
               >
                 {currentImageUrl ? (
-                  <img 
-                    src={currentImageUrl} 
-                    alt="Profile" 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  displayName.charAt(0).toUpperCase()
-                )}
+  <img 
+    src={currentImageUrl}
+    alt="Profile" 
+    className="w-full h-full object-cover"
+  />
+) : (
+  displayName.charAt(0).toUpperCase()
+)}
                 
                 {isEditing && (
                   <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 rounded-full">
