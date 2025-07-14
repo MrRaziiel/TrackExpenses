@@ -1,114 +1,230 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Save, X } from 'lucide-react';
-import apiCall from '../../../hooks/apiCall';
+import React, { useContext, useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import AuthContext from '../../Authentication/AuthContext';
+import { useTheme } from '../../Theme/Theme';
+import apiCall from '../../../hooks/apiCall';
+import {
+  Save, X, User, Mail, Calendar, Phone, Lock, Users, Shield, Key, Camera
+} from 'lucide-react';
 
+function EditUserProfile() {
+  const { id, email } = useParams(); // <-- RECEBE ID E EMAIL DA URL
+  const { theme } = useTheme();
+  const { auth } = useContext(AuthContext);
 
-function EditUser() {
-  const navigate = useNavigate();
-  const [users, setUsers] = useState([]);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    status: 'Active'
-  });
+  const [user, setUser] = useState({});
+  const [formData, setFormData] = useState({});
+  const [errorSubmit, setErrorSubmit] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageError, setImageError] = useState(null);
+  const fileInputRef = useRef(null);
 
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('Save user:', formData);
-    navigate('/ListClients');
-  };
-
-    useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
-     
       try {
-        const res = await apiCall.get('api/User/GetProfile');
+        const res = await apiCall.get('/User/GetProfile', {
+          params: { UserEmail: email }
+        });
+
         if (res.data) {
-          console.log(res.data)
-          setUsers(res.data.$values);
+          const userData = res.data;
+          setUser(userData);
+          setFormData({ ...userData, birthday: userData.birthDay || '' });
+
+          try {
+            const res2 = await apiCall.get(`/User/GetPhotoProfile/${email}`);
+            const photoPath = res2.data?.photoPath;
+            if (photoPath && photoPath !== 'NoPhoto') {
+              setUser(prev => ({ ...prev, profileImage: photoPath }));
+            }
+          } catch (err) {
+            console.error("Erro ao buscar foto:", err);
+          }
         }
       } catch (err) {
-        console.error("Erro ao buscar utilizadores:", err);
-        setUsers([]);
+        console.error("Erro ao buscar perfil:", err);
+        setUser({});
       }
     };
 
     fetchData();
-  }, []);
+  }, [email]);
+
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!validTypes.includes(file.type)) {
+      setImageError('Formato inválido. Usa JPG ou PNG.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError('Imagem deve ter menos de 5MB');
+      return;
+    }
+
+    setSelectedImage(file);
+    const reader = new FileReader();
+    reader.onload = (e) => setImagePreview(e.target.result);
+    reader.readAsDataURL(file);
+  };
+
+  const uploadImage = async () => {
+    if (!selectedImage) return null;
+
+    const imageFormData = new FormData();
+    imageFormData.append('Photo', selectedImage);
+
+    try {
+      const response = await apiCall.post(`/User/UploadProfileImage/${id}`, imageFormData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      return response.data.partialPath;
+    } catch (error) {
+      console.error('Erro ao enviar imagem:', error);
+      setImageError('Erro ao enviar imagem');
+      return null;
+    }
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setErrorSubmit(null);
+
+    let imageUrl = user.profileImage;
+
+    if (selectedImage) {
+      imageUrl = await uploadImage();
+      if (!imageUrl) return;
+    }
+
+    const payload = {
+      ...formData,
+      birthday: formData.birthday || undefined,
+      profileImage: imageUrl
+    };
+
+    try {
+      const response = await apiCall.put('/User/EditUser', payload);
+      if (!response.data) {
+        setErrorSubmit('Erro ao atualizar');
+        return;
+      }
+
+      setUser({ ...formData, profileImage: imageUrl });
+      setFormData({ ...formData, profileImage: imageUrl });
+      setSelectedImage(null);
+      setImagePreview(null);
+    } catch (error) {
+      setErrorSubmit(error?.response?.data?.message || 'Erro ao guardar');
+    }
+  };
+
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5285";
+  const currentImageUrl = imagePreview || (user?.profileImage ? `${API_BASE}/${user.profileImage}` : null);
+  const displayName = `${user?.firstName || ''}`.trim() || 'User';
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Edit User</h1>
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold" style={{ color: theme.colors.text.primary }}>
+          Edit User
+        </h1>
+        <button
+          onClick={handleSave}
+          className="inline-flex items-center px-4 py-2 rounded-lg text-white"
+          style={{ backgroundColor: theme.colors.success.main }}
+        >
+          <Save className="h-5 w-5 mr-2" />
+          Save Changes
+        </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-md p-6">
-        <div className="space-y-6">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-              Name
-            </label>
+      {errorSubmit && (
+        <div className="bg-red-100 text-red-800 p-3 rounded">{errorSubmit}</div>
+      )}
+
+      <div className="bg-white rounded-xl shadow-md p-6" style={{ backgroundColor: theme.colors.background.paper }}>
+        <div className="flex items-center space-x-6">
+          <div className="relative cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+            <div className="h-24 w-24 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center text-3xl font-bold text-white"
+              style={{ backgroundColor: theme.colors.primary.main }}>
+              {currentImageUrl ? (
+                <img src={currentImageUrl} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                displayName.charAt(0).toUpperCase()
+              )}
+            </div>
             <input
-              type="text"
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="hidden"
             />
           </div>
-
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-              Status
-            </label>
-            <select
-              id="status"
-              value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={() => navigate('/users')}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
-            >
-              <X className="h-5 w-5 mr-2" />
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md text-white bg-blue-500 hover:bg-blue-600"
-            >
-              <Save className="h-5 w-5 mr-2" />
-              Save Changes
-            </button>
+            <h2 className="text-xl font-bold" style={{ color: theme.colors.text.primary }}>
+              {displayName}
+            </h2>
+            <p className="text-sm" style={{ color: theme.colors.text.secondary }}>
+              {user?.email}
+            </p>
           </div>
         </div>
-      </form>
+
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* First Name */}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">First Name</label>
+            <input
+              type="text"
+              value={formData.firstName || ''}
+              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+              className="w-full px-3 py-2 rounded-md border border-gray-300"
+            />
+          </div>
+
+          {/* Family Name */}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">Family Name</label>
+            <input
+              type="text"
+              value={formData.familyName || ''}
+              onChange={(e) => setFormData({ ...formData, familyName: e.target.value })}
+              className="w-full px-3 py-2 rounded-md border border-gray-300"
+            />
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">Phone</label>
+            <input
+              type="text"
+              value={formData.phoneNumber || ''}
+              onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+              className="w-full px-3 py-2 rounded-md border border-gray-300"
+            />
+          </div>
+
+          {/* Birthday */}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">Birthday</label>
+            <input
+              type="date"
+              value={formData.birthday || ''}
+              onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
+              className="w-full px-3 py-2 rounded-md border border-gray-300"
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-export default EditUser;
+export default EditUserProfile;

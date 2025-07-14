@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { useTheme } from '../../Theme/Theme';
@@ -7,10 +7,9 @@ import { useLanguage } from '../../../utilis/Translate/LanguageContext';
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 function Dashboard() {
-  const theme = useTheme();
+  const { theme } = useTheme();
   const { t } = useLanguage();
-  
-  // Fallback colors in case theme colors are undefined
+
   const colors = {
     error: theme?.colors?.error?.main || '#FF6B6B',
     primary: theme?.colors?.primary?.main || '#4361EE',
@@ -93,11 +92,11 @@ function Dashboard() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold" style={{ color: theme?.colors?.text?.primary }}>
+    <div className="max-w-7xl mx-auto space-y-6">
+      <h1 className="text-2xl font-bold" style={{ color: colors.text.primary }}>
         {t('common.dashboard')}
       </h1>
-      
+
       <div className="grid md:grid-cols-2 gap-6">
         <div style={{ backgroundColor: colors.background.paper }} className="p-6 rounded-xl shadow-md">
           <h2 className="text-xl font-semibold mb-4" style={{ color: colors.text.primary }}>
