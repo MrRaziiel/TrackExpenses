@@ -7,7 +7,6 @@ import apiCall from "../../hooks/apiCall";
 import AuthContext from "../Authentication/AuthContext";
 
 const Login = () => {
-  console.log("login");
   const { auth, setAuth, isAuthenticated, setIsAuthenticated, role, setRole } = useContext(AuthContext);
   const { theme } = useTheme();
   const { t } = useLanguage();
@@ -40,7 +39,6 @@ const Login = () => {
       navigate('/dashboard');
 
     } catch (err) {
-      console.log("err login", err)
       setErrorSubmit(err.message || 'Login failed');
     }
   };

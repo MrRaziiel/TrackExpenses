@@ -56,7 +56,7 @@ namespace TRACKEXPENSES.Server.Models
                 OnPropertyChanged(nameof(Birthday));
                 if (birthday != null)
                 {
-                    BirthdayString = birthday.Value.ToString("dd/MM/yyyy", new CultureInfo("pt-PT"));
+                    BirthdayString = birthday.Value.ToString();
                 }
             }
         }

@@ -6,6 +6,9 @@ export default {
         fontFamily: {
           sans: ['Inter var', 'sans-serif'],
         },
+        fontSize: {
+        base: '400px', 
+      },
         colors: {
           primary: {
             50: '#f0f9ff',

@@ -15,7 +15,6 @@ function AddExpense() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Save expense:', formData);
     navigate('/expenses');
   };
 

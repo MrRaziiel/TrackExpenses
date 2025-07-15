@@ -9,3 +9,7 @@
   .dark {
     color-scheme: dark;
   }
+
+  html {
+  font-size: 22px;
+}

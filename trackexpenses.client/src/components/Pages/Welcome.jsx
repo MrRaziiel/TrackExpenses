@@ -9,7 +9,6 @@ import { Navigate } from "react-router-dom";
 
   
 function Welcome() {
-  console.log("Welcome");
   const { theme } = useTheme();
   const { isAuthenticated } = useContext(AuthContext);
 
