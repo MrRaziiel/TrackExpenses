@@ -152,13 +152,11 @@ const handleChange = (e) => {
     const isValidCode = await verifyGroupCodeBd();
     if (!isValidCode) return
     const allFields = [...firstConfigurationPage, ...secondconfigurationPage];
-    console.log("allFields",allFields);
     const payload = allFields.reduce((acc, field) => {
       acc[field.lower] = formData[field.lower] ?? ""; // pega os dados reais do formulário
       return acc;
     }, {});
     try {
-      console.log("payload", payload);
       const res = await apiCall.post('/auth/Register', payload);
 
     navigate('/login');

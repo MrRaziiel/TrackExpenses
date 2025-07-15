@@ -8,7 +8,7 @@ import {
 
 function ProfilePage() {
   const [user, setUser] = useState({});
-  const { auth } = useContext(AuthContext);
+  const { auth, setAuth } = useContext(AuthContext);
   const { theme } = useTheme();
 
   const [errorSubmit, setErrorSubmit] = useState(null);
@@ -32,7 +32,7 @@ function ProfilePage() {
           setUser(userData);
           setFormData({
             ...userData,
-            birthday: userData.birthDay || ''
+            birthday: userData.birthday || ''
           });
 
           try {
@@ -40,12 +40,10 @@ function ProfilePage() {
             const photoPath = res2.data?.photoPath;
             const firstName = res2.data?.firstName;
             if (photoPath && photoPath !== 'NoPhoto') {
-           setUser(prev => ({ ...prev, profileImage: res2.data?.photoPath || '' }));
-        }
-        if (firstName)
-          console.log('firstName');
+              setUser(prev => ({ ...prev, profileImage: res2.data?.photoPath || '' }));
+            }
+            if (firstName)
               auth.firstName = firstName;
-            
           } catch (err) {
             console.error("Erro ao buscar photo:", err);
           }
@@ -82,7 +80,6 @@ function ProfilePage() {
     reader.readAsDataURL(file);
   };
 
- 
   const uploadImage = async () => {
     if (!selectedImage) return null;
 
@@ -114,7 +111,6 @@ function ProfilePage() {
       if (!imageUrl) return;
     }
 
-    
     const payload = {
       ...formData,
       birthday: formData.birthday || undefined,
@@ -137,6 +133,15 @@ function ProfilePage() {
       setIsEditing(false);
       setSelectedImage(null);
       setImagePreview(null);
+
+      // Atualiza imagem no contexto auth
+      if (imageUrl) {
+        setAuth((prev) => ({
+          ...prev,
+          path: `${import.meta.env.VITE_API_BASE_URL}/${imageUrl}?t=${Date.now()}`
+        }));
+      }
+
     } catch (error) {
       setErrorSubmit(error?.response?.data?.message || 'Error to save user data');
     }
@@ -145,7 +150,7 @@ function ProfilePage() {
   const handleCancel = () => {
     const resetFormData = {
       ...user,
-      birthday: user.birthDay || ''
+      birthday: user.birthday || ''
     };
 
     setFormData(resetFormData);
@@ -176,7 +181,7 @@ function ProfilePage() {
   const currentGroupMembers = isEditing ? (formData.groupMembers || []) : (user?.groupMembers || []);
   const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5285";
   const currentImageUrl = imagePreview 
-  || (user?.profileImage ? `${API_BASE}/${user.profileImage}` : null);
+    || (user?.profileImage ? `${API_BASE}/${user.profileImage}` : null);
 
 
   return (
@@ -408,7 +413,8 @@ function ProfilePage() {
                 </h4>
                 {!isEditing ? (
                   <p className="text-base" style={{ color: theme.colors.text.primary }}>
-                    {user?.birthDay ? new Date(user.birthDay).toLocaleDateString() : 'Not provided'}
+                    
+                    {user?.birthday ? new Date(user.birthday).toLocaleDateString() : 'Not provided'}
                   </p>
                 ) : (
                   <input

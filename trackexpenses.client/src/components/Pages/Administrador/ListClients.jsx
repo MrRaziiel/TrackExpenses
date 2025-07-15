@@ -6,13 +6,12 @@ import apiCall from '../../../hooks/apiCall';
 import AuthContext from '../../Authentication/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-const arrayPropertiesToShow = ["firstName", "familyName", "email", "birthday"];
+const arrayPropertiesToShow = ["fullName", "email", "birthday", "role", "group"];
 
 function UsersList() {
   const { auth, isAuthenticated, role } = useContext(AuthContext);
   const { theme } = useTheme();
   const { t } = useLanguage();
-
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,6 +23,7 @@ function UsersList() {
       setErrorSubmit(null);
       try {
         const res = await apiCall.get('Administrator/User/GetAllUsers');
+        console.log('data all users', res.data);
         if (res.data) setUsers(res.data.$values);
       } catch (err) {
         console.error("Erro ao buscar utilizadores:", err);
@@ -65,47 +65,60 @@ function UsersList() {
   };
 
   const renderContent = () => {
-    if (!filteredUsers.length) {
-      return (
-        <tr>
-          <td colSpan={100} className="px-6 py-8 text-center" style={{ color: theme?.colors?.text?.secondary }}>
-            {t('common.noUsersFound')}
+  if (!filteredUsers.length) {
+    return (
+      <tr>
+        <td colSpan={100} className="px-6 py-8 text-center" style={{ color: theme?.colors?.text?.secondary }}>
+          {t('common.noUsersFound')}
+        </td>
+      </tr>
+    );
+  }
+
+  return filteredUsers.map((user, index) => (
+    <tr key={index}>
+      {arrayPropertiesToShow.map((prop) => {
+        let value;
+        switch (prop) {
+          case "fullName":
+            value = `${user.firstName || ""} ${user.familyName || ""}`.trim();
+            break;
+          case "group":
+            value = user.groupOfUsers?.name || "-";
+            break;
+          default:
+            value = user[prop] || "-";
+        }
+
+        return (
+          <td
+            key={prop}
+            className="px-4 py-3 text-sm text-center break-words max-w-[200px]"
+            style={{ color: theme?.colors?.text?.secondary }}
+          >
+            {value}
           </td>
-        </tr>
-      );
-    }
-
-    return filteredUsers.map((user, index) => (
-      <tr key={index}>
-  {arrayPropertiesToShow.map((prop) => (
-    <td
-      key={prop}
-      className="px-4 py-3 text-sm text-center break-words max-w-[200px]"
-      style={{ color: theme?.colors?.text?.secondary }}
-    >
-      {user[prop] || "-"}
-    </td>
-  ))}
-  <td className="px-4 py-3 text-sm text-center">
-    <div className="flex justify-center items-center space-x-2">
-      <button
-        onClick={() => handleEdit(user.email, user.id)}
-        className="text-blue-600 hover:text-blue-900"
-      >
-        <Pencil className="h-4 w-4" />
-      </button>
-      <button
-        onClick={() => handleDelete(user.id)}
-        className="text-red-600 hover:text-red-900"
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
-    </div>
-  </td>
-</tr>
-
-    ));
-  };
+        );
+      })}
+      <td className="px-4 py-3 text-sm text-center">
+        <div className="flex justify-center items-center space-x-2">
+          <button
+            onClick={() => handleEdit(user.email, user.id)}
+            className="text-blue-600 hover:text-blue-900"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => handleDelete(user.id)}
+            className="text-red-600 hover:text-red-900"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      </td>
+    </tr>
+  ));
+};
 
   return (
     <div className="min-h-screen px-4 py-6" style={{ backgroundColor: theme?.colors?.background?.default }}>
@@ -135,7 +148,7 @@ function UsersList() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead style={{ backgroundColor: theme?.colors?.background?.paper }}>
                 <tr>
-                  {["firstName", "familyName", "email", "birthday", "actions"].map((key, i) => (
+                  {arrayPropertiesToShow.map((key, i) => (
                     <th
                       key={i}
                       className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-center"

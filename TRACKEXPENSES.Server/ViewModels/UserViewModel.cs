@@ -36,7 +36,7 @@ namespace TRACKEXPENSES.Server.ViewModels
             if (Birthday != default || Birthday != null) updateUser.Birthday = Birthday;
             if (Email != default || Email != null) updateUser.Email = Email;
             if (ProfileImageId != default || ProfileImageId != null) updateUser.ProfileImageId = ProfileImageId;
-            if (PhoneNumber != default || PhoneNumber != null) updateUser.PhoneNumber = ProfileImagePath;
+            if (PhoneNumber != default || PhoneNumber != null) updateUser.PhoneNumber = PhoneNumber;
             if (Password != default || Password != null) updateUser.Password = Password;
         }
     }

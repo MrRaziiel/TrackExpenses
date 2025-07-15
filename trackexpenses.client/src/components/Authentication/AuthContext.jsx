@@ -10,7 +10,6 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const storedAuth = localStorage.getItem("auth");
-    console.log("storedAuth", storedAuth)
     if (storedAuth) {
       try {
         const parsed = JSON.parse(storedAuth);
@@ -19,7 +18,6 @@ export const AuthProvider = ({ children }) => {
         setLoading(true);
         setRole(parsed?.user?.role);
       } catch (error) {
-        console.log(error);
         localStorage.removeItem("auth");
       }
     }

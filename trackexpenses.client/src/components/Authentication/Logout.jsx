@@ -7,7 +7,6 @@ const useLogout = () => {
   const navigate = useNavigate();
 
   const logout = () => {
-    console.log("logout");
     setAuth(null);
     setIsAuthenticated(false);
     setLoading(false);

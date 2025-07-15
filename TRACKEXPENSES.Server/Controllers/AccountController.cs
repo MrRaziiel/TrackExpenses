@@ -50,55 +50,77 @@ namespace TRACKEXPENSES.Server.Controllers
         [HttpPost("UploadProfileImage/{id}")]
         public async Task<IActionResult> UploadProfileImage(string id, IFormFile photo)
         {
-            var existUser = await context.Users.Include(user => user.Expenses).SingleOrDefaultAsync(c => c.Id == id);
-            if (existUser == null) return NotFound("User not found");
-            if (photo == null || photo.Length == 0) return BadRequest("Invalid file.");
+            if (string.IsNullOrWhiteSpace(id))
+                return BadRequest("Invalid user ID.");
+
+            if (photo == null || photo.Length == 0)
+                return BadRequest("Invalid file.");
+
+            var user = await context.Users
+                .Include(u => u.Expenses)
+                .SingleOrDefaultAsync(u => u.Id == id);
+
+            if (user == null)
+                return NotFound("User not found");
 
             var extension = Path.GetExtension(photo.FileName);
+            if (string.IsNullOrWhiteSpace(extension))
+                return BadRequest("File must have an extension.");
+
+            var folderName = Path.Combine("Images", "Users");
+            var rootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", folderName);
+            Directory.CreateDirectory(rootPath); 
+
             var fileName = id + extension;
-            var relativePath = Path.Combine("Images", "Users");
-            var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", relativePath);
-            var fullPath = Path.Combine(folderPath, fileName);
-            var partialPathFile = Path.Combine(relativePath, fileName).Replace("\\", "/");
+            var fullPath = Path.Combine(rootPath, fileName);
+            var relativePath = Path.Combine(folderName, fileName).Replace("\\", "/");
 
-            Directory.CreateDirectory(folderPath); 
+            ImageDB imageRecord = null;
 
-            
-            var existPhoto = await context.ImagesDB.SingleOrDefaultAsync(c => c.Name == partialPathFile);
-            if (existPhoto != null)
+            if (!string.IsNullOrEmpty(user.ProfileImageId))
             {
-                existPhoto.Extension = extension;
-                await using (var stream = new FileStream(fullPath, FileMode.Create))
+                imageRecord = await context.ImagesDB
+                    .SingleOrDefaultAsync(i => i.Id.ToString() == user.ProfileImageId);
+
+                if (imageRecord != null)
                 {
-                    await photo.CopyToAsync(stream);
+                    // Apaga imagem anterior
+                    var oldPath = Path.Combine(rootPath, id + imageRecord.Extension);
+                    if (System.IO.File.Exists(oldPath))
+                        System.IO.File.Delete(oldPath);
+
+                    // Atualiza extensão e nome
+                    imageRecord.Extension = extension;
+                    imageRecord.Name = relativePath;
+
+                    context.ImagesDB.Update(imageRecord);
                 }
-
-                context.ImagesDB.Update(existPhoto);
-                await context.SaveChangesAsync();
-
-                return Ok(new { partialPath = partialPathFile });
             }
 
-  
-            var newImage = new ImageDB
+            if (imageRecord == null)
             {
-                Name = partialPathFile,
-                Extension = extension,
+                imageRecord = new ImageDB
+                {
+                    Name = relativePath,
+                    Extension = extension
+                };
 
-            };
+                await context.ImagesDB.AddAsync(imageRecord);
+                user.ProfileImageId = imageRecord.Id.ToString();
+            }
 
-            await using (var stream = new FileStream(fullPath, FileMode.Create))
+            // Salva nova imagem no disco
+            using (var stream = new FileStream(fullPath, FileMode.Create))
             {
                 await photo.CopyToAsync(stream);
             }
 
-            await context.ImagesDB.AddAsync(newImage);
-            existUser.ProfileImageId = newImage.Id.ToString(); 
-            context.Users.Update(existUser);
+            context.Users.Update(user);
             await context.SaveChangesAsync();
 
-            return Ok(new { partialPath = partialPathFile });
+            return Ok(new { partialPath = relativePath });
         }
+
 
 
         [HttpGet("GetPhotoProfile/{email}")]
@@ -114,7 +136,6 @@ namespace TRACKEXPENSES.Server.Controllers
 
             if (existUser == null)
                 return NotFound("User not found");
-
             if (existUser.ProfileImageId == "No_image.jpg")
                 return Ok(new { photoPath = "NoPhoto" });
 

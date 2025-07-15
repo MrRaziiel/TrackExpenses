@@ -16,7 +16,7 @@ function AddIncome() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Save income:', formData);
+    ('Save income:', formData);
     navigate('/incomes');
   };
 
