@@ -92,10 +92,12 @@ function Dashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold" style={{ color: colors.text.primary }}>
+        <div className="space-y-6">
+      <div className="flex justify-between items-center">
+      <h1 className="text-2xl font-bold" style={{ color: theme?.colors?.text?.primary }}>
         {t('common.dashboard')}
       </h1>
+          </div>
 
       <div className="grid md:grid-cols-2 gap-6">
         <div style={{ backgroundColor: colors.background.paper }} className="p-6 rounded-xl shadow-md">

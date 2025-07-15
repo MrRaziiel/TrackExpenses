@@ -120,54 +120,57 @@ function UsersList() {
   ));
 };
 
-  return (
-    <div className="min-h-screen px-4 py-6" style={{ backgroundColor: theme?.colors?.background?.default }}>
-      <div className="max-w-7xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold" style={{ color: theme?.colors?.text?.primary }}>
-          {t('common.users')}
-        </h1>
+return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+      <h1 className="text-2xl font-bold" style={{ color: theme?.colors?.text?.primary }}>
+        {t('common.users')}
+      </h1>
+    </div>
 
-        <div className="relative">
-          <input
-            type="text"
-            placeholder={t('common.search')}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring focus:border"
-            style={{
-              backgroundColor: theme?.colors?.background?.paper,
-              color: theme?.colors?.text?.primary,
-              borderColor: theme?.colors?.secondary?.light
-            }}
-          />
-          <Search className="h-5 w-5 text-gray-400 absolute left-3 top-2.5" />
-        </div>
-
-        <div style={{ backgroundColor: theme?.colors?.background?.paper }} className="rounded-xl shadow-md overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead style={{ backgroundColor: theme?.colors?.background?.paper }}>
-                <tr>
-                  {arrayPropertiesToShow.map((key, i) => (
-                    <th
-                      key={i}
-                      className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-center"
-                      style={{ color: theme?.colors?.text?.secondary }}
-                    >
-                      {t(`common.${key}`)}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody style={{ backgroundColor: theme?.colors?.background?.paper }}>
-                {renderContent()}
-              </tbody>
-            </table>
-          </div>
-        </div>
+    <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
+      <div className="flex-1 relative">
+        <input
+          type="text"
+          placeholder={t('common.search')}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+          style={{
+            backgroundColor: theme?.colors?.background?.paper,
+            color: theme?.colors?.text?.primary,
+            borderColor: theme?.colors?.secondary?.light
+          }}
+        />
+        <Search className="h-5 w-5 text-gray-400 absolute left-3 top-2.5" />
       </div>
     </div>
-  );
+
+    <div className="bg-white rounded-xl shadow-md overflow-auto" style={{ backgroundColor: theme?.colors?.background?.paper }}>
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead style={{ backgroundColor: theme?.colors?.background?.paper }}>
+          <tr>
+            {arrayPropertiesToShow.map((key, i) => (
+              <th
+                key={i}
+                className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-center"
+                style={{ color: theme?.colors?.text?.secondary }}
+              >
+                {t(`common.${key}`)}
+              </th>
+            ))}
+            <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-center" style={{ color: theme?.colors?.text?.secondary }}>
+              {t('common.actions')}
+            </th>
+          </tr>
+        </thead>
+        <tbody style={{ backgroundColor: theme?.colors?.background?.paper }}>
+          {renderContent()}
+        </tbody>
+      </table>
+    </div>
+  </div>
+);
 }
 
 export default UsersList;

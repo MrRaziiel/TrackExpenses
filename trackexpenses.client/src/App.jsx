@@ -125,11 +125,10 @@ setAuth(prev => ({
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: theme?.colors?.background?.default || '#F9FAFB' }}>
+    <div className="min-h-screen flex flex-col text-base" style={{ backgroundColor: theme?.colors?.background?.default || '#F9FAFB' }}>
       {/* NAVBAR UPER */}
       <nav style={{ backgroundColor: theme?.colors?.primary?.main || '#3B82F6' }} className="text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+        <div className="w-full px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
             <Link to="/" className="flex items-center space-x-2">
               <Wallet className="h-6 w-6" />
               <span className="font-bold text-xl hidden sm:inline">FinanceTracker</span>
@@ -199,7 +198,7 @@ setAuth(prev => ({
               </button>
             </div>
           )}
-        </div>
+      
       </nav>
 
       {/* MAIN */}
