@@ -26,6 +26,7 @@ import RequireAuth from './components/Authentication/Require';
 import useLogout from './components/Authentication/Logout';
 import ForgotPassword from './components/Pages/ForgotPassword';
 import EditUserProfile from './components/Pages/Administrador/EditUser';
+import CategoryManager from './components/Pages/Categories/CategoryManager';
 
 function App() {
   const { theme } = useTheme();
@@ -183,7 +184,7 @@ setAuth(prev => ({
                 onClick={() => setIsMenuOpen(false)} style={{ backgroundColor: theme?.colors?.primary?.dark }}>
                 <PiggyBank className="h-5 w-5" /><span>{t('common.expenses')}</span>
               </Link>
-              <Link to="/incomes" className="flex items-center space-x-2 py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+              <Link to="/Incomes" className="flex items-center space-x-2 py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
                 onClick={() => setIsMenuOpen(false)} style={{ backgroundColor: theme?.colors?.primary?.dark }}>
                 <Wallet className="h-5 w-5" /><span>{t('common.incomes')}</span>
               </Link>
@@ -234,9 +235,13 @@ setAuth(prev => ({
                   <PiggyBank className="h-4 w-4" />
                   {!isSidebarCollapsed && <span className="text-sm">{t('common.expenses')}</span>}
                 </Link>
-                <Link to="/incomes" className="flex items-center space-x-2 px-2 py-1.5 text-gray-700 hover:bg-blue-50 rounded-lg">
+                <Link to="/Incomes" className="flex items-center space-x-2 px-2 py-1.5 text-gray-700 hover:bg-blue-50 rounded-lg">
                   <Wallet className="h-4 w-4" />
                   {!isSidebarCollapsed && <span className="text-sm">{t('common.incomes')}</span>}
+                </Link>
+                <Link to="/Categories" className="flex items-center space-x-2 px-2 py-1.5 text-gray-700 hover:bg-blue-50 rounded-lg">
+                  <Wallet className="h-4 w-4" />
+                  {!isSidebarCollapsed && <span className="text-sm">{t('common.categories')}</span>}
                 </Link>
               </div>
             </nav>
@@ -254,12 +259,13 @@ setAuth(prev => ({
               <Route path="/Dashboard" element={<Dashboard />} />
               <Route path="/expenses" element={<Expenses />} />
               <Route path="/expenses/add" element={<AddExpense />} />
-              <Route path="/incomes" element={<Incomes />} />
+              <Route path="/Incomes" element={<Incomes />} />
               <Route path="/incomes/add" element={<AddIncome />} />
               <Route path="/Users" element={<UsersList />} />
               <Route path="/Users/edit/:id" element={<EditUser />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/Profile" element={<ProfilePage />} />
+              <Route path="/Categories" element={<CategoryManager />} />
             </Route>
           </Routes>
         </div>

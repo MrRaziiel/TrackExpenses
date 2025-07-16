@@ -57,7 +57,6 @@ namespace TRACKEXPENSES.Server.Controllers
                 return BadRequest("Invalid file.");
 
             var user = await context.Users
-                .Include(u => u.Expenses)
                 .SingleOrDefaultAsync(u => u.Id == id);
 
             if (user == null)
@@ -131,7 +130,6 @@ namespace TRACKEXPENSES.Server.Controllers
 
 
             var existUser = await context.Users
-                .Include(user => user.Expenses)
                 .SingleOrDefaultAsync(c => c.Email == email);
 
             if (existUser == null)

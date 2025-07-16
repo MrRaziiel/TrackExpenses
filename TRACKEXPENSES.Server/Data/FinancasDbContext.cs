@@ -31,6 +31,12 @@ namespace TRACKEXPENSES.Server.Data
 
             // Call the base method to ensure any default behavior is applied
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<ExpenseCategory>()
+    .HasMany(c => c.Subcategories)
+    .WithOne(c => c.ParentCategory)
+    .HasForeignKey(c => c.ParentCategoryId)
+    .OnDelete(DeleteBehavior.Restrict);
         }
 
     }
