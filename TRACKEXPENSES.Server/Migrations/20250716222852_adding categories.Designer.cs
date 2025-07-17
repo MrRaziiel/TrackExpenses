@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TRACKEXPENSES.Server.Data;
 
@@ -11,9 +12,11 @@ using TRACKEXPENSES.Server.Data;
 namespace TRACKEXPENSES.Server.Migrations
 {
     [DbContext(typeof(FinancasDbContext))]
-    partial class FinancasDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250716222852_adding categories")]
+    partial class addingcategories
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -163,44 +166,46 @@ namespace TRACKEXPENSES.Server.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Category")
+                    b.Property<string>("ClientId")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("CreatedDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("GroupId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImagePath")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("PayAmount")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<double?>("PayAmount")
+                        .HasColumnType("float");
 
                     b.Property<string>("Periodicity")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("RepeatCount")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("ShouldNotify")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("UserId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<decimal>("Value")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<double>("Value")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime?>("firstPaymentDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("lastPaymentDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("numberAppointments")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -437,9 +442,7 @@ namespace TRACKEXPENSES.Server.Migrations
                 {
                     b.HasOne("TRACKEXPENSES.Server.Models.User", null)
                         .WithMany("Expenses")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("TRACKEXPENSES.Server.Models.User", b =>

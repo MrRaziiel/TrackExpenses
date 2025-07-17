@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TRACKEXPENSES.Server.Data;
 
@@ -11,9 +12,11 @@ using TRACKEXPENSES.Server.Data;
 namespace TRACKEXPENSES.Server.Migrations
 {
     [DbContext(typeof(FinancasDbContext))]
-    partial class FinancasDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250716230809_EditExpenses")]
+    partial class EditExpenses
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -164,6 +167,7 @@ namespace TRACKEXPENSES.Server.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Category")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
@@ -173,13 +177,14 @@ namespace TRACKEXPENSES.Server.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("GroupId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal?>("PayAmount")
+                    b.Property<decimal>("PayAmount")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Periodicity")
