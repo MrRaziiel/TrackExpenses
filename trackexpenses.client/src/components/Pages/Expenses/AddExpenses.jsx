@@ -10,6 +10,7 @@ function AddExpense() {
   const { auth } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -20,13 +21,24 @@ function AddExpense() {
     endDate: '',
     repeatCount: '1',
     shouldNotify: true,
-    category: '' 
+    category: ''
   });
 
   const [endDateTouched, setEndDateTouched] = useState(false);
-
   const isRecurring = formData.periodicity !== 'OneTime';
-  const haveFinishDate = formData.periodicity !== 'OneTime' && formData.periodicity !== 'Daily';
+
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await apiCall.get('Categories/getAllCategories');
+        setCategories(response?.data?.$values || []);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const getMinEndDate = () => {
     const count = parseInt(formData.repeatCount || '1');
@@ -34,79 +46,63 @@ function AddExpense() {
     const minEnd = new Date(start);
 
     switch (formData.periodicity) {
-      case 'Daily':
-        minEnd.setDate(start.getDate() + count - 1);
-        break;
-      case 'Weekly':
-        minEnd.setDate(start.getDate() + 7 * (count - 1));
-        break;
-      case 'Monthly':
-        minEnd.setMonth(start.getMonth() + (count - 1));
-        break;
-      case 'Yearly':
-        minEnd.setFullYear(start.getFullYear() + (count - 1));
-        break;
-      default:
-        return formData.startDate;
+      case 'Daily': minEnd.setDate(start.getDate() + count - 1); break;
+      case 'Weekly': minEnd.setDate(start.getDate() + 7 * (count - 1)); break;
+      case 'Monthly': minEnd.setMonth(start.getMonth() + (count - 1)); break;
+      case 'Yearly': minEnd.setFullYear(start.getFullYear() + (count - 1)); break;
+      default: return formData.startDate;
     }
-
     return minEnd.toISOString().split('T')[0];
   };
 
   useEffect(() => {
     if (!formData.startDate || !formData.periodicity || endDateTouched) return;
-
     const count = parseInt(formData.repeatCount || '1');
     if (isNaN(count) || count < 1) return;
 
     const start = new Date(formData.startDate);
     const newEnd = new Date(start);
-
     switch (formData.periodicity) {
-      case 'Daily':
-        newEnd.setDate(newEnd.getDate() + count - 1);
-        break;
-      case 'Weekly':
-        newEnd.setDate(newEnd.getDate() + 7 * (count - 1));
-        break;
-      case 'Monthly':
-        newEnd.setMonth(newEnd.getMonth() + (count - 1));
-        break;
-      case 'Yearly':
-        newEnd.setFullYear(newEnd.getFullYear() + (count - 1));
-        break;
-      default:
-        return;
+      case 'Daily': newEnd.setDate(start.getDate() + count - 1); break;
+      case 'Weekly': newEnd.setDate(start.getDate() + 7 * (count - 1)); break;
+      case 'Monthly': newEnd.setMonth(start.getMonth() + (count - 1)); break;
+      case 'Yearly': newEnd.setFullYear(start.getFullYear() + (count - 1)); break;
     }
-
     const formatted = newEnd.toISOString().split('T')[0];
     setFormData(prev => ({ ...prev, endDate: formatted }));
   }, [formData.startDate, formData.periodicity, formData.repeatCount, endDateTouched]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const payload = {
       ...formData,
-      clientId: auth?.id || '',
-      groupId: auth?.groupId || '',
       value: parseFloat(formData.value),
       payAmount: formData.payAmount ? parseFloat(formData.payAmount) : 0,
       startDate: new Date(formData.startDate).toISOString(),
       endDate: formData.endDate ? new Date(formData.endDate).toISOString() : null,
-      repeatCount: formData.repeatCount ? parseInt(formData.repeatCount) : null
+      repeatCount: formData.repeatCount ? parseInt(formData.repeatCount) : null,
+      userEmail: auth?.email || ''
     };
 
-    // try {
-    //   await apiCall.post('api/Expenses/CreateRecurring', payload);
-    //   navigate('/expenses');
-    // } catch (error) {
-    //   console.error('Failed to add recurring expense:', error);
-    // }
+    try {
+      await apiCall.post('Expenses/CreateExpenses', payload);
+      navigate('/expenses');
+    } catch (error) {
+      console.error('Failed to save expense:', error);
+    }
+  };
+
+  const amountPerRepeat = () => {
+    const value = parseFloat(formData.value || 0);
+    const pay = parseFloat(formData.payAmount || 0);
+    const count = parseInt(formData.repeatCount || 1);
+    if (!count || count === 0) return null;
+    const result = (value - pay) / count;
+    return isNaN(result) ? null : result.toFixed(2);
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="space-y-6 max-w-2xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold" style={{ color: theme?.colors?.text?.primary }}>
           New Expense with Reminder
@@ -115,9 +111,7 @@ function AddExpense() {
 
       <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-xl p-6 space-y-6">
         <div>
-          <label className="block text-sm font-medium" style={{ color: theme?.colors?.text?.secondary }}>
-            Name *
-          </label>
+          <label className="block text-sm font-medium">Name *</label>
           <input
             type="text"
             required
@@ -128,9 +122,7 @@ function AddExpense() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium" style={{ color: theme?.colors?.text?.secondary }}>
-            Description
-          </label>
+          <label className="block text-sm font-medium">Description</label>
           <input
             type="text"
             value={formData.description}
@@ -139,11 +131,24 @@ function AddExpense() {
           />
         </div>
 
+        <div>
+          <label className="block text-sm font-medium">Category *</label>
+          <select
+            required
+            value={formData.category}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+          >
+            <option value="">Select a category</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.name}>{cat.name}</option>
+            ))}
+          </select>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium" style={{ color: theme?.colors?.text?.secondary }}>
-              Value (€)
-            </label>
+            <label className="block text-sm font-medium">Value (€)</label>
             <input
               type="number"
               min="0"
@@ -154,9 +159,7 @@ function AddExpense() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium" style={{ color: theme?.colors?.text?.secondary }}>
-              Paid Amount (€)
-            </label>
+            <label className="block text-sm font-medium">Paid Amount (€)</label>
             <input
               type="number"
               min="0"
@@ -168,55 +171,10 @@ function AddExpense() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium" style={{ color: theme?.colors?.text?.secondary }}>
-              Start Date
-            </label>
-            <input
-              type="date"
-              value={formData.startDate}
-              onChange={(e) => {
-                setFormData({ ...formData, startDate: e.target.value });
-                setEndDateTouched(false);
-              }}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium" style={{ color: theme?.colors?.text?.secondary }}>
-              Periodicity
-            </label>
-            <select
-              value={formData.periodicity}
-              onChange={(e) => {
-                const newPeriodicity = e.target.value;
-                const isRecurring = newPeriodicity !== 'OneTime';
-                setFormData(prev => ({
-                  ...prev,
-                  periodicity: newPeriodicity,
-                  repeatCount: isRecurring && !prev.repeatCount ? '1' : prev.repeatCount
-                }));
-                setEndDateTouched(false);
-              }}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-            >
-              <option value="OneTime">One Time</option>
-              <option value="Daily">Daily</option>
-              <option value="Weekly">Weekly</option>
-              <option value="Monthly">Monthly</option>
-              <option value="Yearly">Yearly</option>
-            </select>
-          </div>
-        </div>
-
         {isRecurring && (
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium" style={{ color: theme?.colors?.text?.secondary }}>
-                End Date
-              </label>
+              <label className="block text-sm font-medium">End Date</label>
               <input
                 type="date"
                 value={formData.endDate}
@@ -232,24 +190,28 @@ function AddExpense() {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
               />
             </div>
-            {haveFinishDate && (
-              <div>
-                <label className="block text-sm font-medium" style={{ color: theme?.colors?.text?.secondary }}>
-                  Repeat Count
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={formData.repeatCount}
-                  onChange={(e) => {
-                    setFormData({ ...formData, repeatCount: e.target.value });
-                    setEndDateTouched(false);
-                  }}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                  placeholder="e.g., 12 times"
-                />
+            <div>
+              <label className="block text-sm font-medium">Repeat Count</label>
+              <input
+                type="number"
+                min="1"
+                value={formData.repeatCount}
+                onChange={(e) => {
+                  setFormData({ ...formData, repeatCount: e.target.value });
+                  setEndDateTouched(false);
+                }}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                placeholder="e.g., 12 times"
+              />
+            </div>
+          </div>
+        )}
+
+        {isRecurring && amountPerRepeat() && (
+          <div>
+            <div className="text-sm text-gray-600 mt-2">
+                Approx. Amount per Payment: <strong>{amountPerRepeat()} €</strong>
               </div>
-            )}
           </div>
         )}
 
@@ -259,9 +221,7 @@ function AddExpense() {
             checked={formData.shouldNotify}
             onChange={(e) => setFormData({ ...formData, shouldNotify: e.target.checked })}
           />
-          <label className="text-sm" style={{ color: theme?.colors?.text?.secondary }}>
-            Enable notification
-          </label>
+          <label className="text-sm">Enable notification</label>
         </div>
 
         <div className="flex justify-end space-x-3 pt-4">
@@ -270,16 +230,14 @@ function AddExpense() {
             onClick={() => navigate('/expenses')}
             className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
           >
-            <X className="h-5 w-5 mr-2" />
-            Cancel
+            <X className="h-5 w-5 mr-2" /> Cancel
           </button>
           <button
             type="submit"
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md text-white"
             style={{ backgroundColor: theme?.colors?.primary?.main }}
           >
-            <Save className="h-5 w-5 mr-2" />
-            Save
+            <Save className="h-5 w-5 mr-2" /> Save
           </button>
         </div>
       </form>

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -75,7 +76,6 @@ namespace TRACKEXPENSES.Server.Models
         public GroupOfUsers? GroupOfUsers { get; set; }
 
         public List<Expense> Expenses { get; set; } = new List<Expense>();
-
 
     }
 }

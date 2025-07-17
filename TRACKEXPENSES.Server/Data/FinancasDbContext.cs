@@ -20,6 +20,8 @@ namespace TRACKEXPENSES.Server.Data
         public DbSet<ImageDB> ImagesDB { get; set; }
 
         public DbSet<ExpenseCategory> ExpenseCategory { get; set; }
+        public DbSet<ExpenseCategoryToShow> ExpenseCategoryToShow { get; set; }
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -31,12 +33,6 @@ namespace TRACKEXPENSES.Server.Data
 
             // Call the base method to ensure any default behavior is applied
             base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<ExpenseCategory>()
-    .HasMany(c => c.Subcategories)
-    .WithOne(c => c.ParentCategory)
-    .HasForeignKey(c => c.ParentCategoryId)
-    .OnDelete(DeleteBehavior.Restrict);
         }
 
     }

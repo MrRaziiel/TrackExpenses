@@ -7,29 +7,25 @@ namespace TRACKEXPENSES.Server.Models
 {
     public class Expense
     {
-        [Key]
         public int Id { get; set; }
-        public DateTime? CreatedDate { get; set; }
-        public required string Name { get; set; }
+        public string Name { get; set; }
         public string? Description { get; set; }
-        public string? ImagePath { get; set; }
+        public decimal Value { get; set; }
+        public decimal? PayAmount { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public int? RepeatCount { get; set; }
+        public bool ShouldNotify { get; set; }
         public string Periodicity { get; set; }
-        public double? PayAmount { get; set; }
-        public double Value {  get; set; }
-
-        public DateTime? firstPaymentDate { get; set; }
-        public DateTime? lastPaymentDate { get; set; }
-        public DateTime? numberAppointments { get; set; }
-
-        private bool? _isPayed;
-        public bool IsPayed => PayAmount.HasValue && PayAmount.Value >= Value;
+        public string? Category { get; set; }
+        public string UserId { get; set; }
         public string? GroupId { get; set; }
-        public string? ClientId { get; set; }
 
-        // Method to find an expense by ID
-        public static List<Expense> GetExpenseById(DbSet<Expense> expenses, string userId)
+
+// Method to find an expense by ID
+public static List<Expense> GetExpenseById(DbSet<Expense> expenses, string userId)
         {
-            var listExpensesbyId = expenses.Where(exp => exp.ClientId == userId).ToList();
+            var listExpensesbyId = expenses.Where(exp => exp.UserId == userId).ToList();
             return (List<Expense>)listExpensesbyId;
      
         }

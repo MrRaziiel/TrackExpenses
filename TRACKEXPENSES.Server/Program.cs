@@ -75,4 +75,5 @@ app.MapFallbackToFile("/index.html");
 
 await app.SetRoles();
 await app.SetAdmin();
+await app.SetCategories();
 app.Run();

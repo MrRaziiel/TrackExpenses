@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace TRACKEXPENSES.Server.Models
 {
@@ -11,12 +12,15 @@ namespace TRACKEXPENSES.Server.Models
 
         // Usuário que criou esta categoria
         public string UserId { get; set; }
+        public string ExpenseId { get; set; }
 
-        // Referência opcional para a categoria pai
-        public int ParentCategoryId { get; set; }
-        public virtual ExpenseCategory ParentCategory { get; set; }
+    }
 
-        // Lista de subcategorias (um nível)
-        public virtual List<ExpenseCategory> Subcategories { get; set; } = new List<Models.ExpenseCategory>();
+    public class ExpenseCategoryToShow
+    {
+        [Key]
+        public int Id { get; set; }
+
+        public string Name { get; set; }
     }
 }
