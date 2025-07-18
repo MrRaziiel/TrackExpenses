@@ -12,20 +12,26 @@ import apiCall from './hooks/apiCall';
 // Pages
 import Welcome from './components/Pages/Welcome';
 import UsersList from './components/Pages/Administrador/ListClients';
-import Login from './components/Pages/Login';
-import SignIn from './components/Pages/SignIn';
-import Dashboard from './components/Pages/Administrador/Dashboard';
-import Expenses from './components/Pages/Expenses/AllExpenses';
-import Incomes from './components/Pages/Incomes/AllIncomes';
-import AddExpense from './components/Pages/Expenses/AddExpenses';
-import AddIncome from './components/Pages/Incomes/AddIncomes';
 import EditUser from './components/Pages/Administrador/EditUser';
+import EditUserProfile from './components/Pages/Administrador/EditUser';
 import ProfilePage from './components/Pages/Profile';
 import SettingsPage from './components/Pages/Settings';
-import RequireAuth from './components/Authentication/Require';
+
+import Login from './components/Pages/Login';
+import SignIn from './components/Pages/SignIn';
 import useLogout from './components/Authentication/Logout';
+import RequireAuth from './components/Authentication/Require';
 import ForgotPassword from './components/Pages/ForgotPassword';
-import EditUserProfile from './components/Pages/Administrador/EditUser';
+
+import Dashboard from './components/Pages/Administrador/Dashboard';
+
+import Expenses from './components/Pages/Expenses/AllExpenses';
+import AddExpense from './components/Pages/Expenses/AddExpenses';
+
+import EarningsList from './components/Pages/Earnings/EarningList';
+import AddEditEarning from './components/Pages/Earnings/AddEditEarning';
+
+
 
 function App() {
   const { theme } = useTheme();
@@ -183,9 +189,9 @@ setAuth(prev => ({
                 onClick={() => setIsMenuOpen(false)} style={{ backgroundColor: theme?.colors?.primary?.dark }}>
                 <PiggyBank className="h-5 w-5" /><span>{t('common.expenses')}</span>
               </Link>
-              <Link to="/Incomes" className="flex items-center space-x-2 py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+              <Link to="/Earnings" className="flex items-center space-x-2 py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
                 onClick={() => setIsMenuOpen(false)} style={{ backgroundColor: theme?.colors?.primary?.dark }}>
-                <Wallet className="h-5 w-5" /><span>{t('common.incomes')}</span>
+                <Wallet className="h-5 w-5" /><span>{t('common.earning')}</span>
               </Link>
               <Link to="/Users" className="flex items-center space-x-2 py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
                 onClick={() => setIsMenuOpen(false)} style={{ backgroundColor: theme?.colors?.primary?.dark }}>
@@ -234,9 +240,9 @@ setAuth(prev => ({
                   <PiggyBank className="h-4 w-4" />
                   {!isSidebarCollapsed && <span className="text-sm">{t('common.expenses')}</span>}
                 </Link>
-                <Link to="/Incomes" className="flex items-center space-x-2 px-2 py-1.5 text-gray-700 hover:bg-blue-50 rounded-lg">
+                <Link to="/Earnings" className="flex items-center space-x-2 px-2 py-1.5 text-gray-700 hover:bg-blue-50 rounded-lg">
                   <Wallet className="h-4 w-4" />
-                  {!isSidebarCollapsed && <span className="text-sm">{t('common.incomes')}</span>}
+                  {!isSidebarCollapsed && <span className="text-sm">{t('common.earning')}</span>}
                 </Link>
 
               </div>
@@ -255,8 +261,9 @@ setAuth(prev => ({
               <Route path="/Dashboard" element={<Dashboard />} />
               <Route path="/expenses" element={<Expenses />} />
               <Route path="/expenses/add" element={<AddExpense />} />
-              <Route path="/Incomes" element={<Incomes />} />
-              <Route path="/incomes/add" element={<AddIncome />} />
+              <Route path="/Earnings" element={<EarningsList />} />
+              <Route path="/Earnings/add" element={<AddEditEarning />} />
+      
               <Route path="/Users" element={<UsersList />} />
               <Route path="/Users/edit/:id" element={<EditUser />} />
               <Route path="/settings" element={<SettingsPage />} />

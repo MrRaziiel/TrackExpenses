@@ -31,7 +31,7 @@ function AddExpense() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await apiCall.get('Categories/getAllCategories');
+        const response = await apiCall.get('/Categories/GetCategoriesByType?type=Expense');
         setCategories(response?.data?.$values || []);
       } catch (error) {
         console.error('Failed to load categories:', error);
@@ -170,6 +170,36 @@ function AddExpense() {
             />
           </div>
         </div>
+        <div className="grid grid-cols-2 gap-4">
+  <div>
+    <label className="block text-sm font-medium">Start Date *</label>
+    <input
+      type="date"
+      required
+      value={formData.startDate}
+      onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+    />
+  </div>
+  <div>
+    <label className="block text-sm font-medium">Periodicity *</label>
+    <select
+      required
+      value={formData.periodicity}
+      onChange={(e) => {
+        setFormData({ ...formData, periodicity: e.target.value });
+        setEndDateTouched(false);
+      }}
+      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+    >
+      <option value="OneTime">One Time</option>
+      <option value="Daily">Daily</option>
+      <option value="Weekly">Weekly</option>
+      <option value="Monthly">Monthly</option>
+      <option value="Yearly">Yearly</option>
+    </select>
+  </div>
+</div>
 
         {isRecurring && (
           <div className="grid grid-cols-2 gap-4">

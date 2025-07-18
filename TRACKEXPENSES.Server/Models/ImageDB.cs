@@ -18,20 +18,6 @@ namespace TRACKEXPENSES.Server.Models
 
         public string Extension { get; set; }
 
-        public static string UpdateProfileImgDb(string uploadPath, string imagePath, IFormFile? Image)
-        {
-            if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
-
-            var filePath = Path.Combine(uploadPath, imagePath);
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                Image.CopyTo(stream);
-               
-            }
-            return filePath;
-
-
-        }
 
     }
 

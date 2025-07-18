@@ -21,6 +21,7 @@ namespace TRACKEXPENSES.Server.Data
 
         public DbSet<ExpenseCategory> ExpenseCategory { get; set; }
         public DbSet<ExpenseCategoryToShow> ExpenseCategoryToShow { get; set; }
+        public DbSet<Earning> Earnings { get; set; }
 
 
 

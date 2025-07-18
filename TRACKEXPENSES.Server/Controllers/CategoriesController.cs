@@ -20,5 +20,18 @@ namespace TRACKEXPENSES.Server.Controllers
             return Ok(categories);
 
         }
+    
+
+        [HttpGet("GetCategoriesByType")]
+        public async Task<IActionResult> GetCategoriesByType([FromQuery] string type)
+        {
+            if (!Enum.TryParse<CategoryType>(type, true, out var parsedType))
+                return BadRequest("Invalid category type");
+
+            var categories = await _context.ExpenseCategoryToShow
+                                           .Where(c => c.Type == parsedType)
+                                           .ToListAsync();
+            return Ok(categories);
+        }
     }
 }
