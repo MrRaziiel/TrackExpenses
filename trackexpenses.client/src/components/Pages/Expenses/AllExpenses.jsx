@@ -7,7 +7,7 @@ import AuthContext from '../../Authentication/AuthContext';
 import apiCall from '../../../hooks/apiCall';
 
 function Expenses() {
-  const theme = useTheme();
+  const { theme } = useTheme();
   const { t } = useLanguage();
   const { auth } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -54,14 +54,16 @@ function Expenses() {
         <h1 className="text-2xl font-bold" style={{ color: theme?.colors?.text?.primary }}>
           {t('common.expenses')}
         </h1>
+
         <button
-          onClick={() => navigate('/expenses/add')}
-          className="flex items-center px-4 py-2 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          style={{ backgroundColor: theme?.colors?.primary?.main }}
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          {t('common.add')} {t('common.expense')}
-        </button>
+    onClick={() => navigate('/expenses/add')}
+    className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-white font-medium hover:opacity-90 transition-colors duration-200"
+    style={{ backgroundColor: theme?.colors?.primary?.main }}
+  >
+    <Plus className="h-5 w-5 mr-2" />
+    {t('common.add')} {t('common.expense')}
+  </button>
+   
       </div>
 
       <div className="flex space-x-4">

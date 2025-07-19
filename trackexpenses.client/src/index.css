@@ -13,3 +13,20 @@
   html {
   font-size: 22px;
 }
+.react-calendar {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.react-calendar__navigation button {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+.react-calendar__navigation button:hover {
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}

@@ -21,15 +21,19 @@ import Login from './components/Pages/Login';
 import SignIn from './components/Pages/SignIn';
 import useLogout from './components/Authentication/Logout';
 import RequireAuth from './components/Authentication/Require';
+import NotRequireAuth from './components/Authentication/NotRequire';
+
 import ForgotPassword from './components/Pages/ForgotPassword';
 
 import Dashboard from './components/Pages/Administrador/Dashboard';
 
 import Expenses from './components/Pages/Expenses/AllExpenses';
 import AddExpense from './components/Pages/Expenses/AddExpenses';
+import CalendarExpenses from './components/Pages/Expenses/CalendarExpenses';
 
 import EarningsList from './components/Pages/Earnings/EarningList';
 import AddEditEarning from './components/Pages/Earnings/AddEditEarning';
+
 
 
 
@@ -244,6 +248,10 @@ setAuth(prev => ({
                   <Wallet className="h-4 w-4" />
                   {!isSidebarCollapsed && <span className="text-sm">{t('common.earning')}</span>}
                 </Link>
+                <Link to="/CalendarExpenses" className="flex items-center space-x-2 px-2 py-1.5 text-gray-700 hover:bg-blue-50 rounded-lg">
+                  <Wallet className="h-4 w-4" />
+                  {!isSidebarCollapsed && <span className="text-sm">{t('common.calendar')}</span>}
+                </Link>
 
               </div>
             </nav>
@@ -253,9 +261,13 @@ setAuth(prev => ({
         <div className={`flex-1 ${isAuthenticated ? 'p-4 md:p-8' : 'py-8 px-4'} min-h-[calc(100vh-4rem)]`}>
           <Routes>
             <Route path="/" element={<Welcome />} />
+            <Route element={<NotRequireAuth />}>
+            
             <Route path="/Login" element={<Login />} />
             <Route path="/Register" element={<SignIn />} />
             <Route path="/ForgotPassword" element={<ForgotPassword />} />
+            </Route>
+
             <Route element={<RequireAuth />}>
               <Route path="/users/edit/:id/:email" element={<EditUserProfile />} />
               <Route path="/Dashboard" element={<Dashboard />} />
@@ -263,6 +275,7 @@ setAuth(prev => ({
               <Route path="/expenses/add" element={<AddExpense />} />
               <Route path="/Earnings" element={<EarningsList />} />
               <Route path="/Earnings/add" element={<AddEditEarning />} />
+              <Route path="/CalendarExpenses" element={<CalendarExpenses />} />
       
               <Route path="/Users" element={<UsersList />} />
               <Route path="/Users/edit/:id" element={<EditUser />} />
