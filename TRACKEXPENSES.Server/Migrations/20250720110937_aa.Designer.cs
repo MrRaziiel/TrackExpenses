@@ -12,8 +12,8 @@ using TRACKEXPENSES.Server.Data;
 namespace TRACKEXPENSES.Server.Migrations
 {
     [DbContext(typeof(FinancasDbContext))]
-    [Migration("20250718004936_fixCategories")]
-    partial class fixCategories
+    [Migration("20250720110937_aa")]
+    partial class aa
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -158,6 +158,31 @@ namespace TRACKEXPENSES.Server.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("TRACKEXPENSES.Server.Models.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ExpenseId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ExpenseCategory");
+                });
+
             modelBuilder.Entity("TRACKEXPENSES.Server.Models.Earning", b =>
                 {
                     b.Property<int>("Id")
@@ -203,11 +228,8 @@ namespace TRACKEXPENSES.Server.Migrations
 
             modelBuilder.Entity("TRACKEXPENSES.Server.Models.Expense", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Category")
                         .HasColumnType("nvarchar(max)");
@@ -219,6 +241,9 @@ namespace TRACKEXPENSES.Server.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("GroupId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImageId")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -255,31 +280,6 @@ namespace TRACKEXPENSES.Server.Migrations
                     b.ToTable("Expenses");
                 });
 
-            modelBuilder.Entity("TRACKEXPENSES.Server.Models.ExpenseCategory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ExpenseId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ExpenseCategory");
-                });
-
             modelBuilder.Entity("TRACKEXPENSES.Server.Models.ExpenseCategoryToShow", b =>
                 {
                     b.Property<int>("Id")
@@ -298,6 +298,39 @@ namespace TRACKEXPENSES.Server.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ExpenseCategoryToShow");
+                });
+
+            modelBuilder.Entity("TRACKEXPENSES.Server.Models.ExpenseInstance", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("DueDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ExpenseId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ImageId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("IsPaid")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("PaidAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Value")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpenseId");
+
+                    b.HasIndex("ImageId");
+
+                    b.ToTable("ExpenseInstances");
                 });
 
             modelBuilder.Entity("TRACKEXPENSES.Server.Models.GroupOfUsers", b =>
@@ -335,7 +368,7 @@ namespace TRACKEXPENSES.Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ImagesDB");
+                    b.ToTable("ImageDB");
                 });
 
             modelBuilder.Entity("TRACKEXPENSES.Server.Models.User", b =>
@@ -491,6 +524,23 @@ namespace TRACKEXPENSES.Server.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("TRACKEXPENSES.Server.Models.ExpenseInstance", b =>
+                {
+                    b.HasOne("TRACKEXPENSES.Server.Models.Expense", "Expense")
+                        .WithMany("Instances")
+                        .HasForeignKey("ExpenseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TRACKEXPENSES.Server.Models.ImageDB", "Image")
+                        .WithMany()
+                        .HasForeignKey("ImageId");
+
+                    b.Navigation("Expense");
+
+                    b.Navigation("Image");
+                });
+
             modelBuilder.Entity("TRACKEXPENSES.Server.Models.User", b =>
                 {
                     b.HasOne("TRACKEXPENSES.Server.Models.GroupOfUsers", "GroupOfUsers")
@@ -498,6 +548,11 @@ namespace TRACKEXPENSES.Server.Migrations
                         .HasForeignKey("GroupId");
 
                     b.Navigation("GroupOfUsers");
+                });
+
+            modelBuilder.Entity("TRACKEXPENSES.Server.Models.Expense", b =>
+                {
+                    b.Navigation("Instances");
                 });
 
             modelBuilder.Entity("TRACKEXPENSES.Server.Models.GroupOfUsers", b =>

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TRACKEXPENSES.Server.Migrations
 {
     /// <inheritdoc />
-    public partial class fixEarning : Migration
+    public partial class initi : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -67,7 +67,8 @@ namespace TRACKEXPENSES.Server.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Type = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -88,7 +89,7 @@ namespace TRACKEXPENSES.Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ImagesDB",
+                name: "ImageDB",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
@@ -97,7 +98,7 @@ namespace TRACKEXPENSES.Server.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ImagesDB", x => x.Id);
+                    table.PrimaryKey("PK_ImageDB", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -247,8 +248,7 @@ namespace TRACKEXPENSES.Server.Migrations
                 name: "Expenses",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Value = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
@@ -271,6 +271,32 @@ namespace TRACKEXPENSES.Server.Migrations
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ExpenseInstances",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ExpenseId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    DueDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsPaid = table.Column<bool>(type: "bit", nullable: false),
+                    ImageId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ExpenseInstances", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ExpenseInstances_Expenses_ExpenseId",
+                        column: x => x.ExpenseId,
+                        principalTable: "Expenses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ExpenseInstances_ImageDB_ImageId",
+                        column: x => x.ImageId,
+                        principalTable: "ImageDB",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
@@ -318,6 +344,16 @@ namespace TRACKEXPENSES.Server.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ExpenseInstances_ExpenseId",
+                table: "ExpenseInstances",
+                column: "ExpenseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ExpenseInstances_ImageId",
+                table: "ExpenseInstances",
+                column: "ImageId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Expenses_UserId",
                 table: "Expenses",
                 column: "UserId");
@@ -351,13 +387,16 @@ namespace TRACKEXPENSES.Server.Migrations
                 name: "ExpenseCategoryToShow");
 
             migrationBuilder.DropTable(
-                name: "Expenses");
-
-            migrationBuilder.DropTable(
-                name: "ImagesDB");
+                name: "ExpenseInstances");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Expenses");
+
+            migrationBuilder.DropTable(
+                name: "ImageDB");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

@@ -19,9 +19,11 @@ namespace TRACKEXPENSES.Server.Data
 
         public DbSet<ImageDB> ImagesDB { get; set; }
 
-        public DbSet<ExpenseCategory> ExpenseCategory { get; set; }
+        public DbSet<Category> ExpenseCategory { get; set; }
         public DbSet<ExpenseCategoryToShow> ExpenseCategoryToShow { get; set; }
         public DbSet<Earning> Earnings { get; set; }
+        public DbSet<ExpenseInstance> ExpenseInstances { get; set; }
+        public DbSet<ImageDB> Images { get; set; }
 
 
 

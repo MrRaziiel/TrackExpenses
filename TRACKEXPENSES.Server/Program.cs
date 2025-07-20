@@ -26,6 +26,7 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
         options.JsonSerializerOptions.WriteIndented = true;
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
     });
 
 
@@ -53,15 +54,16 @@ app.UseStaticFiles(new StaticFileOptions
 
 if (app.Environment.IsDevelopment())
 {
-    await using(var serviceScope = app.Services.CreateAsyncScope())
-    await using(var dbContext = serviceScope.ServiceProvider.GetRequiredService<FinancasDbContext>())
+    await using (var serviceScope = app.Services.CreateAsyncScope())
+    await using (var dbContext = serviceScope.ServiceProvider.GetRequiredService<FinancasDbContext>())
     {
-       await dbContext.Database.EnsureCreatedAsync();
+        await dbContext.Database.EnsureCreatedAsync();
 
     }
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseDeveloperExceptionPage();    
 app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();

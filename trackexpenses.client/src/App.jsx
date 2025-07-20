@@ -27,9 +27,10 @@ import ForgotPassword from './components/Pages/ForgotPassword';
 
 import Dashboard from './components/Pages/Administrador/Dashboard';
 
-import Expenses from './components/Pages/Expenses/AllExpenses';
+import ListExpenses from './components/Pages/Expenses/AllExpenses';
 import AddExpense from './components/Pages/Expenses/AddExpenses';
 import CalendarExpenses from './components/Pages/Expenses/CalendarExpenses';
+import EditExpense from './components/Pages/Expenses/EditExpense';
 
 import EarningsList from './components/Pages/Earnings/EarningList';
 import AddEditEarning from './components/Pages/Earnings/AddEditEarning';
@@ -189,7 +190,7 @@ setAuth(prev => ({
           {/* MENU MOBILE */}
           {isMenuOpen && isAuthenticated && (
             <div className="md:hidden pb-4 space-y-2">
-              <Link to="/expenses" className="flex items-center space-x-2 py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+              <Link to="/Expenses" className="flex items-center space-x-2 py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
                 onClick={() => setIsMenuOpen(false)} style={{ backgroundColor: theme?.colors?.primary?.dark }}>
                 <PiggyBank className="h-5 w-5" /><span>{t('common.expenses')}</span>
               </Link>
@@ -240,7 +241,7 @@ setAuth(prev => ({
                   <LayoutDashboard className="h-4 w-4" />
                   {!isSidebarCollapsed && <span className="text-sm">{t('common.dashboard')}</span>}
                 </Link>
-                <Link to="/expenses" className="flex items-center space-x-2 px-2 py-1.5 text-gray-700 hover:bg-blue-50 rounded-lg">
+                <Link to="/Expenses" className="flex items-center space-x-2 px-2 py-1.5 text-gray-700 hover:bg-blue-50 rounded-lg">
                   <PiggyBank className="h-4 w-4" />
                   {!isSidebarCollapsed && <span className="text-sm">{t('common.expenses')}</span>}
                 </Link>
@@ -271,12 +272,15 @@ setAuth(prev => ({
             <Route element={<RequireAuth />}>
               <Route path="/users/edit/:id/:email" element={<EditUserProfile />} />
               <Route path="/Dashboard" element={<Dashboard />} />
-              <Route path="/expenses" element={<Expenses />} />
-              <Route path="/expenses/add" element={<AddExpense />} />
+
               <Route path="/Earnings" element={<EarningsList />} />
               <Route path="/Earnings/add" element={<AddEditEarning />} />
+
+              <Route path="/Expenses" element={<ListExpenses />} />
+              <Route path="/expenses/add" element={<AddExpense />} />
               <Route path="/CalendarExpenses" element={<CalendarExpenses />} />
-      
+              <Route path="/Expenses/Edit/:id" element={<EditExpense />} />
+
               <Route path="/Users" element={<UsersList />} />
               <Route path="/Users/edit/:id" element={<EditUser />} />
               <Route path="/settings" element={<SettingsPage />} />

@@ -1,15 +1,13 @@
-import React, { useState, useContext, useEffect } from 'react';
-import { Save, X } from 'lucide-react';
+// AddExpense.jsx
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../Theme/Theme';
-import AuthContext from '../../Authentication/AuthContext';
 import apiCall from '../../../hooks/apiCall';
+import AuthContext from '../../Authentication/AuthContext';
+import jsQR from 'jsqr';
 
 function AddExpense() {
-  const { theme } = useTheme();
   const { auth } = useContext(AuthContext);
   const navigate = useNavigate();
-
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
@@ -21,258 +19,324 @@ function AddExpense() {
     endDate: '',
     repeatCount: '1',
     shouldNotify: true,
-    category: ''
+    category: '',
+    isTotalValue: true,
   });
+  const [imageFile, setImageFile] = useState(null);
 
-  const [endDateTouched, setEndDateTouched] = useState(false);
-  const isRecurring = formData.periodicity !== 'OneTime';
-
-  // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await apiCall.get('/Categories/GetCategoriesByType?type=Expense');
-        setCategories(response?.data?.$values || []);
+        const res = await apiCall.get(`/Categories/GetCategoriesByType?type=Expense`);
+        const data = res.data;
+        const parsedCategories = Array.isArray(data)
+          ? data
+          : data?.$values || [];
+        setCategories(parsedCategories);
       } catch (error) {
-        console.error('Failed to load categories:', error);
+        console.error('Erro ao buscar categorias:', error);
       }
     };
     fetchCategories();
   }, []);
 
-  const getMinEndDate = () => {
-    const count = parseInt(formData.repeatCount || '1');
-    const start = new Date(formData.startDate);
-    const minEnd = new Date(start);
-
-    switch (formData.periodicity) {
-      case 'Daily': minEnd.setDate(start.getDate() + count - 1); break;
-      case 'Weekly': minEnd.setDate(start.getDate() + 7 * (count - 1)); break;
-      case 'Monthly': minEnd.setMonth(start.getMonth() + (count - 1)); break;
-      case 'Yearly': minEnd.setFullYear(start.getFullYear() + (count - 1)); break;
-      default: return formData.startDate;
-    }
-    return minEnd.toISOString().split('T')[0];
-  };
-
   useEffect(() => {
-    if (!formData.startDate || !formData.periodicity || endDateTouched) return;
-    const count = parseInt(formData.repeatCount || '1');
-    if (isNaN(count) || count < 1) return;
+    const isValidDate = (dateStr) => {
+      const date = new Date(dateStr);
+      return !isNaN(date.getTime());
+    };
 
-    const start = new Date(formData.startDate);
-    const newEnd = new Date(start);
-    switch (formData.periodicity) {
-      case 'Daily': newEnd.setDate(start.getDate() + count - 1); break;
-      case 'Weekly': newEnd.setDate(start.getDate() + 7 * (count - 1)); break;
-      case 'Monthly': newEnd.setMonth(start.getMonth() + (count - 1)); break;
-      case 'Yearly': newEnd.setFullYear(start.getFullYear() + (count - 1)); break;
+    if (
+      formData.periodicity !== 'Endless' &&
+      formData.periodicity !== 'OneTime' &&
+      isValidDate(formData.startDate) &&
+      formData.repeatCount &&
+      !isNaN(parseInt(formData.repeatCount))
+    ) {
+      const start = new Date(formData.startDate);
+      const repeat = parseInt(formData.repeatCount);
+      const end = new Date(start);
+
+      switch (formData.periodicity) {
+        case 'Daily':
+          end.setDate(start.getDate() + repeat);
+          break;
+        case 'Weekly':
+          end.setDate(start.getDate() + 7 * repeat);
+          break;
+        case 'Monthly':
+          end.setMonth(start.getMonth() + repeat);
+          break;
+        case 'Yearly':
+          end.setFullYear(start.getFullYear() + repeat);
+          break;
+        default:
+          break;
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        endDate: end.toISOString().split('T')[0],
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        repeatCount: '',
+        endDate: '',
+      }));
     }
-    const formatted = newEnd.toISOString().split('T')[0];
-    setFormData(prev => ({ ...prev, endDate: formatted }));
-  }, [formData.startDate, formData.periodicity, formData.repeatCount, endDateTouched]);
+  }, [formData.periodicity, formData.startDate, formData.repeatCount]);
+
+  const handleImageUpload = (file) => {
+    setImageFile(file);
+
+    if (formData.periodicity === 'OneTime') {
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        const image = new Image();
+        image.onload = function () {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = image.width;
+          canvas.height = image.height;
+          ctx.drawImage(image, 0, 0);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imageData.data, canvas.width, canvas.height);
+          if (code) {
+            try {
+              const parsed = JSON.parse(code.data);
+              setFormData((prev) => ({
+                ...prev,
+                ...parsed,
+              }));
+              console.log('QR Code data applied:', parsed);
+            } catch (err) {
+              console.warn('Erro ao analisar QR Code:', err);
+            }
+          }
+        };
+        image.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const payload = {
-      ...formData,
-      value: parseFloat(formData.value),
-      payAmount: formData.payAmount ? parseFloat(formData.payAmount) : 0,
-      startDate: new Date(formData.startDate).toISOString(),
-      endDate: formData.endDate ? new Date(formData.endDate).toISOString() : null,
-      repeatCount: formData.repeatCount ? parseInt(formData.repeatCount) : null,
-      userEmail: auth?.email || ''
-    };
+    const payload = new FormData();
+    payload.append('name', formData.name);
+    payload.append('description', formData.description);
+    payload.append('value', parseFloat(formData.value));
+    payload.append('payAmount', parseFloat(formData.payAmount || 0));
+    payload.append('startDate', formData.startDate);
+    payload.append('endDate', formData.endDate || '');
+    payload.append('repeatCount', formData.repeatCount);
+    payload.append('shouldNotify', formData.shouldNotify);
+    payload.append('periodicity', formData.periodicity);
+    payload.append('category', formData.category);
+    payload.append('userEmail', auth?.email || '');
+    payload.append('isTotalValue', formData.isTotalValue);
+
+    if (imageFile) {
+      payload.append('uploadType', 'File');
+      payload.append('image', imageFile);
+    }
 
     try {
-      await apiCall.post('Expenses/CreateExpenses', payload);
+      await apiCall.post('/Expenses/CreateExpensesWithImage', payload, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       navigate('/expenses');
-    } catch (error) {
-      console.error('Failed to save expense:', error);
+    } catch (err) {
+      console.error('Erro ao criar despesa:', err);
     }
   };
 
-  const amountPerRepeat = () => {
-    const value = parseFloat(formData.value || 0);
-    const pay = parseFloat(formData.payAmount || 0);
-    const count = parseInt(formData.repeatCount || 1);
-    if (!count || count === 0) return null;
-    const result = (value - pay) / count;
-    return isNaN(result) ? null : result.toFixed(2);
+  const calculatedParcel = () => {
+    const total = parseFloat(formData.value || 0);
+    const paid = parseFloat(formData.payAmount || 0);
+    const count =
+      formData.periodicity === 'Endless'
+        ? 1
+        : parseInt(formData.repeatCount || '1');
+
+    if (formData.isTotalValue) {
+      const remaining = Math.max(0, total - paid);
+      return count > 0 ? (remaining / count).toFixed(2) : '0.00';
+    } else {
+      return total.toFixed(2);
+    }
   };
 
+  const showValueType = formData.periodicity !== 'OneTime' && formData.periodicity !== 'Endless';
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold" style={{ color: theme?.colors?.text?.primary }}>
-          New Expense with Reminder
-        </h1>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+      <h1 className="text-2xl font-bold">Criar Despesa</h1>
       </div>
-
-      <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-xl p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4 bg-white p-4 rounded shadow">
         <div>
-          <label className="block text-sm font-medium">Name *</label>
+          <label className="block text-sm font-medium">Nome *</label>
           <input
             type="text"
             required
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+            className="w-full border p-2 rounded"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium">Description</label>
+          <label className="block text-sm font-medium">Descrição</label>
           <input
             type="text"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+            className="w-full border p-2 rounded"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium">Category *</label>
+          <label className="block text-sm font-medium">Categoria *</label>
           <select
             required
             value={formData.category}
             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+            className="w-full border p-2 rounded"
           >
-            <option value="">Select a category</option>
-            {categories.map(cat => (
-              <option key={cat.id} value={cat.name}>{cat.name}</option>
+            <option value="">Selecione uma categoria</option>
+            {categories.map((cat) => (
+              <option key={cat.Id} value={cat.Name}>{cat.Name}</option>
             ))}
           </select>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium">Value (€)</label>
+            <label className="block text-sm font-medium">Valor (€)</label>
             <input
               type="number"
-              min="0"
               step="0.01"
               value={formData.value}
               onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+              className="w-full border p-2 rounded"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium">Paid Amount (€)</label>
+            <label className="block text-sm font-medium">Valor Pago (€)</label>
             <input
               type="number"
-              min="0"
               step="0.01"
               value={formData.payAmount}
               onChange={(e) => setFormData({ ...formData, payAmount: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+              className="w-full border p-2 rounded"
             />
+            {showValueType && (
+              <div className="mt-2">
+                <label className="text-sm mr-2">Tipo de valor:</label>
+                <select
+                  value={formData.isTotalValue ? 'total' : 'parcelas'}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isTotalValue: e.target.value === 'total' })
+                  }
+                  className="border p-1 rounded"
+                >
+                  <option value="total">Total</option>
+                  <option value="parcelas">Por parcelas</option>
+                </select>
+              </div>
+            )}
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-  <div>
-    <label className="block text-sm font-medium">Start Date *</label>
-    <input
-      type="date"
-      required
-      value={formData.startDate}
-      onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-    />
-  </div>
-  <div>
-    <label className="block text-sm font-medium">Periodicity *</label>
-    <select
-      required
-      value={formData.periodicity}
-      onChange={(e) => {
-        setFormData({ ...formData, periodicity: e.target.value });
-        setEndDateTouched(false);
-      }}
-      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-    >
-      <option value="OneTime">One Time</option>
-      <option value="Daily">Daily</option>
-      <option value="Weekly">Weekly</option>
-      <option value="Monthly">Monthly</option>
-      <option value="Yearly">Yearly</option>
-    </select>
-  </div>
-</div>
 
-        {isRecurring && (
-          <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium">Periodicidade</label>
+            <select
+              value={formData.periodicity}
+              onChange={(e) => setFormData({ ...formData, periodicity: e.target.value })}
+              className="w-full border p-2 rounded"
+            >
+              <option value="OneTime">Única</option>
+              <option value="Daily">Diária</option>
+              <option value="Weekly">Semanal</option>
+              <option value="Monthly">Mensal</option>
+              <option value="Yearly">Anual</option>
+              <option value="Endless">Sem Fim</option>
+            </select>
+          </div>
+
+          {formData.periodicity !== 'OneTime' && formData.periodicity !== 'Endless' && (
             <div>
-              <label className="block text-sm font-medium">End Date</label>
-              <input
-                type="date"
-                value={formData.endDate}
-                min={getMinEndDate()}
-                onChange={(e) => {
-                  const selected = new Date(e.target.value);
-                  const minEndDate = new Date(getMinEndDate());
-                  if (selected >= minEndDate) {
-                    setFormData({ ...formData, endDate: e.target.value });
-                    setEndDateTouched(true);
-                  }
-                }}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium">Repeat Count</label>
+              <label className="block text-sm font-medium">Repetições</label>
               <input
                 type="number"
                 min="1"
                 value={formData.repeatCount}
-                onChange={(e) => {
-                  setFormData({ ...formData, repeatCount: e.target.value });
-                  setEndDateTouched(false);
-                }}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                placeholder="e.g., 12 times"
+                onChange={(e) => setFormData({ ...formData, repeatCount: e.target.value })}
+                className="w-full border p-2 rounded"
               />
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {isRecurring && amountPerRepeat() && (
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <div className="text-sm text-gray-600 mt-2">
-                Approx. Amount per Payment: <strong>{amountPerRepeat()} €</strong>
-              </div>
+            <label className="block text-sm font-medium">Data de Início</label>
+            <input
+              type="date"
+              value={formData.startDate}
+              onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+              className="w-full border p-2 rounded"
+            />
+          </div>
+
+         
+
+                  {showValueType && (
+          <div>
+            <label className="block text-sm font-medium">Data de Fim</label>
+            <input
+              type="date"
+              value={formData.endDate}
+              onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+              className="w-full border p-2 rounded"
+            />
           </div>
         )}
+        </div>
 
-        <div className="flex items-center space-x-2">
+         <div>
+            <label className="block text-sm font-medium">Valor por parcela</label>
+            <input
+              type="text"
+              value={`€${calculatedParcel()}`}
+              disabled
+              className="w-full border p-2 rounded bg-gray-100 text-gray-700"
+            />
+          </div>
+
+       <div>
+          <label className="block text-sm font-medium">Imagem</label>
           <input
-            type="checkbox"
-            checked={formData.shouldNotify}
-            onChange={(e) => setFormData({ ...formData, shouldNotify: e.target.checked })}
+            type="file"
+            accept="image/*"
+            onChange={(e) => handleImageUpload(e.target.files[0])}
+            className="w-full border p-2 rounded"
           />
-          <label className="text-sm">Enable notification</label>
         </div>
 
-        <div className="flex justify-end space-x-3 pt-4">
-          <button
-            type="button"
-            onClick={() => navigate('/expenses')}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <X className="h-5 w-5 mr-2" /> Cancel
-          </button>
-          <button
-            type="submit"
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md text-white"
-            style={{ backgroundColor: theme?.colors?.primary?.main }}
-          >
-            <Save className="h-5 w-5 mr-2" /> Save
-          </button>
-        </div>
+        <button
+          type="submit"
+          className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Criar Despesa
+        </button>
       </form>
     </div>
   );
 }
 
 export default AddExpense;
+

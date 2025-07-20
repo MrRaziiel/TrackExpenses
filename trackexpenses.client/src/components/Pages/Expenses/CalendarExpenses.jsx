@@ -16,7 +16,8 @@ function CalendarExpenses() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await apiCall.get(`Expenses/GetFutureExpenseDates?email=${auth.email}`);
+        const res = await apiCall.get(`Expenses/
+        ?email=${auth.email}`);
         setExpenseDates(res.data?.$values || []);
       } catch (err) {
         console.error('Failed to fetch future expense dates', err);

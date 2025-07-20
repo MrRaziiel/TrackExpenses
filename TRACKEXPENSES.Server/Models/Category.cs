@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace TRACKEXPENSES.Server.Models
 {
-    public class ExpenseCategory
+    public class Category
     {
         [Key]
         public int Id { get; set; }

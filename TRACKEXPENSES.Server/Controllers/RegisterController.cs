@@ -33,7 +33,6 @@ namespace TRACKEXPENSES.Server.Controllers
            //Problems with DATE
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            Console.WriteLine(model.Birthday.GetType());
             User user = new()
             {
 

@@ -5,25 +5,24 @@
 namespace TRACKEXPENSES.Server.Migrations
 {
     /// <inheritdoc />
-    public partial class fixCategories : Migration
+    public partial class a : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<int>(
-                name: "Type",
-                table: "ExpenseCategoryToShow",
-                type: "int",
-                nullable: false,
-                defaultValue: 0);
+            migrationBuilder.AddColumn<string>(
+                name: "ImageId",
+                table: "Expenses",
+                type: "nvarchar(max)",
+                nullable: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Type",
-                table: "ExpenseCategoryToShow");
+                name: "ImageId",
+                table: "Expenses");
         }
     }
 }
