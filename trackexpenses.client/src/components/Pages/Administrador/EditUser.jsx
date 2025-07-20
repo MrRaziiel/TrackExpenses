@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import AuthContext from '../../Authentication/AuthContext';
 import { useTheme } from '../../Theme/Theme';
 import apiCall from '../../../hooks/apiCall';
-import { Save, Edit3, X, User, Mail, Calendar, Phone, Lock, Shield, Key, Camera, Users, Eye, EyeOff } from 'lucide-react';
+import { Save, X, User, Mail, Calendar, Phone, Lock, Shield, Key, Camera, Users, Eye, EyeOff } from 'lucide-react';
 
 function EditUserProfile() {
   const { id, email } = useParams();
@@ -20,7 +20,7 @@ function EditUserProfile() {
   const [imageError, setImageError] = useState(null);
   const [currentGroupMembers, setCurrentGroupMembers] = useState([]);
   const fileInputRef = useRef(null);
-    const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,22 +28,40 @@ function EditUserProfile() {
         const res = await apiCall.get('/User/GetProfile', {
           params: { UserEmail: decodedEmail }
         });
+
         if (!res.data) {
           navigate('/users');
           return;
         }
 
+        // ✅ Normaliza os campos
         const userData = res.data;
-        setUser(userData);
-        setFormData({ ...userData, birthday: userData.birthday || '' });
-        
-        setCurrentGroupMembers(userData?.groupMembers || []);
 
+        const mappedUser = {
+          id: userData.Id || userData.id,
+          email: userData.Email || userData.email,
+          firstName: userData.FirstName || userData.firstName,
+          familyName: userData.FamilyName || userData.familyName,
+          birthday: userData.Birthday || userData.birthday,
+          phoneNumber: userData.PhoneNumber || userData.phoneNumber,
+          groupName: userData.GroupName || '',
+          groupRole: userData.GroupRole || userData.Role || 'Member',
+          groupId: userData.GroupId || '',
+          profileImage: '',
+          groupMembers: userData.GroupMembers || []
+        };
+
+        setUser(mappedUser);
+        setFormData({ ...mappedUser, birthday: mappedUser.birthday || '' });
+        setCurrentGroupMembers(mappedUser.groupMembers || []);
+
+        // imagem
         const res2 = await apiCall.get(`/User/GetPhotoProfile/${decodedEmail}`);
         const photoPath = res2.data?.photoPath;
         if (photoPath && photoPath !== 'NoPhoto') {
           setUser(prev => ({ ...prev, profileImage: photoPath }));
         }
+
       } catch (err) {
         console.error("Erro ao buscar perfil:", err);
         navigate('/users');
@@ -75,7 +93,7 @@ function EditUserProfile() {
   };
 
   const handleImageClick = () => {
-   fileInputRef.current?.click();
+    fileInputRef.current?.click();
   };
 
   const removeImage = () => {
@@ -92,9 +110,8 @@ function EditUserProfile() {
 
     try {
       const response = await apiCall.post(`/User/UploadProfileImage/${id}`, imageFormData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
-
       return response.data.partialPath;
     } catch (error) {
       console.error('Erro ao enviar imagem:', error);
@@ -122,7 +139,6 @@ function EditUserProfile() {
 
     try {
       const response = await apiCall.put('/User/EditUser', payload);
-
       if (!response.data) {
         setErrorSubmit('Erro ao atualizar');
         return;
@@ -365,9 +381,7 @@ function EditUserProfile() {
                   Birthday
                 </h4>
                 
-                  <p className="text-base" style={{ color: theme.colors.text.primary }}>
-                    {user?.birthDay ? new Date(user.birthDay).toLocaleDateString() : 'Not provided'}
-                  </p>
+       
         
                   <input
                     type="date"

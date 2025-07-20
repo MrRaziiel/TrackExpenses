@@ -66,7 +66,7 @@ namespace TRACKEXPENSES.Server.Controllers
             if (string.IsNullOrWhiteSpace(extension))
                 return BadRequest("File must have an extension.");
 
-            var folderName = Path.Combine("Images", "Users");
+            var folderName = Path.Combine("Images", "Users", id, "Profile");
             var rootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", folderName);
             Directory.CreateDirectory(rootPath); 
 

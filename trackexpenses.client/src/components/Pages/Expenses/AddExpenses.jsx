@@ -23,15 +23,14 @@ function AddExpense() {
     isTotalValue: true,
   });
   const [imageFile, setImageFile] = useState(null);
+  const [parcelValue, setParcelValue] = useState('0.00');
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const res = await apiCall.get(`/Categories/GetCategoriesByType?type=Expense`);
         const data = res.data;
-        const parsedCategories = Array.isArray(data)
-          ? data
-          : data?.$values || [];
+        const parsedCategories = Array.isArray(data) ? data : data?.$values || [];
         setCategories(parsedCategories);
       } catch (error) {
         console.error('Erro ao buscar categorias:', error);
@@ -87,55 +86,81 @@ function AddExpense() {
     }
   }, [formData.periodicity, formData.startDate, formData.repeatCount]);
 
-  const handleImageUpload = (file) => {
-    setImageFile(file);
+  useEffect(() => {
+    const total = parseFloat(formData.value || 0);
+    const paid = parseFloat(formData.payAmount || 0);
+    const count = formData.periodicity === 'Endless' ? 1 : parseInt(formData.repeatCount || '1');
 
-    if (formData.periodicity === 'OneTime') {
-      const reader = new FileReader();
-      reader.onload = function (event) {
-        const image = new Image();
-        image.onload = function () {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = image.width;
-          canvas.height = image.height;
-          ctx.drawImage(image, 0, 0);
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const code = jsQR(imageData.data, canvas.width, canvas.height);
-          if (code) {
-            try {
-              const parsed = JSON.parse(code.data);
-              setFormData((prev) => ({
-                ...prev,
-                ...parsed,
-              }));
-              console.log('QR Code data applied:', parsed);
-            } catch (err) {
-              console.warn('Erro ao analisar QR Code:', err);
-            }
-          }
-        };
-        image.src = event.target.result;
-      };
-      reader.readAsDataURL(file);
+    let value = '0.00';
+    if (formData.isTotalValue) {
+      const remaining = Math.max(0, total - paid);
+      value = count > 0 ? (remaining / count).toFixed(2) : '0.00';
+    } else {
+      value = total.toFixed(2);
     }
+    setParcelValue(value);
+  }, [formData.value, formData.payAmount, formData.repeatCount, formData.isTotalValue, formData.periodicity]);
+
+  const handleImageUpload = (file, isQrCode) => {
+    if (!file) return;
+    if (!isQrCode) {
+      setImageFile(file);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      const image = new Image();
+      image.onload = function () {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = image.width;
+        canvas.height = image.height;
+        ctx.drawImage(image, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, canvas.width, canvas.height);
+        if (code) {
+          try {
+            const parsed = JSON.parse(code.data);
+            setFormData((prev) => ({
+              ...prev,
+              ...parsed,
+            }));
+            console.log('QR Code data applied:', parsed);
+          } catch (err) {
+            console.warn('Erro ao analisar QR Code:', err);
+          }
+        } else {
+          console.log('Nenhum QR code detectado — imagem ignorada');
+        }
+      };
+      image.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const payload = new FormData();
-    payload.append('name', formData.name);
-    payload.append('description', formData.description);
-    payload.append('value', parseFloat(formData.value));
-    payload.append('payAmount', parseFloat(formData.payAmount || 0));
-    payload.append('startDate', formData.startDate);
-    payload.append('endDate', formData.endDate || '');
-    payload.append('repeatCount', formData.repeatCount);
-    payload.append('shouldNotify', formData.shouldNotify);
-    payload.append('periodicity', formData.periodicity);
-    payload.append('category', formData.category);
-    payload.append('userEmail', auth?.email || '');
-    payload.append('isTotalValue', formData.isTotalValue);
+
+    const request = {
+      name: formData.name,
+      description: formData.description,
+      value: parseFloat(formData.value),
+      payAmount: parseFloat(formData.payAmount || 0),
+      startDate: formData.startDate,
+      endDate: formData.endDate || '',
+      repeatCount: formData.repeatCount,
+      shouldNotify: formData.shouldNotify,
+      periodicity: formData.periodicity,
+      category: formData.category,
+      userEmail: auth?.email || '',
+      isTotalValue: formData.isTotalValue,
+    };
+
+    Object.entries(request).forEach(([key, value]) => {
+      payload.append(`request.${key}`, value);
+    });
 
     if (imageFile) {
       payload.append('uploadType', 'File');
@@ -149,22 +174,6 @@ function AddExpense() {
       navigate('/expenses');
     } catch (err) {
       console.error('Erro ao criar despesa:', err);
-    }
-  };
-
-  const calculatedParcel = () => {
-    const total = parseFloat(formData.value || 0);
-    const paid = parseFloat(formData.payAmount || 0);
-    const count =
-      formData.periodicity === 'Endless'
-        ? 1
-        : parseInt(formData.repeatCount || '1');
-
-    if (formData.isTotalValue) {
-      const remaining = Math.max(0, total - paid);
-      return count > 0 ? (remaining / count).toFixed(2) : '0.00';
-    } else {
-      return total.toFixed(2);
     }
   };
 
@@ -232,21 +241,21 @@ function AddExpense() {
               onChange={(e) => setFormData({ ...formData, payAmount: e.target.value })}
               className="w-full border p-2 rounded"
             />
-            {showValueType && (
-              <div className="mt-2">
-                <label className="text-sm mr-2">Tipo de valor:</label>
-                <select
-                  value={formData.isTotalValue ? 'total' : 'parcelas'}
-                  onChange={(e) =>
-                    setFormData({ ...formData, isTotalValue: e.target.value === 'total' })
-                  }
-                  className="border p-1 rounded"
-                >
-                  <option value="total">Total</option>
-                  <option value="parcelas">Por parcelas</option>
-                </select>
-              </div>
-            )}
+           {showValueType && (
+  <div>
+    <label className="block text-sm font-medium">Tipo de valor</label>
+    <select
+      value={formData.isTotalValue ? 'total' : 'parcelas'}
+      onChange={(e) =>
+        setFormData({ ...formData, isTotalValue: e.target.value === 'total' })
+      }
+      className="w-full border p-2 rounded"
+    >
+      <option value="total">Total</option>
+      <option value="parcelas">Por parcelas</option>
+    </select>
+  </div>
+)}
           </div>
         </div>
 
@@ -308,24 +317,36 @@ function AddExpense() {
         </div>
 
          <div>
-            <label className="block text-sm font-medium">Valor por parcela</label>
-            <input
-              type="text"
-              value={`€${calculatedParcel()}`}
-              disabled
-              className="w-full border p-2 rounded bg-gray-100 text-gray-700"
-            />
-          </div>
+          <label className="block text-sm font-medium">Valor por parcela</label>
+          <input
+            type="text"
+            value={`€${parcelValue}`}
+            disabled
+            className="w-full border p-2 rounded bg-gray-100 text-gray-700"
+          />
+        </div>
 
-       <div>
-          <label className="block text-sm font-medium">Imagem</label>
+        <div>
+          <label className="block text-sm font-medium">Imagem (Guardar)</label>
           <input
             type="file"
             accept="image/*"
-            onChange={(e) => handleImageUpload(e.target.files[0])}
+            onChange={(e) => handleImageUpload(e.target.files[0], false)}
             className="w-full border p-2 rounded"
           />
         </div>
+
+        {formData.periodicity === 'OneTime' && (
+          <div>
+            <label className="block text-sm font-medium">Imagem (QR Code)</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleImageUpload(e.target.files[0], true)}
+              className="w-full border p-2 rounded"
+            />
+          </div>
+        )}
 
         <button
           type="submit"

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import {
   Plus, Search, Filter, Pencil, Trash2,
-  ChevronDown, ChevronUp, CheckCircle, XCircle
+  ChevronDown, ChevronUp, CheckCircle, XCircle,
+  ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../Theme/Theme';
@@ -167,7 +168,7 @@ function ListExpenses() {
                   <tr className="hover:bg-gray-50">
                     <td className="px-6 py-4 text-sm flex items-center space-x-2">
                       <button onClick={() => toggleExpand(exp.id)}>
-                        {expanded === exp.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        {expanded === exp.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                       </button>
                       <span>{exp.name}</span>
                     </td>

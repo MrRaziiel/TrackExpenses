@@ -99,7 +99,7 @@ namespace TRACKEXPENSES.Server.Controllers
                 if (string.IsNullOrWhiteSpace(extension))
                     return BadRequest("File must have an extension.");
 
-                var folderPath = Path.Combine("Images", "Users", "Expenses", expenseId);
+                var folderPath = Path.Combine("Images", "Users", expenseId, "Expenses");
                 var rootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", folderPath);
                 Directory.CreateDirectory(rootPath);
 
@@ -132,40 +132,6 @@ namespace TRACKEXPENSES.Server.Controllers
             return Ok(new { ExpenseId = expense.Id, Instances = instances.Count });
         }
 
-
-        [HttpPost("ParseQrImage")]
-        public async Task<IActionResult> ParseQrImage()
-        {
-            var file = Request.Form.Files.FirstOrDefault();
-            if (file == null || file.Length == 0)
-                return BadRequest("Invalid image");
-
-            try
-            {
-                using var ms = new MemoryStream();
-                await file.CopyToAsync(ms);
-                ms.Position = 0;
-
-                var results = BarcodeReader.Read(ms);
-
-                if (results == null || string.IsNullOrWhiteSpace(results[0].Value))
-                    return BadRequest("QR not recognized or invalid format");
-
-                var parsed = JsonSerializer.Deserialize<ExpenseCreateRequestViewModel>(results[0].Value);
-                if (parsed == null)
-                    return BadRequest("Failed to parse QR data.");
-
-                parsed.Periodicity = "OneTime";
-                parsed.RepeatCount = 1;
-                parsed.EndDate = null;
-
-                return Ok(parsed);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Failed to read QR: " + ex.Message);
-            }
-        }
 
 
         [HttpGet("ListExpenses")]
@@ -388,38 +354,35 @@ namespace TRACKEXPENSES.Server.Controllers
             return Ok(instance);
         }
 
-        private List<ExpenseInstance> GenerateExpenseInstances(Expense expense)
-        {
-            var instances = new List<ExpenseInstance>();
-            var current = expense.StartDate;
-            int count = expense.Periodicity == "Endless" ? 60 : expense.RepeatCount ?? 1;
-
-            for (int i = 0; i < count; i++)
-            {
-                instances.Add(new ExpenseInstance
-                {
-                    ExpenseId = expense.Id,
-                    DueDate = current,
-                    IsPaid = false,
-                    ImageId = null
-                });
-
-                current = expense.Periodicity switch
-                {
-                    "Daily" => current.AddDays(1),
-                    "Weekly" => current.AddDays(7),
-                    "Monthly" => current.AddMonths(1),
-                    "Yearly" => current.AddYears(1),
-                    _ => current
-                };
-            }
-
-            return instances;
-        }
         public class DeleteExpenseRequest
         {
             public string Id { get; set; }
         }
+        [HttpGet("GetExpenseImage/{expenseId}")]
+        public async Task<IActionResult> GetExpenseImage(string expenseId)
+        {
+            if (string.IsNullOrEmpty(expenseId))
+                return BadRequest("Invalid expense ID");
+
+            var expense = await context.Expenses
+                .SingleOrDefaultAsync(e => e.Id == expenseId);
+
+            if (expense == null)
+                return NotFound("Expense not found");
+
+            if (expense.ImageId == null || expense.ImageId == "No_image.jpg")
+                return Ok(new { imagePath = "NoPhoto" });
+
+            var image = await context.ImagesDB
+                .SingleOrDefaultAsync(img => img.Id.ToString() == expense.ImageId);
+
+            if (image == null)
+                return Ok(new { imagePath = "NoPhoto" });
+
+            return Ok(new { imagePath = image.Name });
+        }
+
+
 
     }
 }

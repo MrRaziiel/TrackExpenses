@@ -26,14 +26,25 @@ function ProfilePage() {
         const res = await apiCall.get('/User/GetProfile', {
           params: { UserEmail: auth.email }
         });
-
         if (res.data) {
           const userData = res.data;
-          setUser(userData);
-          setFormData({
-            ...userData,
-            birthday: userData.birthday || ''
-          });
+
+          const mappedUser = {
+            id: userData.id || userData.Id,
+            email: userData.email || userData.Email,
+            firstName: userData.firstName || userData.FirstName,
+            familyName: userData.familyName || userData.FamilyName,
+            birthday: userData.birthday || userData.Birthday,
+            phoneNumber: userData.phoneNumber || userData.PhoneNumber,
+            groupName: userData.groupName || userData.GroupName,
+            groupRole: userData.groupRole || userData.Role || 'Member',
+            groupId: userData.groupId || userData.GroupId,
+            profileImage: '',
+            groupMembers: userData.groupMembers || []
+          };
+
+          setUser(mappedUser);
+          setFormData({ ...mappedUser, birthday: mappedUser.birthday || '' });
 
           try {
             const res2 = await apiCall.get(`/User/GetPhotoProfile/${auth.email}`);
@@ -80,24 +91,34 @@ function ProfilePage() {
     reader.readAsDataURL(file);
   };
 
-  const uploadImage = async () => {
-    if (!selectedImage) return null;
+const uploadImage = async () => {
+  if (!selectedImage) return null;
 
-    const imageFormData = new FormData();
-    imageFormData.append('Photo', selectedImage);
+  const imageFormData = new FormData();
+  imageFormData.append('photo', selectedImage); // O nome deve ser 'photo' (veja o backend)
 
-    try {
-      const response = await apiCall.post(`/User/UploadProfileImage/${user.id}`, imageFormData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+  try {
+    const response = await apiCall.post(
+      `/User/UploadProfileImage/${user.id}`,
+      imageFormData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+    );
 
-      return response.data.partialPath;
-    } catch (error) {
-      console.error('Error to upload image:', error);
-      setImageError('Error to upload image');
-      return null;
-    }
-  };
+    const partialPath = response.data?.partialPath;
+    if (partialPath) return partialPath;
+
+    setImageError('Image uploaded but no path returned');
+    return null;
+  } catch (error) {
+    console.error('Error to upload image:', error);
+    setImageError('Error to upload image');
+    return null;
+  }
+};
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -136,6 +157,7 @@ function ProfilePage() {
 
       // Atualiza imagem no contexto auth
       if (imageUrl) {
+        console.log('imageUrl', imageUrl);
         setAuth((prev) => ({
           ...prev,
           path: `${import.meta.env.VITE_API_BASE_URL}/${imageUrl}?t=${Date.now()}`

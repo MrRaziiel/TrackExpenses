@@ -24,7 +24,19 @@ function UsersList() {
       try {
         const res = await apiCall.get('Administrator/User/GetAllUsers');
         console.log('data all users', res.data);
-        if (res.data) setUsers(res.data.$values);
+
+        // ✅ Normalizar os campos
+        const userArray = (res.data?.$values || []).map(u => ({
+          id: u.Id || u.id,
+          email: u.Email || u.email,
+          firstName: u.FirstName || u.firstName,
+          familyName: u.FamilyName || u.familyName,
+          birthday: u.BirthdayString || u.birthday,
+          role: u.Role || u.role || '-',
+          groupOfUsers: u.GroupOfUsers || null
+        }));
+
+        setUsers(userArray);
       } catch (err) {
         console.error("Erro ao buscar utilizadores:", err);
         setUsers([]);
@@ -35,8 +47,8 @@ function UsersList() {
 
   useEffect(() => {
     const result = users.filter(user =>
-      user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      (user.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredUsers(result);
   }, [users, searchTerm]);
@@ -84,6 +96,9 @@ function UsersList() {
               break;
             case "group":
               value = user.groupOfUsers?.name || "-";
+              break;
+            case "birthday":
+              value = user.birthday ? new Date(user.birthday).toLocaleDateString() : "-";
               break;
             default:
               value = user[prop] || "-";
@@ -168,6 +183,12 @@ function UsersList() {
           </tbody>
         </table>
       </div>
+
+      {errorSubmit && (
+        <div className="text-red-600 mt-4 text-center">
+          {errorSubmit}
+        </div>
+      )}
     </div>
   );
 }
