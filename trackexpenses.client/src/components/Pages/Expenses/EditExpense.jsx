@@ -20,7 +20,7 @@ function EditExpense() {
     const fetchExpense = async () => {
       try {
         if (!id) return;
-        const res = await apiCall.get(`/Expenses/GetExpenseById/${id}`);
+        const res = await apiCall.get(`/expenses/GetExpenseById/${id}`);
         const data = res.data;
 
         const transformed = {
@@ -28,8 +28,8 @@ function EditExpense() {
           name: data.Name,
           category: data.Category,
           description: data.Description,
-          value: data.Value,
-          payAmount: data.PayAmount,
+          value: Number(data.Value),
+          payAmount: data.PayAmount !== null ? Number(data.PayAmount) : null,
           startDate: data.StartDate,
           endDate: data.EndDate,
           periodicity: data.Periodicity,
@@ -42,15 +42,15 @@ function EditExpense() {
             id: inst.Id,
             dueDate: inst.DueDate,
             isPaid: inst.IsPaid,
-            value: inst.Value,
-            paidAmount: inst.PaidAmount,
+            value: Number(inst.Value),
+            paidAmount: Number(inst.PaidAmount),
             imageId: inst.ImageId,
           })) || [],
         };
 
         setExpense(transformed);
 
-        const imgRes = await apiCall.get(`/Expenses/GetExpenseImage/${id}`);
+        const imgRes = await apiCall.get(`/expenses/GetExpenseImage/${id}`);
         const path = imgRes?.data?.imagePath;
         if (path && path !== 'NoPhoto') {
           setImageUrl(`${API_BASE}/${path}`);
@@ -62,6 +62,23 @@ function EditExpense() {
 
     fetchExpense();
   }, [id]);
+
+  const recalculateInstances = (newValue, newPayAmount, count) => {
+    const instanceValue = Math.round(newValue / count);
+    let remainingPay = newPayAmount ?? 0;
+
+    return expense.instances.map((inst) => {
+      const paidAmount = Math.min(remainingPay, instanceValue);
+      const isPaid = paidAmount >= instanceValue;
+      remainingPay -= paidAmount;
+      return {
+        ...inst,
+        value: instanceValue,
+        paidAmount,
+        isPaid,
+      };
+    });
+  };
 
   const handleInstanceChange = (updatedInstance) => {
     setExpense((prev) => ({
@@ -88,8 +105,7 @@ function EditExpense() {
     const formData = new FormData();
     formData.append('Image', selectedImage);
     try {
-      console.log(formData);
-      await apiCall.post(`/Expenses/UploadImage/${id}`, formData);
+      await apiCall.post(`/expenses/UploadImage/${id}`, formData);
     } catch (err) {
       console.error('Erro ao carregar imagem:', err);
     }
@@ -98,8 +114,26 @@ function EditExpense() {
   const handleSave = async () => {
     try {
       if (selectedImage) await handleUpload();
-      console.log('expense', expense);
-      await apiCall.put(`/Expenses/UpdateExpense`, expense);
+
+      const updatedExpense = {
+        id: expense.id,
+        name: expense.name,
+        category: expense.category,
+        description: expense.description,
+        value: Number(expense.value),
+        payAmount: expense.payAmount !== null ? Number(expense.payAmount) : null,
+        startDate: expense.startDate,
+        endDate: expense.endDate,
+        periodicity: expense.periodicity,
+        repeatCount: expense.repeatCount ?? null,
+        shouldNotify: expense.shouldNotify,
+        groupId: expense.groupId,
+        imageId: expense.imageId,
+        userId: expense.userId,
+        instances: { $values: expense.instances },
+      };
+
+      await apiCall.put(`/expenses/UpdateExpense`, updatedExpense);
       navigate('/expenses');
     } catch (err) {
       console.error('Erro ao guardar alterações:', err);
@@ -155,7 +189,21 @@ function EditExpense() {
             <input
               type="number"
               value={expense.value}
-              onChange={(e) => setExpense({ ...expense, value: parseFloat(e.target.value) })}
+              onChange={(e) => {
+                const newValue = parseFloat(e.target.value);
+                if (!isNaN(newValue)) {
+                  const newInstances = recalculateInstances(
+                    newValue,
+                    expense.payAmount,
+                    expense.instances.length
+                  );
+                  setExpense((prev) => ({
+                    ...prev,
+                    value: newValue,
+                    instances: newInstances,
+                  }));
+                }
+              }}
               className="w-full border p-2 rounded"
             />
           </div>
@@ -164,7 +212,21 @@ function EditExpense() {
             <input
               type="number"
               value={expense.payAmount}
-              onChange={(e) => setExpense({ ...expense, payAmount: parseFloat(e.target.value) })}
+              onChange={(e) => {
+                const newPayAmount = parseFloat(e.target.value);
+                if (!isNaN(newPayAmount)) {
+                  const newInstances = recalculateInstances(
+                    expense.value,
+                    newPayAmount,
+                    expense.instances.length
+                  );
+                  setExpense((prev) => ({
+                    ...prev,
+                    payAmount: newPayAmount,
+                    instances: newInstances,
+                  }));
+                }
+              }}
               className="w-full border p-2 rounded"
             />
           </div>
