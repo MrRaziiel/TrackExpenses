@@ -27,15 +27,18 @@ const Login = () => {
         setErrorSubmit('Email or Password incorrect');
         return;
       }
-      const accessToken = response.data.token;
-      const email = formData.email
-      var role = response.data.user.role;
+      console.log("response.data", response.data);
+      const accessToken = response.data.AccessToken;
+      const email = response.data.Email
+      var role = response.data.Role;
       const user = {email,accessToken, role}
 
+      console.log("user", user);
       setRole(role);
       setAuth({ email, accessToken });
       setIsAuthenticated(true);
       localStorage.setItem('auth', JSON.stringify({user}));
+      console.log("AAAAAAAAAAAA");
       navigate('/dashboard');
 
     } catch (err) {

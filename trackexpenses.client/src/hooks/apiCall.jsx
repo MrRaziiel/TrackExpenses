@@ -1,11 +1,21 @@
 import axios from 'axios';
 
 // Cria uma instância Axios com configuração padrão
+const authString = localStorage.getItem("auth");
+if (authString) {
+  var auth = JSON.parse(authString); // transforma a string em objeto
+  var token = auth.user?.accessToken;
+}
+console.log("Token", token);
 const apiCall = axios.create({
-  baseURL: '/api', // ou use process.env.REACT_APP_API_URL
-  headers: { 'Content-Type': 'application/json' },
-  withCredentials: true, // envia cookies HttpOnly automaticamente
+ baseURL: "https://localhost:5001/api/",
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}` 
+  },
+  withCredentials: true
 });
+
 
 // Interceptor de resposta para normalizar e centralizar o tratamento de erros
 apiCall.interceptors.response.use(
@@ -26,14 +36,6 @@ apiCall.interceptors.response.use(
     return Promise.reject(customError);
   }
 );
-
-export function setAuthToken(token) {
-  if (token) {
-    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  } else {
-    delete apiClient.defaults.headers.common['Authorization'];
-  }
-}
 
 
 export default apiCall;

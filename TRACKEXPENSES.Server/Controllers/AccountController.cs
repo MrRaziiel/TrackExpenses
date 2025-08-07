@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TRACKEXPENSES.Server.Data;
 using TRACKEXPENSES.Server.Models;
+using TRACKEXPENSES.Server.Services;
 using TRACKEXPENSES.Server.ViewModels;
 
 
@@ -20,6 +22,8 @@ namespace TRACKEXPENSES.Server.Controllers
         private readonly IWebHostEnvironment _webHostEnvironment = webHostEnvironment;
 
         [HttpGet("GetProfile")]
+        [Authorize]
+
         public async Task<IActionResult> GetProfile([FromQuery] string UserEmail)
         {
             if (UserEmail == null) return NotFound("No Email entered");

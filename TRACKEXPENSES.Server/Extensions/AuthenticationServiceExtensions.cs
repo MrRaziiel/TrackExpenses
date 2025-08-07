@@ -7,28 +7,31 @@ namespace TRACKEXPENSES.Server.Extensions
 {
     public static class AuthenticationServiceExtensions
     {
-
-        public static async void AddAuthentications(this IServiceCollection services, WebApplicationBuilder builder)
+        //Jwt Authentication token
+        public static async void AddAuthentications(this IServiceCollection services, IConfigurationSection jwtSettings /*,WebApplicationBuilder builder*/)
         {
-            var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-            var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
+
+
             services.AddAuthentication(options =>
-         {
-             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-             options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-         })
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
     .AddJwtBearer(options =>
     {
+        options.RequireHttpsMetadata = false; //TRUE -> To enrure HTTPS is required 
+        options.SaveToken = true;
         options.TokenValidationParameters = new TokenValidationParameters
         {
+            ValidIssuer = jwtSettings["Issuer"],
+            ValidAudience = jwtSettings["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]!)),
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSettings["Issuer"],
-            ValidAudience = jwtSettings["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(secretKey)
-        };
+            };
+      
     });
 
         }

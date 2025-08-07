@@ -1,29 +1,25 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using TRACKEXPENSES.Server.Models;
-using TRACKEXPENSES.Server.ViewModels;
-using TRACKEXPENSES.Server.Data;
 using System.Data;
-using System.Security.Claims;
-using System.IdentityModel.Tokens.Jwt;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.EntityFrameworkCore.SqlServer.Query.Internal;
-using Microsoft.EntityFrameworkCore;
+using TRACKEXPENSES.Server.Data;
+using TRACKEXPENSES.Server.Models;
+using TRACKEXPENSES.Server.Services;
+using TRACKEXPENSES.Server.ViewModels;
 
 
 namespace TRACKEXPENSES.Server.Controllers
 {
     //[ApiController]
     [Route("api/auth")]
-    public class RegisterController(SignInManager<User> signInManager, UserManager<User> userManager, FinancasDbContext context, IConfiguration configuration) : Controller
+    public class RegisterController(SignInManager<User> signInManager, UserManager<User> userManager, FinancasDbContext context, IConfiguration configuration, JwtService jwtService) : Controller
     {
         private readonly SignInManager<User> _signInManager = signInManager;
         private readonly UserManager<User> _userManager = userManager;
         private readonly FinancasDbContext _context = context;
         private readonly IConfiguration _configuration = configuration;
+        private readonly JwtService _jwtService = jwtService;
+
 
 
 
@@ -119,55 +115,22 @@ namespace TRACKEXPENSES.Server.Controllers
         }
 
         [HttpPost("Login")]
+        [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginViewModel model)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            var user = await userManager.FindByEmailAsync(model.Email);
-            if (user is null)
-            {
-                return NotFound();
-            }
+            var result2 = await _jwtService.Authenticate(model);
+            if (result2 == null)
+                return Unauthorized();
 
-            var result = await signInManager.CheckPasswordSignInAsync(user, model.Password, false);
-            if (!result.Succeeded)
-            {
-                return NotFound();
-            }
+            return Ok(result2);
 
-            var authClaims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            };
+        }
 
-            var jwtSettings = configuration.GetSection("JwtSettings");
-            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]));
-            var expirationTimeInMinutes = 0.0;
-            double.TryParse(jwtSettings["ExpirationTimeInMinutes"], out expirationTimeInMinutes);
-
-            var token = new JwtSecurityToken(
-            issuer: jwtSettings["Issuer"],
-            audience: jwtSettings["Audience"],
-            expires: DateTime.Now.AddMinutes(expirationTimeInMinutes),
-            claims: authClaims,
-            signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
-            );
-            var roleNameResponse = await _userManager.GetRolesAsync(user);
-            var roleName = roleNameResponse.IsNullOrEmpty() ? null : roleNameResponse[0];
-
-            return Ok(new
-            {
-                token = new JwtSecurityTokenHandler().WriteToken(token),
-                expiration = token.ValidTo,
-                user = new
-                {
-                    id = user.Id,
-                    email = user.Email,
-                    role = roleName,
-                    path = user.ProfileImageId,
-                }
-            });
-
+        [Authorize]
+        [HttpGet]
+        public IActionResult AuthenticatedOnlyEndpoint()
+        {
+            return Ok("You are authenticated!");
         }
        
     }

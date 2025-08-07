@@ -1,13 +1,14 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using System.Text;
 using TRACKEXPENSES.Server.Data;
 using TRACKEXPENSES.Server.Extensions;
+using TRACKEXPENSES.Server.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<FinancasDbContext>(options =>
@@ -15,11 +16,20 @@ builder.Services.AddDbContext<FinancasDbContext>(options =>
     options.UseSqlServer(connectionString);
 });
 
-
 builder.Services.AddIdentityServices();
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]);
-builder.Services.AddAuthentications(builder);
+builder.Services.AddAuthentications(jwtSettings);
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("https://localhost:64306") // Porta do front-end
+             .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials(); 
+    });
+});
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -30,22 +40,17 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     });
 
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend",
-        builder => builder
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .WithOrigins("http://localhost:3000"));
-});
-
+builder.Services.AddAuthorization();
+builder.Services.AddScoped<JwtService>();
 
 var app = builder.Build();
 
 app.UseDefaultFiles();
+
+
+
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(
@@ -59,12 +64,14 @@ if (app.Environment.IsDevelopment())
     await using (var dbContext = serviceScope.ServiceProvider.GetRequiredService<FinancasDbContext>())
     {
         await dbContext.Database.EnsureCreatedAsync();
-
     }
+
     app.UseSwagger();
     app.UseSwaggerUI();
+
+    app.UseDeveloperExceptionPage(); 
 }
-app.UseDeveloperExceptionPage();    
+
 app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();
@@ -74,7 +81,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapFallbackToFile("/index.html");
 
 await app.SetRoles();
 await app.SetAdmin();
