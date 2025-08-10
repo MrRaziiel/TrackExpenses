@@ -24,7 +24,7 @@ namespace TRACKEXPENSES.Server.Controllers
             var allClients = _context.UsersList.Include(client => client.GroupOfUsers).ToList();
             if (allClients == null) return BadRequest("Dados inválidos.");
 
-            return Ok(allClients);
+            return Ok(new { ListUsers = allClients});
         }
 
         [HttpPost("User/DeleteUser")]

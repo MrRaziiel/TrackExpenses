@@ -1,13 +1,13 @@
 // src/pages/SignIn.jsx
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import apiCall from '../../hooks/apiCall';
 import { getPasswordValidation, pageConfigurations } from '../../utilis/configurations/SigninConfiguration';
 import { useTheme } from '../Theme/Theme';
 import { useLanguage } from '../../utilis/Translate/LanguageContext';
 import { HelpCircle } from 'lucide-react';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
+import { verifyEmailBd } from '../../services/AuthServices.jsx';
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -82,22 +82,35 @@ const SignIn = () => {
  
     }
 
-const verifyEmailBd = async () => {
-  try {
-    setErrorEmail(null);
-    const res = await apiCall.get("/auth/EmailCheckInDb", {params: { email: formData.email }
 
-});
-    // Exemplo: lidar com o resultado
-    if (res.data) {
-      setErrorEmail("Email já existe na base de dados.");
-    } else {
-      setErrorEmail(null);
+const verifyEmail_Bd = async () => {
+  setErrorEmail(null);
+  if (!formData?.email) {
+    setErrorEmail('Please fill Email.');
+    return false;
+  }
+
+  try {
+    const exist = await verifyEmailBd(formData.email);
+    if(exist === undefined)
+    {
+      setErrorEmail('Error to validate email.');
+      return false;
     }
-    return (!res.data);
+
+    if (exist) {
+      setErrorEmail('Email already registed');
+      return false;
+    }
+
+    return true;
   } catch (err) {
-    console.error("Erro ao verificar email:", err);
-    setErrorEmail(err.message || "Erro ao verificar o email.");
+    console.error('Erro ao verificar email:', {
+      status: err.response?.status,
+      data: err.response?.data,
+      message: err.message,
+    });
+    setErrorEmail('Error to validate email.');
     return false;
   }
 };
@@ -132,16 +145,22 @@ const handleChange = (e) => {
   }));
 };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (! verifyEmail() ) return
-    if (! verifyEmailBd()) return
+    const isEmailValid = await verifyEmail_Bd();
+    if (!isEmailValid) {
+      return;
+    }
     if (! validPassword() ) return
     if (! verifyPasswordCheck() ) return
-    setErrorEmail(null);
-    setErrorPasswordCheck(null);
-    setErrorPasswordMatch(null);
-    setStep(2);
-  };
+
+
+  setErrorEmail(null);
+  setErrorPasswordCheck(null);
+  setErrorPasswordMatch(null);
+  setStep(2);
+
+};
 
 
   const handleSubmit = async (e) => {

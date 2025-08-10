@@ -5,6 +5,7 @@ import { useLanguage } from '../../../utilis/Translate/LanguageContext';
 import apiCall from '../../../hooks/apiCall';
 import AuthContext from '../../Authentication/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { getAllUsers } from '../../../services/UsersServices';
 
 const arrayPropertiesToShow = ["fullName", "email", "birthday", "role", "group"];
 
@@ -18,29 +19,16 @@ function UsersList() {
   const [errorSubmit, setErrorSubmit] = useState(null);
   const navigate = useNavigate();
 
+  
+
   useEffect(() => {
     const fetchData = async () => {
       setErrorSubmit(null);
-      try {
-        const res = await apiCall.get('Administrator/User/GetAllUsers');
-        console.log('data all users', res.data);
 
-        // ✅ Normalizar os campos
-        const userArray = (res.data?.$values || []).map(u => ({
-          id: u.Id || u.id,
-          email: u.Email || u.email,
-          firstName: u.FirstName || u.firstName,
-          familyName: u.FamilyName || u.familyName,
-          birthday: u.BirthdayString || u.birthday,
-          role: u.Role || u.role || '-',
-          groupOfUsers: u.GroupOfUsers || null
-        }));
+      const usersList = await getAllUsers();
+      if (!usersList) setErrorSubmit("Error searching Users");
+      setUsers(usersList);
 
-        setUsers(userArray);
-      } catch (err) {
-        console.error("Erro ao buscar utilizadores:", err);
-        setUsers([]);
-      }
     };
     fetchData();
   }, []);
@@ -80,7 +68,12 @@ function UsersList() {
       return (
         <tr>
           <td colSpan={100} className="px-6 py-8 text-center" style={{ color: theme?.colors?.text?.secondary }}>
-            {t('common.noUsersFound')}
+            
+            {errorSubmit && (
+        <div className="text-red-600 text-center">
+          {errorSubmit}
+        </div>
+      )|| t('common.noUsersFound')}
           </td>
         </tr>
       );
@@ -184,11 +177,6 @@ function UsersList() {
         </table>
       </div>
 
-      {errorSubmit && (
-        <div className="text-red-600 mt-4 text-center">
-          {errorSubmit}
-        </div>
-      )}
     </div>
   );
 }

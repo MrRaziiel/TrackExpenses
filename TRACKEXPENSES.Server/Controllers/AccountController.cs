@@ -14,16 +14,123 @@ namespace TRACKEXPENSES.Server.Controllers
 
     [ApiController]
     [Route("api/User")]
-    public class AccountController(RoleManager<IdentityRole> roleManager, UserManager<User> userManager, FinancasDbContext context, IWebHostEnvironment webHostEnvironment) : ControllerBase
+    
+    public class AccountController(RoleManager<IdentityRole> roleManager, UserManager<User> userManager, FinancasDbContext context, IWebHostEnvironment webHostEnvironment, SignInManager<User> signInManager, IConfiguration configuration, JwtService jwtService) : Controller
     {
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
         private readonly UserManager<User> _userManager = userManager;
         private readonly FinancasDbContext _context = context;
         private readonly IWebHostEnvironment _webHostEnvironment = webHostEnvironment;
+        private readonly IConfiguration _configuration = configuration;
+        private readonly JwtService _jwtService = jwtService;
+        private readonly SignInManager<User> _signInManager = signInManager;
+
+
+        [HttpPost("Register")]
+        public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
+        {
+            //Problems with DATE
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            User user = new()
+            {
+
+                FirstName = model.FirstName,
+                FamilyName = model.FamilyName,
+                Email = model.Email,
+                UserName = model.Email,
+                Password = model.Password,
+                PhoneNumber = model.PhoneNumber != null ? model.PhoneNumber : "000000000",
+                ProfileImageId = "No_image.jpg",
+                Birthday = model.Birthday != null ? model.Birthday : DateTime.Now,
+
+            };
+            try
+            {
+                if (model.Birthday != null) user.Birthday = model.Birthday;
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+
+
+            string role = "";
+
+            if (string.IsNullOrEmpty(model.CodeInvite))
+            {
+
+                GroupOfUsers groupOfUsers = new()
+                {
+                    Name = model.FamilyName,
+                    CodeInvite = GenerateCodeGroup()
+
+                };
+                role = "GROUPADMINISTRATOR";
+
+                await _context.GroupOfUsers.AddAsync(groupOfUsers);
+                user.GroupId = groupOfUsers.Id;
+            }
+            else
+            {
+                var group = _context.GroupOfUsers.FirstOrDefault(x => x.CodeInvite == model.CodeInvite);
+
+                if (group == null) return BadRequest("Code Group incorrect");
+                string id = group.Id;
+                user.GroupId = id;
+                role = "USER";
+
+            }
+
+            var result = await _userManager.CreateAsync(user, user.Password);
+            if (!result.Succeeded) return BadRequest(result.Errors);
+
+            await _context.UsersList.AddAsync(user);
+            await _userManager.AddToRoleAsync(user, role);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        private static readonly Random random = new();
+        private string GenerateCodeGroup()
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, 32)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+        [HttpGet("EmailCheckInDb")]
+        public async Task<IActionResult> EmailCheckInDb([FromQuery] string email)
+        {
+            if (string.IsNullOrEmpty(email)) return BadRequest(false);
+            var user = await _userManager.FindByNameAsync(email);
+            var exists = user != null;
+            return Ok(exists);
+
+        }
+        [HttpGet("CodeGroupCheckBd")]
+        public IActionResult CodeGroupCheckBd([FromQuery] string code)
+        {
+            if (string.IsNullOrEmpty(code)) return Ok();
+            var user = _context?.GroupOfUsers.FirstOrDefault(userToFind => userToFind.CodeInvite == code);
+            var exists = user != null;
+            return Ok(exists);
+        }
+
+        [HttpPost("Login")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Login([FromBody] LoginViewModel model)
+        {
+            var result2 = await _jwtService.Authenticate(model);
+            if (result2 == null)
+                return Unauthorized();
+
+            return Ok(result2);
+
+        }
 
         [HttpGet("GetProfile")]
         [Authorize]
-
         public async Task<IActionResult> GetProfile([FromQuery] string UserEmail)
         {
             if (UserEmail == null) return NotFound("No Email entered");
@@ -35,6 +142,7 @@ namespace TRACKEXPENSES.Server.Controllers
             return Ok(existUser);
         }
 
+        [Authorize]
         [HttpPut("EditUser")]
         public async Task<IActionResult> EditUser([FromBody] UserUpdateViewModel UserToEdit)
         {
@@ -51,6 +159,7 @@ namespace TRACKEXPENSES.Server.Controllers
 
         }
 
+        [Authorize]
         [HttpPost("UploadProfileImage/{id}")]
         public async Task<IActionResult> UploadProfileImage(string id, IFormFile photo)
         {
@@ -125,7 +234,7 @@ namespace TRACKEXPENSES.Server.Controllers
         }
 
 
-
+        [Authorize]
         [HttpGet("GetPhotoProfile/{email}")]
         public async Task<IActionResult> GetPhotoProfile(string email)
         {
@@ -147,6 +256,13 @@ namespace TRACKEXPENSES.Server.Controllers
                 return Ok(new { firstName = existUser.FirstName });
 
             return Ok(new { photoPath = imageBd.Name });
+        }
+
+        [Authorize]
+        [HttpGet]
+        public IActionResult AuthenticatedOnlyEndpoint()
+        {
+            return Ok("You are authenticated!");
         }
 
     }

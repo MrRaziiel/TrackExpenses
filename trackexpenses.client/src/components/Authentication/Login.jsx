@@ -4,7 +4,7 @@ import { useTheme } from '../Theme/Theme';
 import { useLanguage } from "../../utilis/Translate/LanguageContext";
 import { Lock, Mail } from 'lucide-react';
 import apiCall from "../../hooks/apiCall";
-import AuthContext from "../Authentication/AuthContext";
+import AuthContext from "./AuthContext";
 
 const Login = () => {
   const { auth, setAuth, isAuthenticated, setIsAuthenticated, role, setRole } = useContext(AuthContext);
@@ -22,7 +22,7 @@ const Login = () => {
       password: formData.password || ""
     };
     try {
-      const response = await apiCall.post('/auth/Login', payload);
+      const response = await apiCall.post('/User/Login', payload);
       if (!response.data) {
         setErrorSubmit('Email or Password incorrect');
         return;

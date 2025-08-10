@@ -17,8 +17,8 @@ import EditUserProfile from './components/Pages/Administrador/EditUser';
 import ProfilePage from './components/Pages/Profile';
 import SettingsPage from './components/Pages/Settings';
 
-import Login from './components/Pages/Login';
-import SignIn from './components/Pages/SignIn';
+import Login from './components/Authentication/Login';
+import SignIn from './components/Authentication/SignIn';
 import useLogout from './components/Authentication/Logout';
 import RequireAuth from './components/Authentication/Require';
 import NotRequireAuth from './components/Authentication/NotRequire';
