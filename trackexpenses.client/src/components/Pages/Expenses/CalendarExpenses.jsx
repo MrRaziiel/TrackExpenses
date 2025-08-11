@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useContext } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import AuthContext from '../../Authentication/AuthContext';
-import apiCall from '../../../hooks/apiCall';
+import AuthContext from '../../AuthenticationService/Auth/AuthContext';
+import apiCall from '../../AuthenticationService/hooks/apiCall';
 import { useTheme } from '../../Theme/Theme';
 import { useLanguage } from '../../../utilis/Translate/LanguageContext';
 

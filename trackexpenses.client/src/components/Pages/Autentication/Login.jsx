@@ -1,10 +1,10 @@
 import { useState, useContext } from "react";
 import { Link, useNavigate } from 'react-router-dom';
-import { useTheme } from '../Theme/Theme';
-import { useLanguage } from "../../utilis/Translate/LanguageContext";
+import { useTheme } from '../../Theme/Theme';
+import { useLanguage } from "../../../utilis/Translate/LanguageContext";
 import { Lock, Mail } from 'lucide-react';
-import apiCall from "../../hooks/apiCall";
-import AuthContext from "./AuthContext";
+import apiCall from "../../AuthenticationService/hooks/apiCall";
+import AuthContext from "../../AuthenticationService/Auth/AuthContext";
 
 const Login = () => {
   const { auth, setAuth, isAuthenticated, setIsAuthenticated, role, setRole } = useContext(AuthContext);

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, PieChart, Shield, TrendingUp } from 'lucide-react';
 import { useContext } from "react";
 import { useTheme } from '../Theme/Theme';
-import AuthContext from "../Authentication/AuthContext";
+import AuthContext from "../AuthenticationService/Auth/AuthContext";
 import { Navigate } from "react-router-dom";
 
 

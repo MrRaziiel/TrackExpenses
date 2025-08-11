@@ -2,10 +2,10 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Search, Pencil, Trash2 } from 'lucide-react';
 import { useTheme } from '../../Theme/Theme';
 import { useLanguage } from '../../../utilis/Translate/LanguageContext';
-import apiCall from '../../../hooks/apiCall';
-import AuthContext from '../../Authentication/AuthContext';
+import apiCall from '../../AuthenticationService/hooks/apiCall';
+import AuthContext from '../../AuthenticationService/Auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getAllUsers } from '../../../services/UsersServices';
+import { getAllUsers } from '../../AuthenticationService/services/UsersServices';
 
 const arrayPropertiesToShow = ["fullName", "email", "birthday", "role", "group"];
 

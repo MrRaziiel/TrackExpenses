@@ -7,8 +7,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../Theme/Theme';
 import { useLanguage } from '../../../utilis/Translate/LanguageContext';
-import AuthContext from '../../Authentication/AuthContext';
-import apiCall from '../../../hooks/apiCall';
+import AuthContext from '../../AuthenticationService/Auth/AuthContext';
+import apiCall from '../../AuthenticationService/hooks/apiCall';
 
 function ListExpenses() {
   const { theme } = useTheme();

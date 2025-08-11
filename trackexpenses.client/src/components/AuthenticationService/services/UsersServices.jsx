@@ -18,12 +18,6 @@ export  const getAllUsers = async () => {
     return listUsers;
 
   } catch (err) {
-    // console.error('Error finding users', {
-    //   url: err.config?.baseURL + err.config?.url,
-    //   status: err.response?.status,
-    //   data: err.response?.data,
-    //   message: err.message,
-    // });
     return [];
   }
 };

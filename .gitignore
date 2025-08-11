@@ -21,6 +21,8 @@ wwwroot/
 *.mdf
 *.ldf
 *.bak
+.env
+.env.*.*
 
 # Secrets
 appsettings.Development.json

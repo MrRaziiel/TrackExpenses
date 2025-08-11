@@ -6,8 +6,8 @@ import {
 } from 'lucide-react';
 import { useTheme } from './components/Theme/Theme';
 import { useLanguage } from './utilis/Translate/LanguageContext';
-import AuthContext from './components/Authentication/AuthContext';
-import apiCall from './hooks/apiCall';
+import AuthContext from './components/AuthenticationService/Auth/AuthContext';
+import apiCall from './components/AuthenticationService/hooks/apiCall';
 
 // Pages
 import Welcome from './components/Pages/Welcome';
@@ -17,13 +17,13 @@ import EditUserProfile from './components/Pages/Administrador/EditUser';
 import ProfilePage from './components/Pages/Profile';
 import SettingsPage from './components/Pages/Settings';
 
-import Login from './components/Authentication/Login';
-import SignIn from './components/Authentication/SignIn';
-import useLogout from './components/Authentication/Logout';
-import RequireAuth from './components/Authentication/Require';
-import NotRequireAuth from './components/Authentication/NotRequire';
+import Login from './components/Pages/Autentication/Login';
+import SignIn from './components/Pages/Autentication/SignIn';
+import useLogout from './components/AuthenticationService/Auth/Logout';
+import RequireAuth from './components/AuthenticationService/Auth/Require';
+import NotRequireAuth from './components/AuthenticationService/Auth/NotRequire';
 
-import ForgotPassword from './components/Pages/ForgotPassword';
+import ForgotPassword from './components/Pages/Autentication/ForgotPassword';
 
 import Dashboard from './components/Pages/Administrador/Dashboard';
 
@@ -262,11 +262,14 @@ setAuth(prev => ({
         <div className={`flex-1 ${isAuthenticated ? 'p-4 md:p-8' : 'py-8 px-4'} min-h-[calc(100vh-4rem)]`}>
           <Routes>
             <Route path="/" element={<Welcome />} />
+            <Route path="*" element={<Welcome />} />
+
             <Route element={<NotRequireAuth />}>
             
             <Route path="/Login" element={<Login />} />
             <Route path="/Register" element={<SignIn />} />
             <Route path="/ForgotPassword" element={<ForgotPassword />} />
+
             </Route>
 
             <Route element={<RequireAuth />}>

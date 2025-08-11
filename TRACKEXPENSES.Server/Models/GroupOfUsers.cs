@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using TRACKEXPENSES.Server.ViewModels;
 
 
 namespace TRACKEXPENSES.Server.Models
@@ -78,6 +79,30 @@ namespace TRACKEXPENSES.Server.Models
         public List<Expense> Expenses { get; set; } = new List<Expense>();
 
     }
+
+    public class CreateUserFromRegister : User
+    {
+        public static CreateUserFromRegister fromRegister(RegisterViewModel register)
+        {
+
+            return new CreateUserFromRegister()
+            {
+
+                FirstName = register.FirstName,
+                FamilyName = register.FamilyName,
+                Email = register.Email,
+                UserName = register.Email,
+                Password = register.Password,
+                PhoneNumber = register.PhoneNumber != null ? register.PhoneNumber : "000000000",
+                ProfileImageId = "No_image.jpg",
+                Birthday = register.Birthday != null ? register.Birthday : DateTime.Now,
+
+            };
+
+
+        }
+    }
+
 }
 
 

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Pencil, Trash2, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import apiCall from '../../../hooks/apiCall';
-import AuthContext from '../../Authentication/AuthContext';
+import apiCall from '../../AuthenticationService/hooks/apiCall';
+import AuthContext from '../../AuthenticationService/Auth/AuthContext';
 import { useTheme } from '../../Theme/Theme';
 
 function EarningsList() {

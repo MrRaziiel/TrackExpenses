@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
-import { useTheme } from '../Theme/Theme';
-import { useLanguage } from '../../utilis/Translate/LanguageContext';
+import { useTheme } from '../../Theme/Theme';
+import { useLanguage } from '../../../utilis/Translate/LanguageContext';
 
 function ForgotPassword() {
   const { theme } = useTheme();
@@ -168,7 +168,7 @@ function ForgotPassword() {
                   Remember your password?
                 </p>
                 <Link 
-                  to="/signin" 
+                  to="/Register" 
                   className="inline-flex items-center text-sm font-medium hover:underline transition-colors duration-200"
                   style={{ color: theme?.colors?.primary?.main }}
                 >

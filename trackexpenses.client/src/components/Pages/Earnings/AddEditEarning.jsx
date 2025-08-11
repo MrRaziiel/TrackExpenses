@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Save, X } from 'lucide-react';
-import apiCall from '../../../hooks/apiCall';
-import AuthContext from '../../Authentication/AuthContext';
+import apiCall from '../../AuthenticationService/hooks/apiCall';
+import AuthContext from '../../AuthenticationService/Auth/AuthContext';
 import { useTheme } from '../../Theme/Theme';
 
 function AddEditEarning({ isEdit = false, existingData = null }) {

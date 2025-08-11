@@ -16,3 +16,15 @@ export  const verifyEmailBd  = async (email) => {
     return {"error" : err};
   }
 };
+
+export const RegistUser = async (payload) => {
+  try {
+    const res = await apiCall.post('/User/Register', payload);
+
+    console.log('res', res);
+    return res.data;
+   
+  } catch (err) {
+    return {"error" : err};
+  }
+};

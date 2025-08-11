@@ -29,30 +29,11 @@ namespace TRACKEXPENSES.Server.Controllers
         [HttpPost("Register")]
         public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
         {
-            //Problems with DATE
+
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            User user = new()
-            {
+            var user = CreateUserFromRegister.fromRegister(model);
 
-                FirstName = model.FirstName,
-                FamilyName = model.FamilyName,
-                Email = model.Email,
-                UserName = model.Email,
-                Password = model.Password,
-                PhoneNumber = model.PhoneNumber != null ? model.PhoneNumber : "000000000",
-                ProfileImageId = "No_image.jpg",
-                Birthday = model.Birthday != null ? model.Birthday : DateTime.Now,
-
-            };
-            try
-            {
-                if (model.Birthday != null) user.Birthday = model.Birthday;
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex);
-            }
 
 
             string role = "";
@@ -88,7 +69,7 @@ namespace TRACKEXPENSES.Server.Controllers
             await _context.UsersList.AddAsync(user);
             await _userManager.AddToRoleAsync(user, role);
             await _context.SaveChangesAsync();
-            return Ok();
+            return Created();
         }
 
         private static readonly Random random = new();
