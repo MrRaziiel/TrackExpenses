@@ -29,8 +29,7 @@ namespace TRACKEXPENSES.Server.Controllers
         [HttpPost("Register")]
         public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
         {
-
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (ModelState.IsValid) return BadRequest(ModelState);
 
             var user = CreateUserFromRegister.fromRegister(model);
 
@@ -80,8 +79,8 @@ namespace TRACKEXPENSES.Server.Controllers
                 .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
-        [HttpGet("EmailCheckInDb")]
-        public async Task<IActionResult> EmailCheckInDb([FromQuery] string email)
+        [HttpPost("EmailCheckInDb")]
+        public async Task<IActionResult> EmailCheckInDb([FromBody] string email)
         {
             if (string.IsNullOrEmpty(email)) return BadRequest(false);
             var user = await _userManager.FindByNameAsync(email);
@@ -89,11 +88,12 @@ namespace TRACKEXPENSES.Server.Controllers
             return Ok(exists);
 
         }
-        [HttpGet("CodeGroupCheckBd")]
-        public IActionResult CodeGroupCheckBd([FromQuery] string code)
+
+        [HttpPost("CodeGroupCheckBd")]
+        public async Task<IActionResult> CodeGroupCheckBd([FromBody] string code)
         {
             if (string.IsNullOrEmpty(code)) return Ok();
-            var user = _context?.GroupOfUsers.FirstOrDefault(userToFind => userToFind.CodeInvite == code);
+            var user = await _context?.GroupOfUsers.FirstOrDefaultAsync(userToFind => userToFind.CodeInvite == code);
             var exists = user != null;
             return Ok(exists);
         }

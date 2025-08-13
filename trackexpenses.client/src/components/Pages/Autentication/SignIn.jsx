@@ -7,19 +7,16 @@ import { useLanguage } from '../../../utilis/Translate/LanguageContext.jsx';
 import { HelpCircle } from 'lucide-react';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
-import { verifyEmailBd , RegistUser } from '../../AuthenticationService/services/AuthServices.jsx';
+import {  genericPostCall } from '../../AuthenticationService/services/AuthServices.jsx';
 
-// import apiCall from '../../services/apiCall';
-// import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
-// import { jwtDecode } from 'jwt-decode'; 
+
 
 const SignIn = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
 
   const [step, setStep] = useState(1);
-  const [authProvider, setAuthProvider] = useState(null); // 'google' | null
-
+  const [authProvider, setAuthProvider] = useState(null); 
   // Errors
   const [errorEmail, setErrorEmail] = useState(null);
   const [errorCodeGroup, setErrorCodeGroup] = useState(null);
@@ -34,38 +31,20 @@ const SignIn = () => {
   const [secondconfigurationPage] = useState(pagesConfigurations.secondconfigurationPage);
 
 
-  const handleTooltipEnter = () => setShowTooltip(true);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
 
+  const handleTooltipEnter = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
 
-  // Comment because will be implement later
-  // const handleGoogleSuccess = (credentialResponse) => {
-  //   try {
-  //     const { credential } = credentialResponse || {};
-  //     if (!credential) return;
-
-  //     const profile = jwtDecode(credential); 
-
-  //     setFormData(prev => ({
-  //       ...prev,
-  //       email: profile.email || prev.email || "",
-  //       firstname: profile.given_name || prev.firstname || "",
-  //       lastname: profile.family_name || prev.lastname || "",
-  //       google_token: credential,
-  //     }));
-
-  //     setAuthProvider('google');
-  //     setErrorEmail(null);
-  //     setErrorPasswordCheck(null);
-  //     setErrorPasswordMatch(null);
-  //     setStep(2);
-  //   } catch (e) {
-  //     console.error("Erro a processar Google credential:", e);
-  //   }
-  // };
-
-  //  const handleGoogleError = () => {
-  //   console.error("Erro no login Google");
-  // };
+    setTooltipPosition({
+      top: rect.top + scrollTop,
+      left: rect.left + scrollLeft
+    });
+    setShowTooltip(true);
+  };
 
 
   const handleNext = async () => {
@@ -73,10 +52,10 @@ const SignIn = () => {
     const isEmailValid = await verifyEmail_Bd();
     if (!isEmailValid) return;
 
-    if (authProvider !== 'google') {
-      if (!validPassword()) return;
-      if (!verifyPasswordCheck()) return;
-    }
+
+    if (!validPassword()) return;
+    if (!verifyPasswordCheck()) return;
+
 
     setStep(2);
   };
@@ -130,41 +109,31 @@ const SignIn = () => {
       return false;
     }
 
-    try {
-      const exist = await verifyEmailBd(formData.email);
+    const exist = await genericPostCall('/User/EmailCheckInDb', formData?.email);
+    if (exist?.error !== undefined) setErrorEmail('Error to validate email.');
+     
+    if (exist?.data === true)  setErrorEmail('Email already registed');
+    
+    return exist?.error === undefined ? !exist?.data : false;
 
-      if (exist.error) pass;
-      if (exist === undefined) {
-        setErrorEmail('Error to validate email.');
-        return false;
-      }
-      if (exist) {
-        setErrorEmail('Email already registed');
-        return false;
-      }
-      return true;
-    } catch (err) {
-
-      setErrorEmail('Error to validate email. Server is down.');
-      return false;
-    }
+      
   };
 
   const verifyGroupCodeBd = async () => {
-    try {
-      if (!formData.code_invite) return true;
+      console.log('verifyGroupCodeBd', formData?.codeinvite);
       setErrorCodeGroup(null);
-      const res = await apiCall.get("/auth/CodeGroupCheckBd", { params: { code: formData.code_invite } });
-      if (!res.data) {
-        setErrorCodeGroup("Group Code já existe na base de dados.");
-      } else {
-        setErrorCodeGroup(null);
-      }
+      if (!formData.codeinvite) return true;
+
+      console.log(typeof formData?.codeinvite)
+
+      const res = await genericPostCall("/User/CodeGroupCheckBd",  JSON.stringify(formData?.codeinvite));
+      console.log('res', res.data);
+      if (res?.error !== undefined) setErrorCodeGroup('Error to validate Group code.');
+      if (res?.data === false) setErrorCodeGroup("Group Code doesn't exist, please correct that or leave empty");
+
+      console.log('ErrorCodeGroup', errorCodeGroup)
       return (res.data);
-    } catch (err) {;
-      setErrorCodeGroup(err.message || "Erro ao verificar o GroupCode.");
-      return false;
-    }
+
   };
 
   const handleChange = (e) => {
@@ -177,9 +146,7 @@ const SignIn = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorEmail(null);
-    setErrorPasswordCheck(null);
-    setErrorPasswordMatch(null);
+
 
     const isValidCode = await verifyGroupCodeBd();
     if (!isValidCode) return;
@@ -190,47 +157,28 @@ const SignIn = () => {
       return acc;
     }, {});
 
-    payload.authProvider = authProvider || 'local';
-    if (authProvider === 'google') {
-      payload.google_token = formData.google_token;
-      delete payload.password;
-      delete payload.confirmpassword;
-    }
+    
 
-    try {
-      // Se o teu backend tiver endpoint específico:
-      // const res = authProvider === 'google'
-      //   ? await apiCall.post('/auth/RegisterGoogle', payload)
-      //   : await apiCall.post('/auth/Register', payload);
+      const res = await genericPostCall('/User/Register',payload);
 
-      const res = await RegistUser(payload);
-      // setUser(res.data);
-      if (!res.error)
-      {
-        navigate('/login'); 
+      if (!res?.error === undefined) navigate('/login'); 
 
-      }
+      setErrorSubmit('Login failed');
  
-    } catch (err) {
-      setErrorSubmit(err.message || 'Login failed');
-    }
   };
 
 
   const renderFields = (fields) => {
-    const visibleFields = authProvider === 'google'
-      ? fields.filter(f => !['password', 'confirmpassword'].includes((f.lower || '').toLowerCase()))
-      : fields;
 
     return (
       <div className="space-y-6">
-        {visibleFields.map((field) => (
+        {fields.map((field) => (
           <div key={field.lower} className="space-y-2">
             <label
               className="block text-sm font-medium"
               style={{ color: theme?.colors?.text?.secondary }}
             >
-              {field.lower !== "code_invite" ? (
+              {field.lower !== "codeinvite" ? (
                 field.label
               ) : (
                 <div className="flex items-center space-x-2">
@@ -315,7 +263,7 @@ const SignIn = () => {
                   value={formData[field.lower] ?? ""}
                   onChange={handleChange}
                   className={`w-full ${field.label !== "Phone" ? 'pl-12' : 'pl-3'} pr-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 transition-all duration-200`}
-                  required={field.Required && !(authProvider === 'google' && ['password','confirmpassword'].includes((field.lower || '').toLowerCase()))}
+                  required={field.Required}
                   pattern={field.pattern || undefined}
                   label={field.label}
                   max={field.type === "date" ? new Date().toISOString().split("T")[0] : undefined}
@@ -329,7 +277,7 @@ const SignIn = () => {
               </p>
             )}
 
-            {field.lower === "password" && authProvider !== 'google' &&
+            {field.lower === "password" &&
               errorPasswordCheck &&
               !errorPasswordMatch &&
               errorPasswordCheck.map((error, index) => (
@@ -338,13 +286,13 @@ const SignIn = () => {
                 </p>
               ))}
 
-            {field.lower === "confirmpassword" && authProvider !== 'google' && errorPasswordMatch && (
+            {field.lower === "confirmpassword" && errorPasswordMatch && (
               <p className="text-sm" style={{ color: theme?.colors?.error?.main }}>
                 Erro: {errorPasswordMatch}
               </p>
             )}
 
-            {field.lower === "code_invite" && errorCodeGroup && (
+            {field.lower === "codeinvite" && errorCodeGroup && (
               <p className="text-red-500 mt-2">{errorCodeGroup}</p>
             )}
           </div>
@@ -382,25 +330,7 @@ const SignIn = () => {
                   }}
                 >
                   Next
-                </button>
-
-  <div className="flex-1">
-    {/* <GoogleOAuthProvider clientId="O_TEU_CLIENT_ID_GOOGLE">
-      <div style={{ width: '100%' }}>
-        <GoogleLogin
-          // onSuccess={handleGoogleSuccess}
-          // onError={handleGoogleError}
-          theme="outline"
-          size="large"
-          text="signin_with"
-          shape="pill"
-          width="100%"
-        />
-      </div>
-    </GoogleOAuthProvider> */}
-  </div>
-
-           
+                </button>           
                 </div>
               </>
             )}
@@ -411,14 +341,7 @@ const SignIn = () => {
                   Just one more step to complete your registration
                 </p>
 
-                {authProvider === 'google' && (
-                  <div
-                    className="mb-4 text-sm px-3 py-2 rounded-lg border"
-                    style={{ borderColor: theme?.colors?.secondary?.light, color: theme?.colors?.text?.secondary }}
-                  >
-                    A concluir registo com Google — não precisas de definir password.
-                  </div>
-                )}
+           
 
                 {renderFields(secondconfigurationPage)}
 
