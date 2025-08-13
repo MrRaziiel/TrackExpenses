@@ -41,3 +41,4 @@ bower_components/
 
 # Resharper files
 *.DotSettings.user
+trackexpenses.client/.env.development

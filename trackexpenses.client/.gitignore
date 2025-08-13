@@ -13,7 +13,7 @@ dist-ssr
 *.local
 
 # Database
-.env
+.env.json
 .env.*.*
 
 # Editor directories and files
