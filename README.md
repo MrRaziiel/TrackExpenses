@@ -1,27 +1,15 @@
 # TrackExpenses
 An application web "TrackExpenses" about financial control build with ASP.NET and SQL <br>
 
-The project will be split at least in 4 parts:<br>
+Welcome to TRACK EXPENSES
 
-<ul>
-<li>1 - Design how the website will be funcion<br></li>
-<li>2 - Logic about clients and admin<br></li>
-<li>3 - Logic about to show the expenses, bills, Payments,  invoices...<br></li>
-<li>4 - Better design of the website<br></li>
-</ul>
-<h3><strong>Without loggin</strong</h3>
-<p></p>
-<img src="https://github.com/user-attachments/assets/a5e81891-a7af-4423-a734-b65f73acc11b" width=1200px height=400px/>
+<img width="1500" height="900" alt="image" src="https://github.com/user-attachments/assets/f0ed6a78-35a0-4def-813a-84b20a42f892" />
 
-<br>
-<br>
+Here you can login! 
 
+<img width="1500" height="900" alt="Untitled" src="https://github.com/user-attachments/assets/0459a561-542a-486d-a455-51df815e1f5c" />
 
+and if you dont have account...
+You can SignIn
 
-<h3><strong>With loggin</strong</h3>
-<p></p>
-<img src="https://github.com/user-attachments/assets/2f2e494c-65ae-4c8d-bedb-5e4bbe3f497d" width=1200px height=400px/>
-
-
-
-
+<img width="1500" height="900" alt="image" src="https://github.com/user-attachments/assets/bc22022e-91f7-44d7-95a6-958585ca9fa0" />
