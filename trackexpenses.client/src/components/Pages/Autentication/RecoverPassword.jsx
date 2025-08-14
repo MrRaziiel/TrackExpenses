@@ -1,59 +1,89 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Mail, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Lock, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useTheme } from '../../Theme/Theme';
 import { useLanguage } from '../../../utilis/Translate/LanguageContext';
 import { genericPostCall } from '../../AuthenticationService/services/AuthServices';
 
-function ForgotPassword() {
+function RecoverPassword() {
   const { theme } = useTheme();
   const { t } = useLanguage();
+  const [searchParams] = useSearchParams();
+
   const [email, setEmail] = useState('');
+  const [token, setToken] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Ler email/token da querystring
+  useEffect(() => {
+    const qEmail = searchParams.get('email') || '';
+    const qToken = searchParams.get('token') || '';
+    setEmail(qEmail);
+    setToken(qToken);
+  }, [searchParams]);
+
   const handleSubmit = async (e) => {
-   
     e.preventDefault();
     setError('');
-    setIsLoading(true);
-     console.log('handleSubmit',email);
+
+    // validações simples
     if (!email || !email.includes('@')) {
-      setError('Please enter a valid email address');
-      setIsLoading(false);
+      setError('Invalid email from reset link.');
       return;
     }
-    var response = await genericPostCall("/User/forgot-password",  email);
-    console.log(response);
-    if (response?.error === undefined)
-    {
-    setTimeout(() => {
-      setIsLoading(false);
+    if (!token) {
+      setError('Invalid or missing reset token.');
+      return;
+    }
+    if (!password || password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    if (password !== confirm) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    const payload = { email, token, newPassword: password };
+    const response = await genericPostCall('/User/reset-password', payload);
+
+    if (!response?.error) {
       setIsSubmitted(true);
-    }, 50000);
-    }else{
-      setTimeout(() => {
-      if (response?.error?.status === 400) setError('Server error');
-      if (response?.error?.status === 404) setError(response?.error?.message);
+      setIsLoading(false);
+    } else {
+      if (response?.error?.status === 400) {
+        // pode vir lista de errors do Identity; tenta mostrar a mensagem recebida
+        setError(response?.error?.message || 'Invalid token or password policy not met.');
+      } else if (response?.error?.status === 404) {
+        setError('User not found.');
+      } else {
+        setError('Server error.');
+      }
       setIsLoading(false);
       setIsSubmitted(false);
-    }, 50000);
     }
-  
   };
 
   const handleTryAgain = () => {
-    setIsSubmitted(false);
-    setEmail('');
+    setPassword('');
+    setConfirm('');
     setError('');
+    setIsSubmitted(false);
   };
 
   return (
-         <div className="flex items-center justify-center px-4 sm:px-6 lg:px-8" style={{ backgroundColor: theme?.colors?.background?.default }}>
-      <div 
+    <div className="flex items-center justify-center px-4 sm:px-6 lg:px-8"
+         style={{ backgroundColor: theme?.colors?.background?.default }}>
+      <div
         className="max-w-md w-full rounded-2xl shadow-2xl overflow-hidden"
-        style={{ 
+        style={{
           backgroundColor: theme?.colors?.background?.paper,
           boxShadow: `0 25px 50px -12px ${theme?.colors?.primary?.dark}50`
         }}
@@ -62,42 +92,30 @@ function ForgotPassword() {
           {isSubmitted ? (
             <>
               <div className="text-center">
-                <div 
+                <div
                   className="mx-auto h-20 w-20 rounded-full flex items-center justify-center mb-6"
                   style={{ backgroundColor: theme?.colors?.success?.light }}
                 >
                   <CheckCircle className="h-10 w-10" style={{ color: theme?.colors?.success?.main }} />
                 </div>
                 <h2 className="text-3xl font-extrabold mb-4" style={{ color: theme?.colors?.text?.primary }}>
-                  Check your email
+                  Password updated
                 </h2>
-                <p className="text-sm mb-2" style={{ color: theme?.colors?.text?.secondary }}>
-                  We've sent a password reset link to:
+                <p className="text-sm mb-6" style={{ color: theme?.colors?.text?.secondary }}>
+                  Your password has been reset successfully for:
                 </p>
                 <p className="text-sm font-semibold mb-6" style={{ color: theme?.colors?.primary?.main }}>
                   {email}
                 </p>
-                <p className="text-xs" style={{ color: theme?.colors?.text?.secondary }}>
-                  Click the link in the email to reset your password. If you don't see it, check your spam folder.
-                </p>
               </div>
 
               <div className="mt-8 space-y-4">
-                <button
-                  onClick={handleTryAgain}
-                  className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-white font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 transform hover:-translate-y-0.5"
-                  style={{ backgroundColor: theme?.colors?.primary?.main }}
-                >
-                  <Mail className="mr-2 h-5 w-5" />
-                  Resend email
-                </button>
-                
                 <Link
                   to="/signin"
                   className="w-full flex justify-center items-center py-3 px-4 border rounded-lg font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200"
-                  style={{ 
+                  style={{
                     borderColor: theme?.colors?.secondary?.light,
-                    color: theme?.colors?.text?.primary 
+                    color: theme?.colors?.text?.primary
                   }}
                 >
                   <ArrowLeft className="mr-2 h-5 w-5" />
@@ -108,51 +126,65 @@ function ForgotPassword() {
           ) : (
             <>
               <div className="text-center">
-                <div 
+                <div
                   className="mx-auto h-16 w-16 rounded-full flex items-center justify-center mb-6"
                   style={{ backgroundColor: theme?.colors?.primary?.light + '30' }}
                 >
-                  <Mail className="h-8 w-8" style={{ color: theme?.colors?.primary?.main }} />
+                  <Lock className="h-8 w-8" style={{ color: theme?.colors?.primary?.main }} />
                 </div>
                 <h2 className="text-3xl font-extrabold mb-4" style={{ color: theme?.colors?.text?.primary }}>
-                  Forgot your password?
+                  Reset your password
                 </h2>
                 <p className="text-sm" style={{ color: theme?.colors?.text?.secondary }}>
-                  No worries! Enter your email and we’ll send you a reset link.
+                  Enter a new password for the account below.
+                </p>
+                <p className="text-sm font-semibold mt-2" style={{ color: theme?.colors?.primary?.main }}>
+                  {email || '—'}
                 </p>
               </div>
 
               <form className="space-y-6 mt-8" onSubmit={handleSubmit}>
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium mb-2" style={{ color: theme?.colors?.text?.secondary }}>
-                    Email Address
+                  <label className="block text-sm font-medium mb-2" style={{ color: theme?.colors?.text?.secondary }}>
+                    New password
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Mail className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="appearance-none block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200"
-                      style={{
-                        backgroundColor: theme?.colors?.background?.paper,
-                        borderColor: error ? theme?.colors?.error?.main : theme?.colors?.secondary?.light,
-                        color: theme?.colors?.text?.primary
-                      }}
-                      placeholder="Enter your email address"
-                    />
-                  </div>
-                  {error && (
-                    <p className="mt-2 text-sm" style={{ color: theme?.colors?.error?.main }}>
-                      {error}
-                    </p>
-                  )}
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="appearance-none block w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200"
+                    style={{
+                      backgroundColor: theme?.colors?.background?.paper,
+                      borderColor: theme?.colors?.secondary?.light,
+                      color: theme?.colors?.text?.primary
+                    }}
+                    placeholder="Enter new password"
+                  />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: theme?.colors?.text?.secondary }}>
+                    Confirm password
+                  </label>
+                  <input
+                    type="password"
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
+                    className="appearance-none block w-full px-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200"
+                    style={{
+                      backgroundColor: theme?.colors?.background?.paper,
+                      borderColor: error ? theme?.colors?.error?.main : theme?.colors?.secondary?.light,
+                      color: theme?.colors?.text?.primary
+                    }}
+                    placeholder="Re-enter new password"
+                  />
+                </div>
+
+                {error && (
+                  <p className="text-sm" style={{ color: theme?.colors?.error?.main }}>
+                    {error}
+                  </p>
+                )}
 
                 <button
                   type="submit"
@@ -166,11 +198,11 @@ function ForgotPassword() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Sending reset link...
+                      Updating password...
                     </span>
                   ) : (
                     <span className="flex items-center">
-                      Send reset link
+                      Update password
                       <ArrowRight className="ml-2 h-5 w-5" />
                     </span>
                   )}
@@ -179,10 +211,10 @@ function ForgotPassword() {
 
               <div className="mt-8 text-center">
                 <p className="text-sm mb-2" style={{ color: theme?.colors?.text?.secondary }}>
-                  Remember your password?
+                  Remembered your password?
                 </p>
-                <Link 
-                  to="/Register" 
+                <Link
+                  to="/signin"
                   className="inline-flex items-center text-sm font-medium hover:underline transition-colors duration-200"
                   style={{ color: theme?.colors?.primary?.main }}
                 >
@@ -198,4 +230,4 @@ function ForgotPassword() {
   );
 }
 
-export default ForgotPassword;
+export default RecoverPassword;

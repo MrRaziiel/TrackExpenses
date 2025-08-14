@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
@@ -40,17 +41,19 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     });
 
+builder.Services.Configure<SmtpOptions>(
+    builder.Configuration.GetSection("Smtp")); 
+builder.Services.AddScoped<TRACKEXPENSES.Server.Services.IEmailSender, SmtpEmailSender>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<JwtService>();
 
 var app = builder.Build();
-
 app.UseDefaultFiles();
 
-
-
+//Set FileProvider to Client APP (AKA front)
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(

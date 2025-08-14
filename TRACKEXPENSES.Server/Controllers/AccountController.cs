@@ -1,12 +1,17 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Web;
 using TRACKEXPENSES.Server.Data;
 using TRACKEXPENSES.Server.Models;
 using TRACKEXPENSES.Server.Services;
+using TRACKEXPENSES.Server.Services;
 using TRACKEXPENSES.Server.ViewModels;
+using Microsoft.Extensions.Logging;
 
 
 namespace TRACKEXPENSES.Server.Controllers
@@ -15,17 +20,19 @@ namespace TRACKEXPENSES.Server.Controllers
     [ApiController]
     [Route("api/User")]
     
-    public class AccountController(RoleManager<IdentityRole> roleManager, UserManager<User> userManager, FinancasDbContext context, IWebHostEnvironment webHostEnvironment, SignInManager<User> signInManager, IConfiguration configuration, JwtService jwtService) : Controller
+    public class AccountController(RoleManager<IdentityRole> roleManager, UserManager<User> userManager,
+        FinancasDbContext context, SignInManager<User> signInManager, IConfiguration configuration,
+        JwtService jwtService, Services.IEmailSender emailSender) : Controller
     {
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
         private readonly UserManager<User> _userManager = userManager;
         private readonly FinancasDbContext _context = context;
-        private readonly IWebHostEnvironment _webHostEnvironment = webHostEnvironment;
         private readonly IConfiguration _configuration = configuration;
         private readonly JwtService _jwtService = jwtService;
         private readonly SignInManager<User> _signInManager = signInManager;
+        private readonly Services.IEmailSender _emailSender = emailSender;
 
-
+        public record ResetPasswordRequest(string Email, string Token, string NewPassword);
         [HttpPost("Register")]
         public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
         {
@@ -239,12 +246,63 @@ namespace TRACKEXPENSES.Server.Controllers
             return Ok(new { photoPath = imageBd.Name });
         }
 
-        [Authorize]
-        [HttpGet]
-        public IActionResult AuthenticatedOnlyEndpoint()
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] string Email)
         {
-            return Ok("You are authenticated!");
+            if (string.IsNullOrWhiteSpace(Email)) return BadRequest("Email é obrigatório.");
+
+            var user = await _userManager.FindByEmailAsync(Email);
+            if (user == null) return NotFound("User not found");
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            var baseURL = _configuration["EmailConfiguration:URL"];
+            var endpoint = _configuration["EmailConfiguration:Endpoint"];
+
+            var url = $"{baseURL}{endpoint}?email={HttpUtility.UrlEncode(user.Email)}&token={HttpUtility.UrlEncode(token)}";
+
+            var html = $@"<p>Olá,</p>
+<p>Recebemos um pedido para alterar a sua palavra-passe.</p>
+<p>Clique no link abaixo para definir uma nova:</p>
+<p><a href='{url}' target='_blank'>Recuperar palavra-passe</a></p>
+<p>Se não foi você, ignore este e-mail.</p>";
+
+            await _emailSender.SendAsync(user.Email!, "Recuperar palavra-passe", html);
+            return Ok(new { message = "Se o e-mail existir e estiver confirmado, enviaremos instruções." });
         }
+
+        // 2) Confirmar reset: o frontend envia Email, Token e a nova password
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.NewPassword))
+                return BadRequest("Dados inválidos.");
+
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if (user == null)
+            {
+                // Não revelar detalhes
+                return BadRequest("Não foi possível redefinir a palavra-passe.");
+            }
+
+            var result = await _userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
+            if (!result.Succeeded)
+            {
+                return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
+            }
+   
+            return Ok(new { message = user });
+        }
+    
+    [HttpPost("test-email")]
+        public async Task<IActionResult> TestEmail(string to)
+        {
+            await _emailSender.SendAsync(to, "Teste", "<p>Funciona!</p>");
+            return Ok(new { message = "Email enviado" });
+        }
+
 
     }
 }
+
+

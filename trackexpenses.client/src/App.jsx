@@ -24,6 +24,7 @@ import RequireAuth from './components/AuthenticationService/Auth/Require';
 import NotRequireAuth from './components/AuthenticationService/Auth/NotRequire';
 
 import ForgotPassword from './components/Pages/Autentication/ForgotPassword';
+import RecoverPassword from './components/Pages/Autentication/RecoverPassword';
 
 import Dashboard from './components/Pages/Administrador/Dashboard';
 
@@ -34,6 +35,7 @@ import EditExpense from './components/Pages/Expenses/EditExpense';
 
 import EarningsList from './components/Pages/Earnings/EarningList';
 import AddEditEarning from './components/Pages/Earnings/AddEditEarning';
+
 
 
 
@@ -269,6 +271,7 @@ setAuth(prev => ({
             <Route path="/Login" element={<Login />} />
             <Route path="/Register" element={<SignIn />} />
             <Route path="/ForgotPassword" element={<ForgotPassword />} />
+            <Route path="/RecoverPassword" element={<RecoverPassword />} />
 
             </Route>
 

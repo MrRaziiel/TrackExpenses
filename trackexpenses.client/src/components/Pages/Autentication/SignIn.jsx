@@ -120,19 +120,15 @@ const SignIn = () => {
   };
 
   const verifyGroupCodeBd = async () => {
-      console.log('verifyGroupCodeBd', formData?.codeinvite);
       setErrorCodeGroup(null);
       if (!formData.codeinvite) return true;
 
-      console.log(typeof formData?.codeinvite)
+      const response = await genericPostCall("/User/CodeGroupCheckBd",  JSON.stringify(formData?.codeinvite));
 
-      const res = await genericPostCall("/User/CodeGroupCheckBd",  JSON.stringify(formData?.codeinvite));
-      console.log('res', res.data);
-      if (res?.error !== undefined) setErrorCodeGroup('Error to validate Group code.');
-      if (res?.data === false) setErrorCodeGroup("Group Code doesn't exist, please correct that or leave empty");
+      if (response?.error !== undefined) setErrorCodeGroup('Error to validate Group code.');
+      if (response?.data === false) setErrorCodeGroup("Group Code doesn't exist, please correct that or leave empty");
 
-      console.log('ErrorCodeGroup', errorCodeGroup)
-      return (res.data);
+      return (response.data);
 
   };
 
@@ -159,9 +155,9 @@ const SignIn = () => {
 
     
 
-      const res = await genericPostCall('/User/Register',payload);
+      const response = await genericPostCall('/User/Register',payload);
 
-      if (!res?.error === undefined) navigate('/login'); 
+      if (!response?.error === undefined) navigate('/login'); 
 
       setErrorSubmit('Login failed');
  
