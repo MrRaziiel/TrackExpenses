@@ -1,10 +1,11 @@
 import { useState, useContext } from "react";
 import { Link, useNavigate } from 'react-router-dom';
-import { useTheme } from '../../Theme/Theme';
-import { useLanguage } from "../../../utilis/Translate/LanguageContext";
+import { useTheme } from '../../styles/Theme/Theme';
+import { useLanguage } from "../../utilis/Translate/LanguageContext";
 import { Lock, Mail } from 'lucide-react';
-import apiCall from "../../AuthenticationService/hooks/apiCall";
-import AuthContext from "../../AuthenticationService/Auth/AuthContext";
+import apiCall from "../../services/ApiCalls/apiCall";
+import AuthContext from "../../services/Authentication/AuthContext";
+
 
 const Login = () => {
   const { auth, setAuth, isAuthenticated, setIsAuthenticated, role, setRole } = useContext(AuthContext);
@@ -21,29 +22,23 @@ const Login = () => {
       email: formData.email || "",
       password: formData.password || ""
     };
-    try {
-      const response = await apiCall.post('/User/Login', payload);
-      if (!response.data) {
-        setErrorSubmit('Email or Password incorrect');
-        return;
-      }
-      console.log("response.data", response.data);
-      const accessToken = response.data.AccessToken;
-      const email = response.data.Email
-      var role = response.data.Role;
+
+      const response = await apiCall.post("/User/Login", payload);
+      if (!response.ok) return setErrorSubmit(response.error.message);
+
+      var data = response.data;
+
+      const accessToken = data.AccessToken;
+      const email = data.Email
+      var role = data.Role;
       const user = {email,accessToken, role}
 
-      console.log("user", user);
       setRole(role);
       setAuth({ email, accessToken });
       setIsAuthenticated(true);
       localStorage.setItem('auth', JSON.stringify({user}));
-      console.log("AAAAAAAAAAAA");
       navigate('/dashboard');
 
-    } catch (err) {
-      setErrorSubmit(err.message || 'Login failed');
-    }
   };
 
   const fields = [

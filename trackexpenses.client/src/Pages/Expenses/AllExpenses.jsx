@@ -5,10 +5,10 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../Theme/Theme';
-import { useLanguage } from '../../../utilis/Translate/LanguageContext';
-import AuthContext from '../../AuthenticationService/Auth/AuthContext';
-import apiCall from '../../AuthenticationService/hooks/apiCall';
+import { useTheme } from '../../styles/Theme/Theme';
+import { useLanguage } from '../../utilis/Translate/LanguageContext';
+import AuthContext from '../../services/Authentication/AuthContext';
+import apiCall from '../../services/ApiCalls/apiCall';
 
 function ListExpenses() {
   const { theme } = useTheme();

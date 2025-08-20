@@ -1,4 +1,4 @@
-import { useTheme } from "../../components/Theme/Theme";
+import { useTheme } from "../../styles/Theme/Theme";
 import { Lock, Mail, User, Phone, Calendar } from 'lucide-react';
 
 

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
-import { useTheme } from '../../Theme/Theme';
-import { useLanguage } from '../../../utilis/Translate/LanguageContext';
-import { genericPostCall } from '../../AuthenticationService/services/AuthServices';
+import { useTheme } from '../../styles/Theme/Theme';
+import { useLanguage } from '../../utilis/Translate/LanguageContext';
+import apiCall from '../../services/ApiCalls/apiCall';
+
 
 function ForgotPassword() {
   const { theme } = useTheme();
@@ -24,23 +25,15 @@ function ForgotPassword() {
       setIsLoading(false);
       return;
     }
-    var response = await genericPostCall("/User/forgot-password",  email);
-    console.log(response);
-    if (response?.error === undefined)
-    {
-    setTimeout(() => {
+
+    apiCall.post("/User/forgot-password",  email).then(response => {
       setIsLoading(false);
       setIsSubmitted(true);
-    }, 50000);
-    }else{
-      setTimeout(() => {
-      if (response?.error?.status === 400) setError('Server error');
-      if (response?.error?.status === 404) setError(response?.error?.message);
-      setIsLoading(false);
-      setIsSubmitted(false);
-    }, 50000);
-    }
-  
+    }).catch(error =>{
+        setError(error.response?.data?.message || error.message);
+        setIsLoading(false);
+        setIsSubmitted(false);
+    });
   };
 
   const handleTryAgain = () => {

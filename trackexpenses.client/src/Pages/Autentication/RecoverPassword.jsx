@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Lock, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
-import { useTheme } from '../../Theme/Theme';
-import { useLanguage } from '../../../utilis/Translate/LanguageContext';
-import { genericPostCall } from '../../AuthenticationService/services/AuthServices';
+import { useTheme } from '../../styles/Theme/Theme';
+import { useLanguage } from '../../utilis/Translate/LanguageContext';
+import apiCall from '../../services/ApiCalls/apiCall';
 
 function RecoverPassword() {
   const { theme } = useTheme();
@@ -52,23 +52,18 @@ function RecoverPassword() {
     setIsLoading(true);
 
     const payload = { email, token, newPassword: password };
-    const response = await genericPostCall('/User/reset-password', payload);
 
-    if (!response?.error) {
-      setIsSubmitted(true);
-      setIsLoading(false);
-    } else {
-      if (response?.error?.status === 400) {
-        // pode vir lista de errors do Identity; tenta mostrar a mensagem recebida
-        setError(response?.error?.message || 'Invalid token or password policy not met.');
-      } else if (response?.error?.status === 404) {
-        setError('User not found.');
-      } else {
-        setError('Server error.');
+    const response = await apiCall.post('/User/reset-password', payload);
+    setIsSubmitted(true);
+    if (!response.ok)
+      {
+        setIsLoading(false);
+        return setError(response.error.message);
       }
-      setIsLoading(false);
-      setIsSubmitted(false);
-    }
+    setIsSubmitted(true);
+    setIsLoading(false);
+
+
   };
 
   const handleTryAgain = () => {

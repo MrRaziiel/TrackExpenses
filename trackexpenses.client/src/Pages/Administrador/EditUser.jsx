@@ -1,8 +1,8 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import AuthContext from '../../AuthenticationService/Auth/AuthContext';
-import { useTheme } from '../../Theme/Theme';
-import apiCall from '../../AuthenticationService/hooks/apiCall';
+import AuthContext from '../../services/Authentication/AuthContext';
+import { useTheme } from '../../styles/Theme/Theme';
+import apiCall from '../../services/ApiCalls/apiCall';
 import { Save, X, User, Mail, Calendar, Phone, Lock, Shield, Key, Camera, Users, Eye, EyeOff } from 'lucide-react';
 
 function EditUserProfile() {

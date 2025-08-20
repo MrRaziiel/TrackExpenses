@@ -1,13 +1,13 @@
 // src/pages/SignIn.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getPasswordValidation, pageConfigurations } from '../../../utilis/configurations/SigninConfiguration.jsx';
-import { useTheme } from '../../Theme/Theme.jsx';
-import { useLanguage } from '../../../utilis/Translate/LanguageContext.jsx';
+import { getPasswordValidation, pageConfigurations } from '../../utilis/Configurations/SigninConfiguration.jsx';
+import { useTheme } from '../../styles/Theme/Theme.jsx';
+import { useLanguage } from '../../utilis/Translate/LanguageContext.jsx';
 import { HelpCircle } from 'lucide-react';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
-import {  genericPostCall } from '../../AuthenticationService/services/AuthServices.jsx';
+import apiCall from '../../services/ApiCalls/apiCall.jsx';
 
 
 
@@ -108,13 +108,12 @@ const SignIn = () => {
       setErrorEmail('Please fill Email.');
       return false;
     }
-
-    const exist = await genericPostCall('/User/EmailCheckInDb', formData?.email);
-    if (exist?.error !== undefined) setErrorEmail('Error to validate email.');
+    const response = await apiCall.post('/User/EmailCheckInDb', formData?.email);
+    if (!response.ok) return setErrorEmail(response.error.message);
      
-    if (exist?.data === true)  setErrorEmail('Email already registed');
+    if (response?.data === true)  setErrorEmail('Email already registed');
     
-    return exist?.error === undefined ? !exist?.data : false;
+    return !response?.data;
 
       
   };
@@ -123,10 +122,10 @@ const SignIn = () => {
       setErrorCodeGroup(null);
       if (!formData.codeinvite) return true;
 
-      const response = await genericPostCall("/User/CodeGroupCheckBd",  JSON.stringify(formData?.codeinvite));
+      const response = await apiCall.post("/User/CodeGroupCheckBd",  JSON.stringify(formData?.codeinvite));
+      if (!response.ok) return setErrorSubmit(response.error.message);
 
-      if (response?.error !== undefined) setErrorCodeGroup('Error to validate Group code.');
-      if (response?.data === false) setErrorCodeGroup("Group Code doesn't exist, please correct that or leave empty");
+      if (response?.data === false) return setErrorCodeGroup("Group Code doesn't exist, please correct that or leave empty.");
 
       return (response.data);
 
@@ -141,6 +140,7 @@ const SignIn = () => {
   };
 
   const handleSubmit = async (e) => {
+    setErrorSubmit("");
     e.preventDefault();
 
 
@@ -152,15 +152,11 @@ const SignIn = () => {
       acc[field.lower] = formData[field.lower] ?? "";
       return acc;
     }, {});
+      console.log(payload);
+      const response = await apiCall.post('/User/Register',payload);
+      if (!response.ok) return setErrorSubmit(response.error.message);
+      navigate('/login'); 
 
-    
-
-      const response = await genericPostCall('/User/Register',payload);
-
-      if (!response?.error === undefined) navigate('/login'); 
-
-      setErrorSubmit('Login failed');
- 
   };
 
 

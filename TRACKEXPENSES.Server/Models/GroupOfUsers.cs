@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using TRACKEXPENSES.Server.Handlers;
 using TRACKEXPENSES.Server.ViewModels;
 
 
@@ -92,7 +93,7 @@ namespace TRACKEXPENSES.Server.Models
                 FamilyName = register.FamilyName,
                 Email = register.Email,
                 UserName = register.Email,
-                Password = register.Password,
+                Password = PasswordHashHandler.HashPassword(register.Password),
                 PhoneNumber = register.PhoneNumber != null ? register.PhoneNumber : "000000000",
                 ProfileImageId = "No_image.jpg",
                 Birthday = register.Birthday != null ? register.Birthday : DateTime.Now,

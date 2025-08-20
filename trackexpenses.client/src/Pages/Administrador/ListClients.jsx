@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Search, Pencil, Trash2 } from 'lucide-react';
-import { useTheme } from '../../Theme/Theme';
-import { useLanguage } from '../../../utilis/Translate/LanguageContext';
-import apiCall from '../../AuthenticationService/hooks/apiCall';
-import AuthContext from '../../AuthenticationService/Auth/AuthContext';
+import { useTheme } from '../../styles/Theme/Theme';
+import { useLanguage } from '../../utilis/Translate/LanguageContext';
+import AuthContext from '../../services/Authentication/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getAllUsers } from '../../AuthenticationService/services/UsersServices';
+
 
 const arrayPropertiesToShow = ["fullName", "email", "birthday", "role", "group"];
 
@@ -25,7 +24,20 @@ function UsersList() {
     const fetchData = async () => {
       setErrorSubmit(null);
 
-      const usersList = await getAllUsers();
+      
+      const response = await apiCall.get('Administrator/User/getAllUsers');
+      if (!response.ok) return setErrorSubmit(res.error.message);
+
+      const usersList = (response?.data?.ListUsers.$values || []).map(u => ({
+      id: u.Id || u.id,
+      email: u.Email || u.email,
+      firstName: u.FirstName || u.firstName,
+      familyName: u.FamilyName || u.familyName,
+      birthday: u.BirthdayString || u.birthday,
+      role: u.Role || u.role || '-',
+      groupOfUsers: u.GroupOfUsers || null
+    }));
+
       if (!usersList) setErrorSubmit("Error searching Users");
       setUsers(usersList);
 

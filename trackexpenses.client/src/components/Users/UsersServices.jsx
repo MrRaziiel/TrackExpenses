@@ -1,4 +1,4 @@
-import apiCall from "../hooks/apiCall";
+import apiCall from "../../services/apiCalls/apiCall";
 
 export  const getAllUsers = async () => {
   try {

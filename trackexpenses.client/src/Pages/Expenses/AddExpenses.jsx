@@ -1,8 +1,8 @@
 // AddExpense.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import apiCall from '../../AuthenticationService/hooks/apiCall';
-import AuthContext from '../../AuthenticationService/Auth/AuthContext';
+import apiCall from '../../services/ApiCalls/apiCall';
+import AuthContext from '../../services/Authentication/AuthContext';
 import jsQR from 'jsqr';
 
 function AddExpense() {

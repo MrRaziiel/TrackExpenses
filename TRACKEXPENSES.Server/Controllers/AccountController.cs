@@ -21,7 +21,7 @@ namespace TRACKEXPENSES.Server.Controllers
     [Route("api/User")]
     
     public class AccountController(RoleManager<IdentityRole> roleManager, UserManager<User> userManager,
-        FinancasDbContext context, SignInManager<User> signInManager, IConfiguration configuration,
+        FinancasDbContext context, IConfiguration configuration,
         JwtService jwtService, Services.IEmailSender emailSender) : Controller
     {
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
@@ -29,14 +29,13 @@ namespace TRACKEXPENSES.Server.Controllers
         private readonly FinancasDbContext _context = context;
         private readonly IConfiguration _configuration = configuration;
         private readonly JwtService _jwtService = jwtService;
-        private readonly SignInManager<User> _signInManager = signInManager;
         private readonly Services.IEmailSender _emailSender = emailSender;
 
         public record ResetPasswordRequest(string Email, string Token, string NewPassword);
         [HttpPost("Register")]
         public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
         {
-            if (ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var user = CreateUserFromRegister.fromRegister(model);
 
@@ -109,11 +108,11 @@ namespace TRACKEXPENSES.Server.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginViewModel model)
         {
-            var result2 = await _jwtService.Authenticate(model);
-            if (result2 == null)
-                return Unauthorized();
+            var result = await _jwtService.Authenticate(model);
+            if (result == null)
+                return Unauthorized("Wrong Email or Password");
 
-            return Ok(result2);
+            return Ok(result);
 
         }
 

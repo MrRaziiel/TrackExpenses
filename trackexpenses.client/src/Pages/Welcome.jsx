@@ -2,8 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, PieChart, Shield, TrendingUp } from 'lucide-react';
 import { useContext } from "react";
-import { useTheme } from '../Theme/Theme';
-import AuthContext from "../AuthenticationService/Auth/AuthContext";
+import { useTheme } from '../styles/Theme/Theme';
+import AuthContext from "../services/Authentication/AuthContext";
 import { Navigate } from "react-router-dom";
 
 

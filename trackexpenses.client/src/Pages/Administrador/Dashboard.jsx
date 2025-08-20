@@ -1,8 +1,8 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { useTheme } from '../../Theme/Theme';
-import { useLanguage } from '../../../utilis/Translate/LanguageContext';
+import { useTheme } from '../../styles/Theme/Theme';
+import { useLanguage } from '../../utilis/Translate/LanguageContext';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 

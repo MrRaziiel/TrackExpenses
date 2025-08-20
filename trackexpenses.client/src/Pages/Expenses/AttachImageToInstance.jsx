@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import apiCall from '../../../hooks/apiCall';
+import apiCall from '../../services/apiCall';
 
 function AttachImageToInstance({ instanceId, onImageAttached }) {
   const [previewUrl, setPreviewUrl] = useState(null);

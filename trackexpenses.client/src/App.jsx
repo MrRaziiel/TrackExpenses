@@ -4,37 +4,37 @@ import {
   Wallet, PiggyBank, Users, LogIn, Menu as MenuIcon, X,
   LayoutDashboard, ChevronLeft, ChevronRight, Settings, LogOut
 } from 'lucide-react';
-import { useTheme } from './components/Theme/Theme';
+import { useTheme } from './styles/Theme/Theme'; 
 import { useLanguage } from './utilis/Translate/LanguageContext';
-import AuthContext from './components/AuthenticationService/Auth/AuthContext';
-import apiCall from './components/AuthenticationService/hooks/apiCall';
+import AuthContext from './services/Authentication/AuthContext';
+
 
 // Pages
-import Welcome from './components/Pages/Welcome';
-import UsersList from './components/Pages/Administrador/ListClients';
-import EditUser from './components/Pages/Administrador/EditUser';
-import EditUserProfile from './components/Pages/Administrador/EditUser';
-import ProfilePage from './components/Pages/Profile';
-import SettingsPage from './components/Pages/Settings';
+import Welcome from './Pages/Welcome';
+import UsersList from './Pages/Administrador/ListClients';
+import EditUser from './Pages/Administrador/EditUser';
+import EditUserProfile from './Pages/Administrador/EditUser';
+import ProfilePage from './Pages/Profile';
+import SettingsPage from './Pages/Settings';
 
-import Login from './components/Pages/Autentication/Login';
-import SignIn from './components/Pages/Autentication/SignIn';
-import useLogout from './components/AuthenticationService/Auth/Logout';
-import RequireAuth from './components/AuthenticationService/Auth/Require';
-import NotRequireAuth from './components/AuthenticationService/Auth/NotRequire';
+import Login from './Pages/Autentication/Login';
+import SignIn from './Pages/Autentication/SignIn';
+import useLogout from './services/Authentication/Logout';
+import RequireAuth from './services/Authentication/Require';
+import NotRequireAuth from './services/Authentication/NotRequire';
 
-import ForgotPassword from './components/Pages/Autentication/ForgotPassword';
-import RecoverPassword from './components/Pages/Autentication/RecoverPassword';
+import ForgotPassword from './Pages/Autentication/ForgotPassword';
+import RecoverPassword from './Pages/Autentication/RecoverPassword';
 
-import Dashboard from './components/Pages/Administrador/Dashboard';
+import Dashboard from './Pages/Administrador/Dashboard';
 
-import ListExpenses from './components/Pages/Expenses/AllExpenses';
-import AddExpense from './components/Pages/Expenses/AddExpenses';
-import CalendarExpenses from './components/Pages/Expenses/CalendarExpenses';
-import EditExpense from './components/Pages/Expenses/EditExpense';
+import ListExpenses from './Pages/Expenses/AllExpenses';
+import AddExpense from './Pages/Expenses/AddExpenses';
+import CalendarExpenses from './Pages/Expenses/CalendarExpenses';
+import EditExpense from './Pages/Expenses/EditExpense';
 
-import EarningsList from './components/Pages/Earnings/EarningList';
-import AddEditEarning from './components/Pages/Earnings/AddEditEarning';
+import EarningsList from './Pages/Earnings/EarningList';
+import AddEditEarning from './Pages/Earnings/AddEditEarning';
 
 
 
