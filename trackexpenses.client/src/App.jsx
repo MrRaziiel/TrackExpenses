@@ -7,6 +7,7 @@ import {
 import { useTheme } from './styles/Theme/Theme'; 
 import { useLanguage } from './utilis/Translate/LanguageContext';
 import AuthContext from './services/Authentication/AuthContext';
+import apiCall from './services/apiCalls/apiCall';
 
 
 // Pages
@@ -36,7 +37,7 @@ import EditExpense from './Pages/Expenses/EditExpense';
 import EarningsList from './Pages/Earnings/EarningList';
 import AddEditEarning from './Pages/Earnings/AddEditEarning';
 
-
+import PremiumChoicePage from './Pages/Premium/Prices';
 
 
 
@@ -144,7 +145,7 @@ setAuth(prev => ({
         <div className="w-full px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
             <Link to="/" className="flex items-center space-x-2">
               <Wallet className="h-6 w-6" />
-              <span className="font-bold text-xl hidden sm:inline">FinanceTracker</span>
+              <span className="font-bold text-xl hidden sm:inline">TRACKEXPENSES</span>
             </Link>
 
             <div className="flex items-center space-x-2">
@@ -281,6 +282,7 @@ setAuth(prev => ({
 
               <Route path="/Earnings" element={<EarningsList />} />
               <Route path="/Earnings/add" element={<AddEditEarning />} />
+              <Route path="/Premium" element={<PremiumChoicePage />} />
 
               <Route path="/Expenses" element={<ListExpenses />} />
               <Route path="/expenses/add" element={<AddExpense />} />
@@ -300,7 +302,7 @@ setAuth(prev => ({
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <div className="text-gray-500 text-sm" style={{ color: theme?.colors?.text?.secondary }}>
-              © 2025 FinanceTracker. {t('common.allRightsReserved')}
+              © 2025 TRACKEXPENSES. {t('common.allRightsReserved')}
             </div>
             <div className="flex space-x-6">
               <a href="#" className="text-gray-500 hover:text-gray-700 text-sm">{t('common.privacyPolicy')}</a>

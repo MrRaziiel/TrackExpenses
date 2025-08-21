@@ -7,8 +7,7 @@ import { useLanguage } from '../../utilis/Translate/LanguageContext.jsx';
 import { HelpCircle } from 'lucide-react';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
-import apiCall from '../../services/ApiCalls/apiCall.jsx';
-
+import apiCall from '../../services/apiCalls/apiCall.jsx';
 
 
 const SignIn = () => {

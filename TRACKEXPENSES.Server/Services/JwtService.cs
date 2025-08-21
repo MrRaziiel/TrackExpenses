@@ -51,11 +51,11 @@ namespace TRACKEXPENSES.Server.Services
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[]
-{
-    new Claim(ClaimTypes.Email, request.Email),              
-    new Claim(ClaimTypes.NameIdentifier, userAccount.Id),  
-    new Claim(ClaimTypes.Role, roleName ?? "User")          
-}),
+            {
+                new Claim(ClaimTypes.Email, request.Email),              
+                new Claim(ClaimTypes.NameIdentifier, userAccount.Id),  
+                new Claim(ClaimTypes.Role, roleName ?? "User")          
+            }),
                 Expires = tokenExpiryTimeStamp,
                 Issuer = issuer,
                 Audience = audience,
@@ -67,8 +67,7 @@ namespace TRACKEXPENSES.Server.Services
        
             var securityToken = tokenHandler.CreateToken(tokenDescriptor);
             var accessToken = tokenHandler.WriteToken(securityToken);
-            
-           
+
 
             return new LoginResponseModel
             {
@@ -77,10 +76,7 @@ namespace TRACKEXPENSES.Server.Services
                 Role = roleName,
                 ExpiresIn = (int)tokenExpiryTimeStamp.Subtract(DateTime.UtcNow).TotalSeconds
             };
-            
-           
-
-          
+   
         }
     }
 }

@@ -3,8 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../styles/Theme/Theme';
 import { useLanguage } from "../../utilis/Translate/LanguageContext";
 import { Lock, Mail } from 'lucide-react';
-import apiCall from "../../services/ApiCalls/apiCall";
+import apiCall from "../../services/apiCalls/apiCall";
 import AuthContext from "../../services/Authentication/AuthContext";
+import Title from "../../components/Titles/TitlePage";
 
 
 const Login = () => {

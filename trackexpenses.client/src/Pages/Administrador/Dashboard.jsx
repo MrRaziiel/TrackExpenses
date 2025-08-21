@@ -3,6 +3,7 @@ import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { useTheme } from '../../styles/Theme/Theme';
 import { useLanguage } from '../../utilis/Translate/LanguageContext';
+import Title from '../../components/Titles/TitlePage';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -93,11 +94,7 @@ function Dashboard() {
 
   return (
         <div className="space-y-6">
-      <div className="flex justify-between items-center">
-      <h1 className="text-2xl font-bold" style={{ color: theme?.colors?.text?.primary }}>
-        {t('common.dashboard')}
-      </h1>
-          </div>
+          <Title text={ t('common.dashboard')} />
 
       <div className="grid md:grid-cols-2 gap-6">
         <div style={{ backgroundColor: colors.background.paper }} className="p-6 rounded-xl shadow-md">

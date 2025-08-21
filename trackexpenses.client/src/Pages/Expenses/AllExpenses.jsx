@@ -8,7 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../styles/Theme/Theme';
 import { useLanguage } from '../../utilis/Translate/LanguageContext';
 import AuthContext from '../../services/Authentication/AuthContext';
-import apiCall from '../../services/ApiCalls/apiCall';
+import apiCall from '../../services/apiCalls/apiCall';
+import Title from '../../components/Titles/TitlePage';
 
 function ListExpenses() {
   const { theme } = useTheme();
@@ -114,9 +115,8 @@ function ListExpenses() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold" style={{ color: theme?.colors?.text?.primary }}>
-          {t('common.expenses')}
-        </h1>
+        <Title text={t('common.expenses') || "Desbloqueia todas as funcionalidades sem limites."} />
+
         <button
           onClick={() => navigate('/expenses/add')}
           className="inline-flex items-center px-4 py-2 rounded-lg text-white"

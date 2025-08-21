@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Mail, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useTheme } from '../../styles/Theme/Theme';
 import { useLanguage } from '../../utilis/Translate/LanguageContext';
-import apiCall from '../../services/ApiCalls/apiCall';
+import apiCall from '../../services/apiCalls/apiCall';
 
 
 function ForgotPassword() {

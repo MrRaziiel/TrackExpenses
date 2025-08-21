@@ -21,6 +21,7 @@
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
     "flowbite": "^3.1.2",
+    "framer-motion": "^12.23.12",
     "jsqr": "^1.4.0",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.488.0",

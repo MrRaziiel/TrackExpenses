@@ -4,6 +4,8 @@ import { useTheme } from '../../styles/Theme/Theme';
 import { useLanguage } from '../../utilis/Translate/LanguageContext';
 import AuthContext from '../../services/Authentication/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import apiCall from '../../services/apiCalls/apiCall';
+import Title from '../../components/Titles/TitlePage';
 
 
 const arrayPropertiesToShow = ["fullName", "email", "birthday", "role", "group"];
@@ -141,12 +143,7 @@ function UsersList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold" style={{ color: theme?.colors?.text?.primary }}>
-          {t('common.users')}
-        </h1>
-      </div>
-
+      <Title text={t('common.users')} />
       <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
         <div className="flex-1 relative">
           <input
