@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../styles/Theme/Theme';
 import { useLanguage } from '../../utilis/Translate/LanguageContext';
 import AuthContext from '../../services/Authentication/AuthContext';
-import apiCall from '../../services/apiCalls/apiCall';
+import apiCall from '../../services/ApiCallGeneric/apiCall';
 import Title from '../../components/Titles/TitlePage';
 
 function ListExpenses() {

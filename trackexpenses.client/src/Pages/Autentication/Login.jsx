@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../styles/Theme/Theme';
 import { useLanguage } from "../../utilis/Translate/LanguageContext";
 import { Lock, Mail } from 'lucide-react';
-import apiCall, { setLoginTokens } from "../../services/ApiCalls/apiCall";
+import apiCall, { setLoginTokens } from "../../services/ApiCallGeneric/apiCall";
 import AuthContext from "../../services/Authentication/AuthContext";
 
 
@@ -30,7 +30,6 @@ const Login = () => {
 
       var data = response.data;
 
-      console.log(response.data);
       const accessToken = data.AccessToken;
       const email = data.Email
       const role = data.Role;

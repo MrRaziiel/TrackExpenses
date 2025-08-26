@@ -1,47 +1,42 @@
 // src/components/SessionPopup.jsx
-import React, { useEffect, useState } from "react";
-import { renewSession } from "../../services/ApiCalls/apiCall";
-import { subscribeTokenPopup, clearTokenPopupPending } from "../../services/MicroServices/tokenPopupBus";
-import useLogout from "../../services/Authentication/Logout";
+import React, { useEffect, useRef, useState } from "react";
+import { manualRefreshFromPopup, abortQueueAndClearAuth } from "../../services/ApiCallGeneric/apiCall";
 
 export default function SessionPopup() {
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState("");
-  const logout = useLogout();
+  const isOpenRef = useRef(false);
 
   useEffect(() => {
-    return subscribeTokenPopup(() => { setErr(""); setOpen(true); });
+    const on = () => {
+      // só abre se houver tokens e ainda não está aberto
+      try {
+        const a = JSON.parse(localStorage.getItem("auth") || "{}");
+        const has = !!a?.user?.accessToken && !!a?.user?.refreshToken;
+        if (has && !isOpenRef.current) {
+          isOpenRef.current = true;
+          setOpen(true);
+        }
+      } catch {}
+    };
+    window.addEventListener("tokenPopup", on);
+    return () => window.removeEventListener("tokenPopup", on);
   }, []);
 
   const handleRenew = async () => {
-    setLoading(true);
-    setErr("");
-    try {
-      await renewSession();
+    const ok = await manualRefreshFromPopup();
+    if (ok) {
+      isOpenRef.current = false;
       setOpen(false);
-      clearTokenPopupPending();
-    } catch (e) {
-      setErr(e?.message || "Não foi possível renovar. Tente novamente.");
-      try {
-        const hasRt = !!(JSON.parse(localStorage.getItem("auth") || "{}")?.user?.refreshToken);
-        if (!hasRt) await handleLogout();
-      } catch {}
-    } finally {
-      setLoading(false);
+    } else {
+      handleLogout();
     }
   };
 
-  const handleLogout = async () => {
-    setLoading(true);
-    try {
-      
-      await logout();
-    } finally {
-      clearTokenPopupPending();
-      setOpen(false);
-      setLoading(false);
-    }
+  const handleLogout = () => {
+    abortQueueAndClearAuth();
+    isOpenRef.current = false;
+    setOpen(false);
+    window.location.href = "/login";
   };
 
   if (!open) return null;
@@ -50,12 +45,15 @@ export default function SessionPopup() {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-white rounded-2xl p-6 w-[360px] shadow-xl">
         <h2 className="text-lg font-semibold mb-2">Sessão expirada</h2>
-        <p className="text-sm text-gray-600">Pretende renovar a sessão ou terminar?</p>
-        {err ? <p className="mt-3 text-sm text-red-600">{err}</p> : null}
+        <p className="text-sm text-gray-600">
+          O seu acesso expirou. Pretende renovar a sessão ou terminar?
+        </p>
         <div className="mt-5 flex justify-end gap-3">
-          <button onClick={handleLogout} className="px-4 py-2 rounded bg-gray-200" disabled={loading}>Terminar</button>
-          <button onClick={handleRenew} className="px-4 py-2 rounded bg-green-600 text-white" disabled={loading}>
-            {loading ? "A renovar..." : "Renovar"}
+          <button onClick={handleLogout} className="px-4 py-2 rounded bg-gray-200">
+            Terminar
+          </button>
+          <button onClick={handleRenew} className="px-4 py-2 rounded bg-green-600 text-white">
+            Renovar
           </button>
         </div>
       </div>

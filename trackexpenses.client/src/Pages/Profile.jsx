@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import AuthContext from '../services/Authentication/AuthContext';
 import { useTheme } from '../styles/Theme/Theme';
-import apiCall from '../services/apiCalls/apiCall';
+import apiCall from '../services/ApiCallGeneric/apiCall';
 import {
   Edit3, Save, X, User, Mail, Calendar, Phone, Lock, Users, Shield, Key, Camera
 } from 'lucide-react';
@@ -157,7 +157,6 @@ const uploadImage = async () => {
 
       // Atualiza imagem no contexto auth
       if (imageUrl) {
-        console.log('imageUrl', imageUrl);
         setAuth((prev) => ({
           ...prev,
           path: `${import.meta.env.VITE_API_BASE_URL}/${imageUrl}?t=${Date.now()}`

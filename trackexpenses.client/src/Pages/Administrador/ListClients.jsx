@@ -1,193 +1,153 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Search, Pencil, Trash2 } from 'lucide-react';
-import { useTheme } from '../../styles/Theme/Theme';
-import { useLanguage } from '../../utilis/Translate/LanguageContext';
-import AuthContext from '../../services/Authentication/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import apiCall from '../../services/apiCalls/apiCall';
-import Title from '../../components/Titles/TitlePage';
+import React, { useMemo, useEffect, useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 
+import GenericTable from "../../components/Tables/GenericTable";
+import GenericFilter from "../../components/Tables/GenericFilter";
+import Title from "../../components/Titles/TitlePage";
 
-const arrayPropertiesToShow = ["fullName", "email", "birthday", "role", "group"];
+import apiCall from "../../services/ApiCallGeneric/apiCall";
+import { useLanguage } from "../../utilis/Translate/LanguageContext";
+import AuthContext from "../../services/Authentication/AuthContext";
+import { useTheme } from "../../styles/Theme/Theme";
+import { Plus } from "lucide-react";
 
-function UsersList() {
+export default function UsersTable() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorSubmit, setErrorSubmit] = useState(null);
+
+  const navigate = useNavigate();
+  const { t } = useLanguage();
   const { auth, isAuthenticated, role } = useContext(AuthContext);
   const { theme } = useTheme();
-  const { t } = useLanguage();
-  const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [errorSubmit, setErrorSubmit] = useState(null);
-  const navigate = useNavigate();
-
-  
 
   useEffect(() => {
-    const fetchData = async () => {
-      setErrorSubmit(null);
-
-      
-      const response = await apiCall.get('Administrator/User/getAllUsers');
-      if (!response.ok) return setErrorSubmit(res.error.message);
-
-      const usersList = (response?.data?.ListUsers.$values || []).map(u => ({
-      id: u.Id || u.id,
-      email: u.Email || u.email,
-      firstName: u.FirstName || u.firstName,
-      familyName: u.FamilyName || u.familyName,
-      birthday: u.BirthdayString || u.birthday,
-      role: u.Role || u.role || '-',
-      groupOfUsers: u.GroupOfUsers || null
-    }));
-
-      if (!usersList) setErrorSubmit("Error searching Users");
-      setUsers(usersList);
-
-    };
-    fetchData();
+    let alive = true;
+    (async () => {
+      try {
+        const res = await apiCall.get("Administrator/User/GetAllUsers");
+        const list = res?.data?.ListUsers?.$values ?? [];
+        if (alive) setUsers(list);
+      } catch (e) {
+        if (alive) setErrorSubmit(e.message || "Erro ao carregar utilizadores.");
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => { alive = false; };
   }, []);
 
-  useEffect(() => {
-    const result = users.filter(user =>
-      (user.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.email || '').toLowerCase().includes(searchTerm.toLowerCase())
+  // filtro
+  const [flt, setFlt] = useState({ q: "", group: "all" });
+
+  const groupOptions = useMemo(() => {
+    const s = new Set(
+      (users || []).map(u => (u?.GroupOfUsers?.Name || "").trim()).filter(Boolean)
     );
-    setFilteredUsers(result);
-  }, [users, searchTerm]);
+    return [
+      { value: "all", label: t ? t("common.all") : "Todos" },
+      ...Array.from(s).map(g => ({ value: g, label: g })),
+    ];
+  }, [users, t]);
 
-  const handleEdit = (email, id) => {
-    navigate(`/users/edit/${id}/${email}`);
-  };
+  const filteredUsers = useMemo(() => {
+    const q = (flt.q || "").toLowerCase().trim();
+    return (users || []).filter(u => {
+      const name  = `${u?.FirstName || ""} ${u?.FamilyName || ""}`.toLowerCase();
+      const email = (u?.Email || "").toLowerCase();
+      const group = (u?.GroupOfUsers?.Name || "").toLowerCase();
+      const matchesText  = !q || name.includes(q) || email.includes(q) || group.includes(q);
+      const matchesGroup = flt.group === "all" || group === flt.group.toLowerCase();
+      return matchesText && matchesGroup;
+    });
+  }, [users, flt]);
 
-  const handleDelete = async (userId) => {
-    if (!isAuthenticated || role !== "ADMINISTRATOR") return;
+  const columns = [
+    { key: "fullName", headerKey: "fullName", accessor: (u) => `${u.FirstName || ""} ${u.FamilyName || ""}`.trim() || "-" },
+    { key: "email",    headerKey: "email",    accessor: (u) => u.Email },
+    { key: "group",    headerKey: "group",    accessor: (u) => u.GroupOfUsers?.Name || "-" },
+    { key: "birthday", headerKey: "birthday", accessor: (u) => (u.Birthday ? new Date(u.Birthday).toLocaleDateString() : "-") },
+  ];
 
-    const confirmDelete = window.confirm('Tens a certeza que queres apagar este utilizador?');
-    if (!confirmDelete) return;
+  const canDelete = () =>
+    (typeof isAuthenticated === "boolean" ? isAuthenticated : !!auth?.Email) &&
+    (role ? role === "ADMINISTRATOR" : auth?.Role === "ADMINISTRATOR");
 
-    try {
-      const response = await apiCall.post('Administrator/User/DeleteUser', userId);
-      if (response?.status === 200) {
-        setUsers(prev => prev.filter(user => user.id !== userId));
-      } else {
-        setErrorSubmit('Erro ao apagar utilizador.');
-      }
-    } catch (err) {
-      setErrorSubmit(err.message || 'Ocorreu um erro.');
-    }
-  };
+   return (
+        <div className="space-y-6">
 
-  const renderContent = () => {
-    if (!filteredUsers.length) {
-      return (
-        <tr>
-          <td colSpan={100} className="px-6 py-8 text-center" style={{ color: theme?.colors?.text?.secondary }}>
-            
-            {errorSubmit && (
-        <div className="text-red-600 text-center">
-          {errorSubmit}
-        </div>
-      )|| t('common.noUsersFound')}
-          </td>
-        </tr>
-      );
-    }
 
-    return filteredUsers.map((user, index) => (
-      <tr key={index}>
-        {arrayPropertiesToShow.map((prop) => {
-          let value;
-          switch (prop) {
-            case "fullName":
-              value = `${user.firstName || ""} ${user.familyName || ""}`.trim();
-              break;
-            case "group":
-              value = user.groupOfUsers?.name || "-";
-              break;
-            case "birthday":
-              value = user.birthday ? new Date(user.birthday).toLocaleDateString() : "-";
-              break;
-            default:
-              value = user[prop] || "-";
-          }
+      {/* header igual ao Expenses: título + botão a direita */}
+      <div className="flex justify-between items-center">
+        <Title text={t("common.users")} />
 
-          return (
-            <td
-              key={prop}
-              className="px-4 py-3 text-sm text-center break-words max-w-[200px]"
-              style={{ color: theme?.colors?.text?.secondary }}
-            >
-              {value}
-            </td>
-          );
-        })}
-        <td className="px-4 py-3 text-sm text-center">
-          <div className="flex justify-center items-center space-x-2">
-            <button
-              onClick={() => handleEdit(user.email, user.id)}
-              className="text-blue-600 hover:text-blue-900"
-            >
-              <Pencil className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => handleDelete(user.id)}
-              className="text-red-600 hover:text-red-900"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </div>
-        </td>
-      </tr>
-    ));
-  };
+        <button
+          onClick={() => navigate('/Register')} // usa a rota que já tens
+          className="inline-flex items-center px-4 py-2 rounded-lg text-white"
+          style={{ backgroundColor: theme?.colors?.primary?.main }}
+        >
+          <Plus className="h-5 w-5 mr-2" />
+          {t('common.add')} {t('common.user') || 'User'}
+        </button>
+      </div>
 
-  return (
-    <div className="space-y-6">
-      <Title text={t('common.users')} />
-      <div className="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            placeholder={t('common.search')}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-            style={{
-              backgroundColor: theme?.colors?.background?.paper,
-              color: theme?.colors?.text?.primary,
-              borderColor: theme?.colors?.secondary?.light
+      {/* barra de pesquisa fora do cartão (igual ao Expenses) */}
+      <GenericFilter
+        className="
+        mt-2
+        grid items-center gap-3
+        grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto_auto]
+        [&_input]:h-11 [&_select]:h-11 [&_button]:h-11
+      "
+        value={flt}
+        onChange={setFlt}
+        t={t}
+        theme={theme}
+        searchPlaceholder={t ? t("common.searchUsers") : "Search users..."}
+        filters={[{ key: "group", type: "select", options: groupOptions }]}
+      />
+
+      {/* cartão com a tabela */}
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="relative overflow-x-auto">
+          <GenericTable
+            filteredData={filteredUsers}
+            columns={columns}
+            theme={theme}
+            t={t}
+            loading={loading}
+            rowKey={(u) => u.Id || u.Email}
+            stickyHeader
+            truncateKeys={["fullName", "email"]}
+            minTableWidth="56rem"
+            headClassName="bg-gray-50"
+            headerCellClassName="px-6 py-3 text-xs font-medium text-left uppercase tracking-wider"
+            emptyMessage={t ? t("common.noResults") : "Sem resultados"}
+            edit={{
+              enabled: true,
+              navigate,
+              navigateTo: (u) => `/users/edit/${u.Id}/${u.Email}`,
+            }}
+            remove={{
+              enabled: true,
+              confirmMessage:
+                t?.("common.confirmDelete") || "Tens a certeza que queres apagar este utilizador?",
+              doDelete: async (u) => {
+                if (!canDelete()) return false;
+                const res = await apiCall.post("Administrator/User/DeleteUser", u.Id);
+                if (res?.status === 200) {
+                  setUsers(prev => prev.filter(x => x.Id !== u.Id));
+                  return true;
+                }
+                return false;
+              },
+              onError: (err) => setErrorSubmit(err?.message || "Erro ao apagar utilizador."),
             }}
           />
-          <Search className="h-5 w-5 text-gray-400 absolute left-3 top-2.5" />
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-md overflow-auto" style={{ backgroundColor: theme?.colors?.background?.paper }}>
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead style={{ backgroundColor: theme?.colors?.background?.paper }}>
-            <tr>
-              {arrayPropertiesToShow.map((key, i) => (
-                <th
-                  key={i}
-                  className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-center"
-                  style={{ color: theme?.colors?.text?.secondary }}
-                >
-                  {t(`common.${key}`)}
-                </th>
-              ))}
-              <th className="px-6 py-3 text-xs font-medium uppercase tracking-wider text-center" style={{ color: theme?.colors?.text?.secondary }}>
-                {t('common.actions')}
-              </th>
-            </tr>
-          </thead>
-          <tbody style={{ backgroundColor: theme?.colors?.background?.paper }}>
-            {renderContent()}
-          </tbody>
-        </table>
-      </div>
-
+      {errorSubmit && <div className="text-sm text-red-600">{errorSubmit}</div>}
     </div>
   );
 }
-
-export default UsersList;

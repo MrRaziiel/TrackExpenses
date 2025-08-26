@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import AuthContext from '../../services/Authentication/AuthContext';
-import apiCall from '../../services/ApiCalls/apiCall';
+import apiCall from '../../services/ApiCallGeneric/apiCall';
 import { useTheme } from '../../styles/Theme/Theme';
 import { useLanguage } from '../../utilis/Translate/LanguageContext';
 

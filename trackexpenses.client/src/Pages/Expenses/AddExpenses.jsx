@@ -1,7 +1,7 @@
 // AddExpense.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import apiCall from '../../services/ApiCalls/apiCall';
+import apiCall from '../../services/ApiCallGeneric/apiCall';
 import AuthContext from '../../services/Authentication/AuthContext';
 import jsQR from 'jsqr';
 
@@ -126,12 +126,10 @@ function AddExpense() {
               ...prev,
               ...parsed,
             }));
-            console.log('QR Code data applied:', parsed);
           } catch (err) {
             console.warn('Erro ao analisar QR Code:', err);
           }
         } else {
-          console.log('Nenhum QR code detectado — imagem ignorada');
         }
       };
       image.src = event.target.result;

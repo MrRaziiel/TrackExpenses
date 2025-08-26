@@ -7,7 +7,7 @@ import { useLanguage } from '../../utilis/Translate/LanguageContext.jsx';
 import { HelpCircle } from 'lucide-react';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
-import apiCall from '../../services/apiCalls/apiCall.jsx';
+import apiCall from '../../services/ApiCallGeneric/apiCall.jsx';
 
 
 const SignIn = () => {
@@ -151,7 +151,6 @@ const SignIn = () => {
       acc[field.lower] = formData[field.lower] ?? "";
       return acc;
     }, {});
-      console.log(payload);
       const response = await apiCall.post('/User/Register',payload);
       if (!response.ok) return setErrorSubmit(response.error.message);
       navigate('/login'); 

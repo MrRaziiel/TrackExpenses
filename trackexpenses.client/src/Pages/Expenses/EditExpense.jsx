@@ -1,7 +1,7 @@
 // EditExpense.jsx
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import apiCall from '../../services/ApiCalls/apiCall';
+import apiCall from '../../services/ApiCallGeneric/apiCall';
 import EditInstanceCard from './EditInstanceCard';
 import { Eye, Download, Camera, X, Save } from 'lucide-react';
 

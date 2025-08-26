@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Mail, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useTheme } from '../../styles/Theme/Theme';
 import { useLanguage } from '../../utilis/Translate/LanguageContext';
-import apiCall from '../../services/apiCalls/apiCall';
+import apiCall from '../../services/ApiCallGeneric/apiCall';
 
 
 function ForgotPassword() {
@@ -19,7 +19,6 @@ function ForgotPassword() {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-     console.log('handleSubmit',email);
     if (!email || !email.includes('@')) {
       setError('Please enter a valid email address');
       setIsLoading(false);

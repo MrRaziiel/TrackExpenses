@@ -4,7 +4,7 @@ import { useTheme } from "../../styles/Theme/Theme";
 import { useLanguage } from "../../utilis/Translate/LanguageContext";
 import Title from "../../components/Titles/TitlePage";
 import AuthContext from "../../services/Authentication/AuthContext";
-import apiCall from "../../services/ApiCalls/apiCall";
+import apiCall from "../../services/ApiCallGeneric/apiCall";
 /**
  * PremiumChoicePage
  * - Fixes invalid hook call by replacing <Navigate> misuse with useNavigate()
@@ -43,7 +43,6 @@ function PremiumChoicePage({ price = "€9,99", checkoutUrl, onSubscribe }) {
     setLoading(true);
     try {
       const response = await apiCall.post("Premium/ChangeUserToPremium", { UserEmail: auth?.email });
-      console.log('response', response);
       if ((!response.ok)) {
         const msg = response?.error?.message || t("errors.generic") || "Ocorreu um erro ao subscrever.";
         setErrorSubmit(msg);

@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthContext from "./AuthContext";
-import apiCall, { clearAuth } from "../ApiCalls/apiCall";
+import apiCall, {clearAuth} from "../ApiCallGeneric/apiCall";
 
 const useLogout = () => {
   const { setAuth, setIsAuthenticated, setLoading, setRole } = useContext(AuthContext);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import apiCall from '../../services/ApiCalls/apiCall';
+import apiCall from '../../services/ApiCallGeneric/apiCall';
 import { CheckCircle, XCircle } from 'lucide-react';
 
 function EditInstanceCard({ instance }) {

@@ -1,4 +1,4 @@
-import apiCall from "../../services/apiCalls/apiCall";
+import apiCall from "../../services/ApiCallGeneric/apiCall";
 
 export  const getAllUsers = async () => {
   try {

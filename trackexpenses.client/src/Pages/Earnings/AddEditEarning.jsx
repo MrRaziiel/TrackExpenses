@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Save, X } from 'lucide-react';
-import apiCall from '../../services/ApiCalls/apiCall';
+import apiCall from '../../services/ApiCallGeneric/apiCall';
 import AuthContext from '../../services/Authentication/AuthContext';
 import { useTheme } from '../../styles/Theme/Theme';
 

@@ -1,13 +1,14 @@
+// App.jsx
 import React, { useContext, useState, useEffect } from 'react';
 import { Routes, Route, Link, useNavigate } from 'react-router-dom';
 import {
   Wallet, PiggyBank, Users, LogIn, Menu as MenuIcon, X,
   LayoutDashboard, ChevronLeft, ChevronRight, Settings, LogOut
 } from 'lucide-react';
-import { useTheme } from './styles/Theme/Theme'; 
+import { useTheme } from './styles/Theme/Theme';
 import { useLanguage } from './utilis/Translate/LanguageContext';
 import AuthContext from './services/Authentication/AuthContext';
-import apiCall from './services/ApiCalls/apiCall';
+import apiCall from './services/ApiCallGeneric/apiCall';
 
 import SessionPopup from './Pages/Autentication/SessionPopup';
 import { startTokenWatcher } from './services/MicroServices/tokenWatcher';
@@ -48,12 +49,14 @@ function App() {
   const { t } = useLanguage();
   const navigate = useNavigate();
 
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthMenuOpen, setIsAuthMenuOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const { isAuthenticated, setIsAuthenticated, auth, setAuth, setRole, role, loading } = useContext(AuthContext);
   const logout = useLogout();
+  
 
   useEffect(() => {
     if (!auth?.email) return;
@@ -64,19 +67,13 @@ function App() {
         const photoPath =  res.data?.photoPath;
         const firstName = res.data?.firstName;
 
-        if (photoPath != undefined && photoPath !== 'NoPhoto') {
-        {
-const imageUrl = `${import.meta.env.VITE_API_BASE_URL}/${photoPath}?t=${Date.now()}`;
-
-setAuth(prev => ({
-  ...prev,
-  path: imageUrl
-}));
+        if (photoPath !== undefined && photoPath !== 'NoPhoto') {
+          const imageUrl = `${import.meta.env.VITE_API_BASE_URL}/${photoPath}?t=${Date.now()}`;
+          setAuth(prev => ({ ...prev, path: imageUrl }));
         }
-     
-        }
-        if (firstName != undefined)
+        if (firstName !== undefined) {
           setAuth(prev => ({ ...prev, firstName: firstName[0]?.toUpperCase() }));
+        }
       } catch (err) {
         console.error("Erro ao buscar imagem de perfil:", err);
       }
@@ -106,7 +103,7 @@ setAuth(prev => ({
               src={auth.path}
               alt="Perfil"
               className="h-10 w-10 rounded-full object-cover border-2 border-blue-500 cursor-pointer"
-              onError={(e) => { e.target.style.display = 'none'; }}
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
             />
           ) : (
             <div className="h-10 w-10 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-semibold border-2 border-blue-500 cursor-pointer">
@@ -116,7 +113,7 @@ setAuth(prev => ({
         </Link>
 
         {open && (
-          <div className="absolute right-0  w-28 bg-white rounded shadow z-20">
+          <div className="absolute right-0 w-36 bg-white rounded shadow z-20">
             <Link
               to="/Premium"
               className="flex items-center px-4 py-2 text-sm rounded hover:bg-gray-100"
@@ -147,91 +144,91 @@ setAuth(prev => ({
     );
   };
 
-
   if (loading) return <div>Loading...</div>;
 
   return (
     <div className="min-h-screen flex flex-col text-base" style={{ backgroundColor: theme?.colors?.background?.default || '#F9FAFB' }}>
-      {/* NAVBAR UPER */}
+      {/* NAVBAR */}
       <nav style={{ backgroundColor: theme?.colors?.primary?.main || '#3B82F6' }} className="text-white shadow-lg">
         <div className="w-full px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
-            <Link to="/" className="flex items-center space-x-2">
-              <Wallet className="h-6 w-6" />
-              <span className="font-bold text-xl hidden sm:inline">TRACKEXPENSES</span>
-            </Link>
+          <Link to="/" className="flex items-center space-x-2">
+            <Wallet className="h-6 w-6" />
+            <span className="font-bold text-xl hidden sm:inline">TRACKEXPENSES</span>
+          </Link>
 
-            <div className="flex items-center space-x-2">
-              {!isAuthenticated && (
-                <div className="relative md:hidden">
-                  <button
-                    onClick={() => setIsAuthMenuOpen(!isAuthMenuOpen)}
-                    className="p-2 rounded-lg hover:bg-blue-600 transition-colors"
-                    style={{ backgroundColor: theme?.colors?.primary?.light }}
-                  >
-                    <LogIn className="h-6 w-6" />
-                  </button>
-
-                  {isAuthMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg py-1"
-                      style={{ backgroundColor: theme?.colors?.primary?.main }}>
-                      <Link
-                        to="/Login"
-                        className="block px-4 py-2 hover:bg-blue-600 transition-colors"
-                        onClick={() => setIsAuthMenuOpen(false)}
-                      >
-                        {t('common.login')}
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {isAuthenticated && (
+          <div className="flex items-center space-x-2">
+            {!isAuthenticated && (
+              <div className="relative md:hidden">
                 <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="md:hidden p-2 rounded-lg hover:bg-blue-600 transition-colors"
-                  style={{ backgroundColor: theme?.colors?.primary?.dark }}
+                  onClick={() => setIsAuthMenuOpen(!isAuthMenuOpen)}
+                  className="p-2 rounded-lg hover:bg-blue-600 transition-colors"
+                  style={{ backgroundColor: theme?.colors?.primary?.light }}
                 >
-                  {isMenuOpen ? <X className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
+                  <LogIn className="h-6 w-6" />
                 </button>
-              )}
 
-              <div className="hidden md:flex items-center space-x-4">
-                <ProfileMenu />
+                {isAuthMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg py-1"
+                    style={{ backgroundColor: theme?.colors?.primary?.main }}>
+                    <Link
+                      to="/Login"
+                      className="block px-4 py-2 hover:bg-blue-600 transition-colors"
+                      onClick={() => setIsAuthMenuOpen(false)}
+                    >
+                      {t('common.login')}
+                    </Link>
+                  </div>
+                )}
               </div>
+            )}
+
+            {isAuthenticated && (
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="md:hidden p-2 rounded-lg hover:bg-blue-600 transition-colors"
+                style={{ backgroundColor: theme?.colors?.primary?.dark }}
+              >
+                {isMenuOpen ? <X className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
+              </button>
+            )}
+
+            <div className="hidden md:flex items-center space-x-4">
+              <ProfileMenu />
             </div>
           </div>
+        </div>
 
-          {/* MENU MOBILE */}
-          {isMenuOpen && isAuthenticated && (
-            <div className="md:hidden pb-4 space-y-2">
-              <Link to="/Expenses" className="flex items-center space-x-2 py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
-                onClick={() => setIsMenuOpen(false)} style={{ backgroundColor: theme?.colors?.primary?.dark }}>
-                <PiggyBank className="h-5 w-5" /><span>{t('common.expenses')}</span>
-              </Link>
-              <Link to="/Earnings" className="flex items-center space-x-2 py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
-                onClick={() => setIsMenuOpen(false)} style={{ backgroundColor: theme?.colors?.primary?.dark }}>
-                <Wallet className="h-5 w-5" /><span>{t('common.earning')}</span>
-              </Link>
-              <Link to="/Users" className="flex items-center space-x-2 py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
-                onClick={() => setIsMenuOpen(false)} style={{ backgroundColor: theme?.colors?.primary?.dark }}>
-                <Users className="h-5 w-5" /><span>{t('common.users')}</span>
-              </Link>
-              <button onClick={() => { setIsAuthenticated(false); setIsMenuOpen(false); navigate('/login'); }}
-                className="flex items-center space-x-2 py-2 px-4 w-full text-left rounded-lg hover:bg-blue-600 transition-colors"
-                style={{ backgroundColor: theme?.colors?.primary?.dark }}>
-                <LogIn className="h-5 w-5" /><span>{t('common.logout')}</span>
-              </button>
-            </div>
-          )}
-      
+        {/* MENU MOBILE */}
+        {isMenuOpen && isAuthenticated && (
+          <div className="md:hidden pb-4 space-y-2">
+            <Link to="/Expenses" className="flex items-center space-x-2 py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+              onClick={() => setIsMenuOpen(false)} style={{ backgroundColor: theme?.colors?.primary?.dark }}>
+              <PiggyBank className="h-5 w-5" /><span>{t('common.expenses')}</span>
+            </Link>
+            <Link to="/Earnings" className="flex items-center space-x-2 py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+              onClick={() => setIsMenuOpen(false)} style={{ backgroundColor: theme?.colors?.primary?.dark }}>
+              <Wallet className="h-5 w-5" /><span>{t('common.earning')}</span>
+            </Link>
+            <Link to="/Users" className="flex items-center space-x-2 py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+              onClick={() => setIsMenuOpen(false)} style={{ backgroundColor: theme?.colors?.primary?.dark }}>
+              <Users className="h-5 w-5" /><span>{t('common.users')}</span>
+            </Link>
+            <button onClick={() => { setIsAuthenticated(false); setIsMenuOpen(false); navigate('/login'); }}
+              className="flex items-center space-x-2 py-2 px-4 w-full text-left rounded-lg hover:bg-blue-600 transition-colors"
+              style={{ backgroundColor: theme?.colors?.primary?.dark }}>
+              <LogIn className="h-5 w-5" /><span>{t('common.logout')}</span>
+            </button>
+          </div>
+        )}
       </nav>
 
       {/* MAIN */}
-      <div className="flex flex-col md:flex-row flex-1">
+      <div className="flex flex-col md:flex-row flex-1 overflow-x-hidden">
         {isAuthenticated && (
-          <aside className={`hidden md:flex md:flex-col transition-all duration-300 ease-in-out min-h-[calc(100vh-4rem)] ${isSidebarCollapsed ? 'w-17' : 'w-48'} bg-white shadow-lg`}
-            style={{ backgroundColor: theme?.colors?.background?.paper }}>
+          <aside
+            className={`hidden md:flex md:flex-col transition-all duration-300 ease-in-out min-h-[calc(100vh-4rem)] ${isSidebarCollapsed ? 'w-[68px]' : 'w-48'} bg-white shadow-lg`}
+            style={{ backgroundColor: theme?.colors?.background?.paper }}
+          >
             <div className="flex justify-end p-1">
               <button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="p-1 rounded-lg hover:bg-gray-100 transition-colors">
                 {isSidebarCollapsed ? <ChevronRight className="h-4 w-4 text-gray-500" /> : <ChevronLeft className="h-4 w-4 text-gray-500" />}
@@ -268,26 +265,25 @@ setAuth(prev => ({
                   <Wallet className="h-4 w-4" />
                   {!isSidebarCollapsed && <span className="text-sm">{t('common.calendar')}</span>}
                 </Link>
-
               </div>
             </nav>
           </aside>
         )}
 
-        <div className={`flex-1 ${isAuthenticated ? 'p-4 md:p-8' : 'py-8 px-4'} min-h-[calc(100vh-4rem)]`}>
+        {/* conteúdo: min-w-0 permite encolher ao lado da sidebar */}
+<main className={`flex-1 min-w-0 ${isAuthenticated ? 'px-4 md:px-8 py-3 md:py-4' : 'py-6 px-4'} min-h-[calc(100vh-4rem)]`}>
+
+          
           <SessionPopup />
           <Routes>
-            
             <Route path="/" element={<Welcome />} />
             <Route path="*" element={<Welcome />} />
 
             <Route element={<NotRequireAuth />}>
-            
-            <Route path="/Login" element={<Login />} />
-            <Route path="/Register" element={<SignIn />} />
-            <Route path="/ForgotPassword" element={<ForgotPassword />} />
-            <Route path="/RecoverPassword" element={<RecoverPassword />} />
-
+              <Route path="/Login" element={<Login />} />
+              <Route path="/Register" element={<SignIn />} />
+              <Route path="/ForgotPassword" element={<ForgotPassword />} />
+              <Route path="/RecoverPassword" element={<RecoverPassword />} />
             </Route>
 
             <Route element={<RequireAuth />}>
@@ -309,16 +305,16 @@ setAuth(prev => ({
               <Route path="/Profile" element={<ProfilePage />} />
             </Route>
           </Routes>
-        </div>
+        </main>
       </div>
 
       <footer className="bg-white shadow-lg mt-auto" style={{ backgroundColor: theme?.colors?.background?.paper }}>
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
             <div className="text-gray-500 text-sm" style={{ color: theme?.colors?.text?.secondary }}>
               © 2025 TRACKEXPENSES. {t('common.allRightsReserved')}
             </div>
-            <div className="flex space-x-6">
+            <div className="flex flex-wrap gap-4">
               <a href="#" className="text-gray-500 hover:text-gray-700 text-sm">{t('common.privacyPolicy')}</a>
               <a href="#" className="text-gray-500 hover:text-gray-700 text-sm">{t('common.termsOfService')}</a>
               <a href="#" className="text-gray-500 hover:text-gray-700 text-sm">{t('common.contact')}</a>
