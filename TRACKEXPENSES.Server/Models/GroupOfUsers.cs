@@ -79,6 +79,8 @@ namespace TRACKEXPENSES.Server.Models
 
         public List<Expense> Expenses { get; set; } = new List<Expense>();
 
+        public List<RefreshToken> RefreshTokens { get; set; } = new();
+
     }
 
     public class CreateUserFromRegister : User

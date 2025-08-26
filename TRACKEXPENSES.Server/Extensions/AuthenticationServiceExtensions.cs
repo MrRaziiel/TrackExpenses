@@ -8,7 +8,7 @@ namespace TRACKEXPENSES.Server.Extensions
     public static class AuthenticationServiceExtensions
     {
         //Jwt Authentication token
-        public static async void AddAuthentications(this IServiceCollection services, IConfigurationSection jwtSettings /*,WebApplicationBuilder builder*/)
+        public static async void AddAuthentications(this IServiceCollection services, IConfigurationSection jwtSettings)
         {
 
 
@@ -30,7 +30,8 @@ namespace TRACKEXPENSES.Server.Extensions
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            };
+            ClockSkew = TimeSpan.Zero,
+        };
       
     });
 

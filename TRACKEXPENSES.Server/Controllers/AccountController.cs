@@ -1,17 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.Data;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Web;
 using TRACKEXPENSES.Server.Data;
 using TRACKEXPENSES.Server.Models;
-using TRACKEXPENSES.Server.Services;
+using TRACKEXPENSES.Server.Requests.User;
 using TRACKEXPENSES.Server.Services;
 using TRACKEXPENSES.Server.ViewModels;
-using Microsoft.Extensions.Logging;
 
 
 namespace TRACKEXPENSES.Server.Controllers
@@ -30,8 +26,11 @@ namespace TRACKEXPENSES.Server.Controllers
         private readonly IConfiguration _configuration = configuration;
         private readonly JwtService _jwtService = jwtService;
         private readonly Services.IEmailSender _emailSender = emailSender;
+        public sealed record RefreshRequest(string RefreshToken);
+
 
         public record ResetPasswordRequest(string Email, string Token, string NewPassword);
+
         [HttpPost("Register")]
         public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
         {
@@ -104,25 +103,16 @@ namespace TRACKEXPENSES.Server.Controllers
             return Ok(exists);
         }
 
-        [HttpPost("Login")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Login([FromBody] LoginViewModel model)
-        {
-            var result = await _jwtService.Authenticate(model);
-            if (result == null)
-                return Unauthorized("Wrong Email or Password");
-
-            return Ok(result);
-
-        }
+        
 
         [HttpGet("GetProfile")]
         [Authorize]
-        public async Task<IActionResult> GetProfile([FromQuery] string UserEmail)
+        public async Task<IActionResult> GetProfile([FromQuery] UserEmailRequest request)
         {
-            if (UserEmail == null) return NotFound("No Email entered");
+            var userEmail = request.UserEmail;
+            if (userEmail == null) return NotFound("No Email entered");
 
-            var existUser = await context.Users.Include(user => user.Expenses).SingleOrDefaultAsync(c => c.Email == UserEmail);
+            var existUser = await context.Users.Include(user => user.Expenses).SingleOrDefaultAsync(c => c.Email == userEmail);
             if (existUser == null) return NotFound("No user found");
 
           
@@ -245,7 +235,7 @@ namespace TRACKEXPENSES.Server.Controllers
             return Ok(new { photoPath = imageBd.Name });
         }
 
-        [HttpPost("forgot-password")]
+        [HttpPost("Forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] string Email)
         {
             if (string.IsNullOrWhiteSpace(Email)) return BadRequest("Email é obrigatório.");
@@ -271,7 +261,7 @@ namespace TRACKEXPENSES.Server.Controllers
         }
 
         // 2) Confirmar reset: o frontend envia Email, Token e a nova password
-        [HttpPost("reset-password")]
+        [HttpPost("Reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.NewPassword))
@@ -293,13 +283,36 @@ namespace TRACKEXPENSES.Server.Controllers
             return Ok(new { message = user });
         }
     
-    [HttpPost("test-email")]
+    [HttpPost("Test-email")]
         public async Task<IActionResult> TestEmail(string to)
         {
             await _emailSender.SendAsync(to, "Teste", "<p>Funciona!</p>");
             return Ok(new { message = "Email enviado" });
         }
 
+
+
+        [HttpPost("Refresh-token")]
+        public async Task<IActionResult> Refresh([FromBody] RefreshRequest req)
+        {
+            var tokens = await _jwtService.RefreshAsync(req.RefreshToken, HttpContext);
+            if (tokens is null) return Unauthorized();
+            return Ok(tokens); // { accessToken, refreshToken }
+        }
+
+        [HttpPost("Logout")]
+        public async Task<IActionResult> Logout([FromBody] RefreshRequest req)
+        {
+            await _jwtService.RevokeAsync(req.RefreshToken);
+            return NoContent();
+        }
+        [HttpPost("Login")]
+        public async Task<IActionResult> Login([FromBody] LoginViewModel model)
+        {
+            var res = await _jwtService.Authenticate(model, HttpContext);
+            if (res is null) return Unauthorized();
+            return Ok(res); // contém AccessToken, RefreshToken, etc
+        }
 
     }
 }

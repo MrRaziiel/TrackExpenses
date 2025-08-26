@@ -7,8 +7,10 @@ import {
 import { useTheme } from './styles/Theme/Theme'; 
 import { useLanguage } from './utilis/Translate/LanguageContext';
 import AuthContext from './services/Authentication/AuthContext';
-import apiCall from './services/apiCalls/apiCall';
+import apiCall from './services/ApiCalls/apiCall';
 
+import SessionPopup from './Pages/Autentication/SessionPopup';
+import { startTokenWatcher } from './services/MicroServices/tokenWatcher';
 
 // Pages
 import Welcome from './Pages/Welcome';
@@ -81,6 +83,8 @@ setAuth(prev => ({
     };
 
     fetchUserPhoto();
+    const stop = startTokenWatcher();
+    return stop;
   }, [auth?.email, setAuth]);
 
   const ProfileMenu = () => {
@@ -113,6 +117,14 @@ setAuth(prev => ({
 
         {open && (
           <div className="absolute right-0  w-28 bg-white rounded shadow z-20">
+            <Link
+              to="/Premium"
+              className="flex items-center px-4 py-2 text-sm rounded hover:bg-gray-100"
+              style={{ color: theme.colors.text.primary }}
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              {t('common.premium')}
+            </Link>
             <Link
               to="/settings"
               className="flex items-center px-4 py-2 text-sm rounded hover:bg-gray-100"
@@ -229,7 +241,7 @@ setAuth(prev => ({
             <nav className="flex-1 p-2 space-y-1">
               {role === "ADMINISTRATOR" && (
                 <div className="p-2 border-t border-b">
-                  <h2 className='text-center'>ADMINISTRATOR</h2>
+                  <span className="text-sm">ADMINISTRATOR</span>
                   <div className='pt-3'>
                     <Link to="/Users" className="flex items-center space-x-2 px-2 py-1.5 text-gray-700 hover:bg-blue-50 rounded-lg">
                       <Users className="h-4 w-4" />
@@ -263,7 +275,9 @@ setAuth(prev => ({
         )}
 
         <div className={`flex-1 ${isAuthenticated ? 'p-4 md:p-8' : 'py-8 px-4'} min-h-[calc(100vh-4rem)]`}>
+          <SessionPopup />
           <Routes>
+            
             <Route path="/" element={<Welcome />} />
             <Route path="*" element={<Welcome />} />
 

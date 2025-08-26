@@ -3,9 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../styles/Theme/Theme';
 import { useLanguage } from "../../utilis/Translate/LanguageContext";
 import { Lock, Mail } from 'lucide-react';
-import apiCall from "../../services/apiCalls/apiCall";
+import apiCall, { setLoginTokens } from "../../services/ApiCalls/apiCall";
 import AuthContext from "../../services/Authentication/AuthContext";
-import Title from "../../components/Titles/TitlePage";
 
 
 const Login = () => {
@@ -15,6 +14,8 @@ const Login = () => {
   const [formData, setFormData] = useState({});
   const [errorSubmit, setErrorSubmit] = useState(null);
   const navigate = useNavigate();
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,15 +30,29 @@ const Login = () => {
 
       var data = response.data;
 
+      console.log(response.data);
       const accessToken = data.AccessToken;
       const email = data.Email
-      var role = data.Role;
-      const user = {email,accessToken, role}
+      const role = data.Role;
+      const refreshToken = data.RefreshToken;
+      const expiresIn = data.ExpiresIn;
 
+      const minutes = Number.isFinite(expiresIn) ? expiresIn : null;
+ 
+
+      const user = {
+      email: email,
+      role: role,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    };
+
+     setLoginTokens(accessToken, refreshToken, minutes);
       setRole(role);
       setAuth({ email, accessToken });
       setIsAuthenticated(true);
       localStorage.setItem('auth', JSON.stringify({user}));
+      window.dispatchEvent(new Event("authUserUpdated"));
       navigate('/dashboard');
 
   };

@@ -1,21 +1,28 @@
-// src/Pages/Premium/PremiumChoicePage.jsx
-import React from "react";
+import React, { useContext, useMemo, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../styles/Theme/Theme";
 import { useLanguage } from "../../utilis/Translate/LanguageContext";
 import Title from "../../components/Titles/TitlePage";
-
+import AuthContext from "../../services/Authentication/AuthContext";
+import apiCall from "../../services/ApiCalls/apiCall";
 /**
- * Página de compra do Premium (apenas plano mensal).
- * Props:
- *  - price?: string (ex: "€7,99")
- *  - checkoutUrl?: string (se definido, o botão redireciona para esta URL)
- *  - onSubscribe?: () => void (callback alternativo ao checkoutUrl)
+ * PremiumChoicePage
+ * - Fixes invalid hook call by replacing <Navigate> misuse with useNavigate()
+ * - Adds loading, error handling, optimistic UI and subtle animations
+ * - Memoizes derived colors and handlers to avoid unnecessary re-renders
+ * - Optional: accepts checkoutUrl and onSubscribe props
  */
 function PremiumChoicePage({ price = "€9,99", checkoutUrl, onSubscribe }) {
+  const navigate = useNavigate();
   const { theme } = useTheme();
   const { t } = useLanguage();
+  const { auth } = useContext(AuthContext);
 
-  const colors = {
+  const [errorSubmit, setErrorSubmit] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // Memoize colors so the object reference is stable
+  const colors = useMemo(() => ({
     primary: theme?.colors?.primary?.main || "#4361EE",
     secondary: theme?.colors?.secondary?.main || "#3F37C9",
     success: theme?.colors?.success?.main || "#4CAF50",
@@ -29,30 +36,47 @@ function PremiumChoicePage({ price = "€9,99", checkoutUrl, onSubscribe }) {
       paper: theme?.colors?.background?.paper || "#FFFFFF",
     },
     border: theme?.colors?.divider || "#E5E7EB",
-  };
+  }), [theme]);
 
-  const handleSubscribe = () => {
-    if (typeof onSubscribe === "function") {
-      onSubscribe();
-      return;
+  const handleSubscribe = useCallback(async () => {
+    setErrorSubmit(null);
+    setLoading(true);
+    try {
+      const response = await apiCall.post("Premium/ChangeUserToPremium", { UserEmail: auth?.email });
+      console.log('response', response);
+      if ((!response.ok)) {
+        const msg = response?.error?.message || t("errors.generic") || "Ocorreu um erro ao subscrever.";
+        setErrorSubmit(msg);
+        return;
+      }
+
+      if (typeof onSubscribe === "function") onSubscribe({ email: auth?.email });
+
+
+      if (checkoutUrl) {
+        window.location.assign(checkoutUrl);
+        return; 
+      }
+
+
+      navigate("/Dashboard");
+    } catch (err) {
+      const msg = err?.response?.data?.error?.message || err?.message || t("errors.network") || "Falha de rede. Tenta novamente.";
+      setErrorSubmit(msg);
+    } finally {
+      setLoading(false);
     }
-    if (checkoutUrl) {
-      window.location.href = checkoutUrl;
-      return;
-    }
-    // fallback simples: emite um evento para a app escutar
-    const evt = new CustomEvent("premium:subscribe", { detail: { price } });
-    window.dispatchEvent(evt);
-  };
+  }, [auth?.email, checkoutUrl, navigate, onSubscribe, t]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ backgroundColor: colors.background.default }}>
       <Title text={t("premium.subtitle") || "Desbloqueia todas as funcionalidades sem limites."} />
+
       {/* CONTEÚDO PRINCIPAL */}
       <div className="grid md:grid-cols-3 gap-6">
         {/* Benefícios + FAQ */}
         <section
-          className="md:col-span-2 p-6 rounded-xl shadow-md"
+          className="md:col-span-2 p-6 rounded-xl shadow-md transition-transform hover:translate-y-[-2px]"
           style={{ backgroundColor: colors.background.paper }}
         >
           <h2 className="text-xl font-semibold" style={{ color: colors.text.primary }}>
@@ -126,7 +150,7 @@ function PremiumChoicePage({ price = "€9,99", checkoutUrl, onSubscribe }) {
 
         {/* CARD DO PLANO */}
         <aside
-          className="p-6 rounded-xl shadow-lg h-max"
+          className="p-6 rounded-xl shadow-lg h-max transition-transform hover:translate-y-[-2px]"
           style={{ backgroundColor: colors.background.paper, border: `1px solid ${colors.border}` }}
         >
           <div className="flex items-center gap-2">
@@ -169,12 +193,29 @@ function PremiumChoicePage({ price = "€9,99", checkoutUrl, onSubscribe }) {
 
           <button
             onClick={handleSubscribe}
-            className="mt-6 w-full py-3 rounded-xl font-semibold shadow-md transition-transform active:scale-95"
-            style={{ backgroundColor: colors.primary, color: colors.text.contrast }}
+            disabled={loading}
+            className={`mt-6 w-full py-3 rounded-xl font-semibold shadow-md transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 ${loading ? "opacity-60 cursor-not-allowed" : "hover:shadow-lg"}`}
+            style={{ backgroundColor: colors.primary, color: colors.text.contrast, boxShadow: "0 6px 20px rgba(67,97,238,0.25)" }}
             aria-label={t("premium.ctaButton") || "Assinar Premium"}
           >
-            {t("premium.ctaButton") || "Assinar Premium"}
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+                {t("loading") || "A processar..."}
+              </span>
+            ) : (
+              t("premium.ctaButton") || "Assinar Premium"
+            )}
           </button>
+
+          {errorSubmit && (
+            <p role="alert" className="mt-3 text-sm" style={{ color: "#DC2626" }}>
+              {errorSubmit}
+            </p>
+          )}
 
           <p className="text-xs mt-3" style={{ color: colors.text.secondary }}>
             {t("premium.legal") || "Ao continuar, concordas com os Termos e a Política de Privacidade."}
@@ -214,7 +255,7 @@ function PremiumChoicePage({ price = "€9,99", checkoutUrl, onSubscribe }) {
         ].map((item, i) => (
           <div
             key={i}
-            className="p-5 rounded-xl shadow-md"
+            className="p-5 rounded-xl shadow-md transition-transform hover:translate-y-[-2px]"
             style={{ backgroundColor: colors.background.paper }}
           >
             <p className="italic" style={{ color: colors.text.primary }}>
