@@ -82,7 +82,7 @@ export default function UsersTable() {
         <Title text={t("common.users")} />
 
         <button
-          onClick={() => navigate('/Register')} // usa a rota que já tens
+          onClick={() => navigate('/Admin/Users/add')} // usa a rota que já tens
           className="inline-flex items-center px-4 py-2 rounded-lg text-white"
           style={{ backgroundColor: theme?.colors?.primary?.main }}
         >

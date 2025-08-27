@@ -1,14 +1,25 @@
-import { useContext } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import AuthContext from './AuthContext';
+// services/Authentication/Require.jsx
+import React, { useEffect, useState } from "react";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 
+function hasSession() {
+  try { return !!JSON.parse(localStorage.getItem("auth") || "{}")?.user?.accessToken; }
+  catch { return false; }
+}
 
-const RequireAuth = () => {
-  const { auth } = useContext(AuthContext);
+export default function RequireAuth() {
+  const [ok, setOk] = useState(hasSession());
+  const loc = useLocation();
 
-  return auth?.accessToken
-    ? <Outlet />
-    : <Navigate to="/login" replace />;
-};
+  useEffect(() => {
+    const onChange = () => setOk(hasSession());
+    window.addEventListener("token-refreshed", onChange);
+    window.addEventListener("storage", onChange); // outra aba
+    return () => {
+      window.removeEventListener("token-refreshed", onChange);
+      window.removeEventListener("storage", onChange);
+    };
+  }, []);
 
-export default RequireAuth;
+  return ok ? <Outlet /> : <Navigate to="/login" replace state={{ from: loc }} />;
+}

@@ -1,36 +1,40 @@
-import { createContext, useState, useEffect } from "react";
+import React, { createContext, useEffect, useMemo, useState } from "react";
 
 const AuthContext = createContext({});
 
+function readAuth() { try { return JSON.parse(localStorage.getItem("auth") || "{}"); } catch { return {}; } }
+function getUser() { return readAuth()?.user || null; }
+function hasSession() { return !!getUser()?.accessToken; }
+
 export const AuthProvider = ({ children }) => {
-  const [auth, setAuth] = useState(null); 
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true); 
-  const [role, setRole] = useState(null); 
+  const [auth, setAuth] = useState(getUser());
+  const [isAuthenticated, setIsAuthenticated] = useState(hasSession());
+  const [role, setRole] = useState(getUser()?.role ?? null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const storedAuth = localStorage.getItem("auth");
-    if (storedAuth) {
-      try {
-        const parsed = JSON.parse(storedAuth);
-        setAuth(parsed.user);
-        setIsAuthenticated(true);
-        setLoading(true);
-        setRole(parsed?.user?.role);
-      } catch (error) {
-        localStorage.removeItem("auth");
-      }
-    }
-    setLoading(false); 
+    const sync = () => {
+      const u = getUser();
+      setAuth(u);
+      setIsAuthenticated(!!u?.accessToken);
+      setRole(u?.role ?? null);
+    };
+    const onStorage = (e) => { if (!e || e.key === "auth") sync(); };
+
+    sync();
+    window.addEventListener("token-refreshed", sync);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("token-refreshed", sync);
+      window.removeEventListener("storage", onStorage);
+    };
   }, []);
 
-  return (
-    <AuthContext.Provider
-      value={{ auth, setAuth, isAuthenticated, setIsAuthenticated, setLoading, loading, role, setRole }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = useMemo(() => ({
+    auth, setAuth, isAuthenticated, setIsAuthenticated, role, setRole, loading, setLoading
+  }), [auth, isAuthenticated, role, loading]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export default AuthContext;

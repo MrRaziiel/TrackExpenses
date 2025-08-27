@@ -3,8 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../styles/Theme/Theme';
 import { useLanguage } from "../../utilis/Translate/LanguageContext";
 import { Lock, Mail } from 'lucide-react';
-import apiCall, { setLoginTokens } from "../../services/ApiCallGeneric/apiCall";
+import apiCall from "../../services/ApiCallGeneric/apiCall";
 import AuthContext from "../../services/Authentication/AuthContext";
+import { AuthTimer_start, authMergeUser } from "../../services/MicroServices/AuthTime";
 
 
 const Login = () => {
@@ -45,12 +46,18 @@ const Login = () => {
       accessToken: accessToken,
       refreshToken: refreshToken,
     };
-
-     setLoginTokens(accessToken, refreshToken, minutes);
-      setRole(role);
-      setAuth({ email, accessToken });
+AuthTimer_start({
+  accessToken: data.AccessToken,
+  refreshToken: data.RefreshToken,
+  email: data.Email,
+  role: data.Role,
+  expiresIn: data.ExpiresIn,                 // <- MINUTOS vindos do payload
+  baseUrl: import.meta.env.VITE_API_BASE_URL,
+  earlyMs: 60 * 1000,                         // quando queres mostrar o popup
+  mode: "prompt"
+});
+      authMergeUser({ email: data.Email ?? data.email, role: data.Role ?? data.role });
       setIsAuthenticated(true);
-      localStorage.setItem('auth', JSON.stringify({user}));
       window.dispatchEvent(new Event("authUserUpdated"));
       navigate('/dashboard');
 

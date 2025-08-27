@@ -1,46 +1,51 @@
 // App.jsx
-import React, { useContext, useState, useEffect } from 'react';
-import { Routes, Route, Link, useNavigate } from 'react-router-dom';
+import React, { useContext, useState, useEffect } from "react";
+import { Routes, Route, Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Wallet, PiggyBank, Users, LogIn, Menu as MenuIcon, X,
   LayoutDashboard, ChevronLeft, ChevronRight, Settings, LogOut
-} from 'lucide-react';
-import { useTheme } from './styles/Theme/Theme';
-import { useLanguage } from './utilis/Translate/LanguageContext';
-import AuthContext from './services/Authentication/AuthContext';
-import apiCall from './services/ApiCallGeneric/apiCall';
+} from "lucide-react";
+import { useTheme } from "./styles/Theme/Theme";
+import { useLanguage } from "./utilis/Translate/LanguageContext";
+import AuthContext from "./services/Authentication/AuthContext";
+import apiCall from "./services/ApiCallGeneric/apiCall";
 
-import SessionPopup from './Pages/Autentication/SessionPopup';
-import { startTokenWatcher } from './services/MicroServices/tokenWatcher';
+import SessionPopup from "./Pages/Autentication/SessionPopup";
+import { AuthTimer_resume } from "./services/MicroServices/AuthTime";
 
 // Pages
-import Welcome from './Pages/Welcome';
-import UsersList from './Pages/Administrador/ListClients';
-import EditUser from './Pages/Administrador/EditUser';
-import EditUserProfile from './Pages/Administrador/EditUser';
-import ProfilePage from './Pages/Profile';
-import SettingsPage from './Pages/Settings';
+import Welcome from "./Pages/Welcome";
+import UsersList from "./Pages/Administrador/ListClients";
+import EditUser from "./Pages/Administrador/EditUser";
+import EditUserProfile from "./Pages/Administrador/EditUser";
+import ProfilePage from "./Pages/Profile";
+import SettingsPage from "./Pages/Settings";
 
-import Login from './Pages/Autentication/Login';
-import SignIn from './Pages/Autentication/SignIn';
-import useLogout from './services/Authentication/Logout';
-import RequireAuth from './services/Authentication/Require';
-import NotRequireAuth from './services/Authentication/NotRequire';
+import Login from "./Pages/Autentication/Login";
+import SignIn from "./Pages/Autentication/SignIn";
+import useLogout from "./services/Authentication/Logout";
+import RequireAuth from "./services/Authentication/Require";
+import NotRequireAuth from "./services/Authentication/NotRequire";
 
-import ForgotPassword from './Pages/Autentication/ForgotPassword';
-import RecoverPassword from './Pages/Autentication/RecoverPassword';
+import ForgotPassword from "./Pages/Autentication/ForgotPassword";
+import RecoverPassword from "./Pages/Autentication/RecoverPassword";
 
-import Dashboard from './Pages/Administrador/Dashboard';
+import Dashboard from "./Pages/Administrador/Dashboard";
 
-import ListExpenses from './Pages/Expenses/AllExpenses';
-import AddExpense from './Pages/Expenses/AddExpenses';
-import CalendarExpenses from './Pages/Expenses/CalendarExpenses';
-import EditExpense from './Pages/Expenses/EditExpense';
+import ListExpenses from "./Pages/Expenses/AllExpenses";
+import AddExpense from "./Pages/Expenses/AddExpenses";
+import CalendarExpenses from "./Pages/Expenses/CalendarExpenses";
+import EditExpense from "./Pages/Expenses/EditExpense";
 
-import EarningsList from './Pages/Earnings/EarningList';
-import AddEditEarning from './Pages/Earnings/AddEditEarning';
+import EarningsList from "./Pages/Earnings/EarningList";
+import AddEditEarning from "./Pages/Earnings/AddEditEarning";
 
-import PremiumChoicePage from './Pages/Premium/Prices';
+import PremiumChoicePage from "./Pages/Premium/Prices";
+
+const hasSession = () => {
+  try { return !!JSON.parse(localStorage.getItem("auth") || "{}")?.user?.accessToken; }
+  catch { return false; }
+};
 
 
 
@@ -48,40 +53,64 @@ function App() {
   const { theme } = useTheme();
   const { t } = useLanguage();
   const navigate = useNavigate();
-
+  const location = useLocation();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthMenuOpen, setIsAuthMenuOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-
-  const { isAuthenticated, setIsAuthenticated, auth, setAuth, setRole, role, loading } = useContext(AuthContext);
+  const { isAuthenticated, auth, setAuth, role, loading } = useContext(AuthContext);
   const logout = useLogout();
-  
 
   useEffect(() => {
-    if (!auth?.email) return;
+  const onExpired = () => logout();
+  window.addEventListener("token-expired", onExpired);
+  return () => window.removeEventListener("token-expired", onExpired);
+}, [logout]);
 
+  // retoma o contador no arranque
+ useEffect(() => {
+    AuthTimer_resume({
+      baseUrl: import.meta.env.VITE_API_BASE_URL,
+      earlyMs: 30 * 1000
+    });
+  }, []);
+
+  useEffect(() => {
+    const kickIfAuthed = () => {
+      if (location.pathname.toLowerCase().includes("login") && hasSession()) {
+        const to = location.state?.from?.pathname || "/Dashboard";
+        navigate(to, { replace: true });
+      }
+    };
+    kickIfAuthed();
+    window.addEventListener("token-refreshed", kickIfAuthed);
+    window.addEventListener("storage", kickIfAuthed);
+    return () => {
+      window.removeEventListener("token-refreshed", kickIfAuthed);
+      window.removeEventListener("storage", kickIfAuthed);
+    };
+  }, [location.pathname, location.state, navigate]);
+
+  // foto / primeira letra
+  useEffect(() => {
+    if (!auth?.email) return;
     const fetchUserPhoto = async () => {
       try {
         const res = await apiCall.get(`/User/GetPhotoProfile/${auth.email}`);
-        const photoPath =  res.data?.photoPath;
+        const photoPath = res.data?.photoPath;
         const firstName = res.data?.firstName;
-
-        if (photoPath !== undefined && photoPath !== 'NoPhoto') {
+        if (photoPath && photoPath !== "NoPhoto") {
           const imageUrl = `${import.meta.env.VITE_API_BASE_URL}/${photoPath}?t=${Date.now()}`;
           setAuth(prev => ({ ...prev, path: imageUrl }));
         }
-        if (firstName !== undefined) {
+        if (firstName) {
           setAuth(prev => ({ ...prev, firstName: firstName[0]?.toUpperCase() }));
         }
       } catch (err) {
         console.error("Erro ao buscar imagem de perfil:", err);
       }
     };
-
     fetchUserPhoto();
-    const stop = startTokenWatcher();
-    return stop;
   }, [auth?.email, setAuth]);
 
   const ProfileMenu = () => {
@@ -103,11 +132,11 @@ function App() {
               src={auth.path}
               alt="Perfil"
               className="h-10 w-10 rounded-full object-cover border-2 border-blue-500 cursor-pointer"
-              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              onError={(e) => { e.currentTarget.style.display = "none"; }}
             />
           ) : (
             <div className="h-10 w-10 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-semibold border-2 border-blue-500 cursor-pointer">
-              {(auth?.firstName && auth.firstName) || ''}
+              {(auth?.firstName && auth.firstName) || ""}
             </div>
           )}
         </Link>
@@ -120,7 +149,7 @@ function App() {
               style={{ color: theme.colors.text.primary }}
             >
               <Settings className="h-4 w-4 mr-2" />
-              {t('common.premium')}
+              {t("common.premium")}
             </Link>
             <Link
               to="/settings"
@@ -128,7 +157,7 @@ function App() {
               style={{ color: theme.colors.text.primary }}
             >
               <Settings className="h-4 w-4 mr-2" />
-              {t('common.settings')}
+              {t("common.settings")}
             </Link>
             <button
               onClick={logout}
@@ -136,7 +165,7 @@ function App() {
               style={{ color: theme.colors.text.primary }}
             >
               <LogOut className="h-4 w-4 mr-2" />
-              {t('common.logout')}
+              {t("common.logout")}
             </button>
           </div>
         )}
@@ -147,9 +176,9 @@ function App() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="min-h-screen flex flex-col text-base" style={{ backgroundColor: theme?.colors?.background?.default || '#F9FAFB' }}>
+    <div className="min-h-screen flex flex-col text-base" style={{ backgroundColor: theme?.colors?.background?.default || "#F9FAFB" }}>
       {/* NAVBAR */}
-      <nav style={{ backgroundColor: theme?.colors?.primary?.main || '#3B82F6' }} className="text-white shadow-lg">
+      <nav style={{ backgroundColor: theme?.colors?.primary?.main || "#3B82F6" }} className="text-white shadow-lg">
         <div className="w-full px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
           <Link to="/" className="flex items-center space-x-2">
             <Wallet className="h-6 w-6" />
@@ -168,14 +197,16 @@ function App() {
                 </button>
 
                 {isAuthMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg py-1"
-                    style={{ backgroundColor: theme?.colors?.primary?.main }}>
+                  <div
+                    className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg py-1"
+                    style={{ backgroundColor: theme?.colors?.primary?.main }}
+                  >
                     <Link
                       to="/Login"
                       className="block px-4 py-2 hover:bg-blue-600 transition-colors"
                       onClick={() => setIsAuthMenuOpen(false)}
                     >
-                      {t('common.login')}
+                      {t("common.login")}
                     </Link>
                   </div>
                 )}
@@ -201,22 +232,40 @@ function App() {
         {/* MENU MOBILE */}
         {isMenuOpen && isAuthenticated && (
           <div className="md:hidden pb-4 space-y-2">
-            <Link to="/Expenses" className="flex items-center space-x-2 py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
-              onClick={() => setIsMenuOpen(false)} style={{ backgroundColor: theme?.colors?.primary?.dark }}>
-              <PiggyBank className="h-5 w-5" /><span>{t('common.expenses')}</span>
+            <Link
+              to="/Expenses"
+              className="flex items-center space-x-2 py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+              style={{ backgroundColor: theme?.colors?.primary?.dark }}
+            >
+              <PiggyBank className="h-5 w-5" />
+              <span>{t("common.expenses")}</span>
             </Link>
-            <Link to="/Earnings" className="flex items-center space-x-2 py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
-              onClick={() => setIsMenuOpen(false)} style={{ backgroundColor: theme?.colors?.primary?.dark }}>
-              <Wallet className="h-5 w-5" /><span>{t('common.earning')}</span>
+            <Link
+              to="/Earnings"
+              className="flex items-center space-x-2 py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+              style={{ backgroundColor: theme?.colors?.primary?.dark }}
+            >
+              <Wallet className="h-5 w-5" />
+              <span>{t("common.earning")}</span>
             </Link>
-            <Link to="/Users" className="flex items-center space-x-2 py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
-              onClick={() => setIsMenuOpen(false)} style={{ backgroundColor: theme?.colors?.primary?.dark }}>
-              <Users className="h-5 w-5" /><span>{t('common.users')}</span>
+            <Link
+              to="/Users"
+              className="flex items-center space-x-2 py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+              style={{ backgroundColor: theme?.colors?.primary?.dark }}
+            >
+              <Users className="h-5 w-5" />
+              <span>{t("common.users")}</span>
             </Link>
-            <button onClick={() => { setIsAuthenticated(false); setIsMenuOpen(false); navigate('/login'); }}
+            <button
+              onClick={() => { setIsMenuOpen(false); logout(); }}
               className="flex items-center space-x-2 py-2 px-4 w-full text-left rounded-lg hover:bg-blue-600 transition-colors"
-              style={{ backgroundColor: theme?.colors?.primary?.dark }}>
-              <LogIn className="h-5 w-5" /><span>{t('common.logout')}</span>
+              style={{ backgroundColor: theme?.colors?.primary?.dark }}
+            >
+              <LogIn className="h-5 w-5" />
+              <span>{t("common.logout")}</span>
             </button>
           </div>
         )}
@@ -226,54 +275,72 @@ function App() {
       <div className="flex flex-col md:flex-row flex-1 overflow-x-hidden">
         {isAuthenticated && (
           <aside
-            className={`hidden md:flex md:flex-col transition-all duration-300 ease-in-out min-h-[calc(100vh-4rem)] ${isSidebarCollapsed ? 'w-[68px]' : 'w-48'} bg-white shadow-lg`}
+            className={`
+              hidden md:flex flex-col flex-shrink-0
+              transition-[width] duration-300 ease-in-out
+              ${isSidebarCollapsed ? "w-16" : "w-60"}
+              bg-white shadow-lg
+            `}
             style={{ backgroundColor: theme?.colors?.background?.paper }}
           >
-            <div className="flex justify-end p-1">
-              <button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="p-1 rounded-lg hover:bg-gray-100 transition-colors">
-                {isSidebarCollapsed ? <ChevronRight className="h-4 w-4 text-gray-500" /> : <ChevronLeft className="h-4 w-4 text-gray-500" />}
+            {/* topo da sidebar – só o botão, sem "ADMINISTRATOR" */}
+            <div className="flex items-center justify-end h-12 px-2 border-b">
+              <button
+                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                className="p-2 rounded-md hover:bg-gray-100 transition-colors"
+                title={isSidebarCollapsed ? "Expandir" : "Colapsar"}
+                aria-label="Alternar sidebar"
+              >
+                {isSidebarCollapsed ? (
+                  <ChevronRight className="h-4 w-4 text-gray-600" />
+                ) : (
+                  <ChevronLeft className="h-4 w-4 text-gray-600" />
+                )}
               </button>
             </div>
 
-            <nav className="flex-1 p-2 space-y-1">
-              {role === "ADMINISTRATOR" && (
-                <div className="p-2 border-t border-b">
-                  <span className="text-sm">ADMINISTRATOR</span>
-                  <div className='pt-3'>
-                    <Link to="/Users" className="flex items-center space-x-2 px-2 py-1.5 text-gray-700 hover:bg-blue-50 rounded-lg">
-                      <Users className="h-4 w-4" />
-                      {!isSidebarCollapsed && <span className="text-sm">{t('common.users')}</span>}
-                    </Link>
-                  </div>
-                </div>
+            {/* navegação */}
+            <nav className="flex-1 overflow-y-auto py-2">
+              {role === "ADMINISTRATOR" && !isSidebarCollapsed && (
+                <div className="px-3 pb-2 pt-1 text-xs font-semibold text-gray-600">ADMIN</div>
               )}
 
-              <div className="p-2 border-t border-b">
-                <Link to="/Dashboard" className="flex items-center space-x-2 px-2 py-1.5 text-gray-700 hover:bg-blue-50 rounded-lg">
-                  <LayoutDashboard className="h-4 w-4" />
-                  {!isSidebarCollapsed && <span className="text-sm">{t('common.dashboard')}</span>}
+              {role === "ADMINISTRATOR" && (
+                <Link to="/Users" className="mx-2 mb-1 flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50">
+                  <Users className="h-5 w-5 text-gray-600" />
+                  {!isSidebarCollapsed && <span className="text-sm">{t("common.users")}</span>}
                 </Link>
-                <Link to="/Expenses" className="flex items-center space-x-2 px-2 py-1.5 text-gray-700 hover:bg-blue-50 rounded-lg">
-                  <PiggyBank className="h-4 w-4" />
-                  {!isSidebarCollapsed && <span className="text-sm">{t('common.expenses')}</span>}
-                </Link>
-                <Link to="/Earnings" className="flex items-center space-x-2 px-2 py-1.5 text-gray-700 hover:bg-blue-50 rounded-lg">
-                  <Wallet className="h-4 w-4" />
-                  {!isSidebarCollapsed && <span className="text-sm">{t('common.earning')}</span>}
-                </Link>
-                <Link to="/CalendarExpenses" className="flex items-center space-x-2 px-2 py-1.5 text-gray-700 hover:bg-blue-50 rounded-lg">
-                  <Wallet className="h-4 w-4" />
-                  {!isSidebarCollapsed && <span className="text-sm">{t('common.calendar')}</span>}
-                </Link>
-              </div>
+              )}
+
+              {!isSidebarCollapsed && (
+                <div className="px-3 pb-2 pt-3 text-xs font-semibold text-gray-600">{t("common.options")}</div>
+              )}
+
+              <Link to="/Dashboard" className="mx-2 mb-1 flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50">
+                <LayoutDashboard className="h-5 w-5 text-gray-600" />
+                {!isSidebarCollapsed && <span className="text-sm">{t("common.dashboard")}</span>}
+              </Link>
+
+              <Link to="/Expenses" className="mx-2 mb-1 flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50">
+                <PiggyBank className="h-5 w-5 text-gray-600" />
+                {!isSidebarCollapsed && <span className="text-sm">{t("common.expenses")}</span>}
+              </Link>
+
+              <Link to="/Earnings" className="mx-2 mb-1 flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50">
+                <Wallet className="h-5 w-5 text-gray-600" />
+                {!isSidebarCollapsed && <span className="text-sm">{t("common.earning")}</span>}
+              </Link>
+
+              <Link to="/CalendarExpenses" className="mx-2 mb-1 flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50">
+                <Wallet className="h-5 w-5 text-gray-600" />
+                {!isSidebarCollapsed && <span className="text-sm">{t("common.calendar")}</span>}
+              </Link>
             </nav>
           </aside>
         )}
 
-        {/* conteúdo: min-w-0 permite encolher ao lado da sidebar */}
-<main className={`flex-1 min-w-0 ${isAuthenticated ? 'px-4 md:px-8 py-3 md:py-4' : 'py-6 px-4'} min-h-[calc(100vh-4rem)]`}>
-
-          
+        {/* conteúdo */}
+        <main className={`flex-1 min-w-0 ${isAuthenticated ? "p-4 md:p-8" : "py-8 px-4"} min-h-[calc(100vh-4rem)]`}>
           <SessionPopup />
           <Routes>
             <Route path="/" element={<Welcome />} />
@@ -289,16 +356,13 @@ function App() {
             <Route element={<RequireAuth />}>
               <Route path="/users/edit/:id/:email" element={<EditUserProfile />} />
               <Route path="/Dashboard" element={<Dashboard />} />
-
               <Route path="/Earnings" element={<EarningsList />} />
               <Route path="/Earnings/add" element={<AddEditEarning />} />
               <Route path="/Premium" element={<PremiumChoicePage />} />
-
               <Route path="/Expenses" element={<ListExpenses />} />
               <Route path="/expenses/add" element={<AddExpense />} />
               <Route path="/CalendarExpenses" element={<CalendarExpenses />} />
               <Route path="/Expenses/Edit/:id" element={<EditExpense />} />
-
               <Route path="/Users" element={<UsersList />} />
               <Route path="/Users/edit/:id" element={<EditUser />} />
               <Route path="/settings" element={<SettingsPage />} />
@@ -312,12 +376,20 @@ function App() {
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
             <div className="text-gray-500 text-sm" style={{ color: theme?.colors?.text?.secondary }}>
-              © 2025 TRACKEXPENSES. {t('common.allRightsReserved')}
+              © 2025 TRACKEXPENSES. {t("common.allRightsReserved")}
             </div>
             <div className="flex flex-wrap gap-4">
-              <a href="#" className="text-gray-500 hover:text-gray-700 text-sm">{t('common.privacyPolicy')}</a>
-              <a href="#" className="text-gray-500 hover:text-gray-700 text-sm">{t('common.termsOfService')}</a>
-              <a href="#" className="text-gray-500 hover:text-gray-700 text-sm">{t('common.contact')}</a>
+              <a href="#" className="text-gray-500 hover:text-gray-700 text-sm">{t("common.privacyPolicy")}</a>
+              <a href="#" className="text-gray-500 hover:text-gray-700 text-sm">{t("common.termsOfService")}</a>
+              <a href="#" className="text-gray-500 hover:text-gray-700 text-sm">{t("common.contact")}</a>
+              <button
+                onClick={logout}
+                className="flex items-center w-full px-4 py-2 text-sm rounded hover:bg-gray-100"
+                style={{ color: theme?.colors?.text?.primary }}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                {t("common.logout")}
+              </button>
             </div>
           </div>
         </div>

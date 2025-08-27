@@ -12,6 +12,7 @@ namespace TRACKEXPENSES.Server.Controllers
 
     [ApiController]
     [Route("api/Administrator")]
+    [Authorize(Roles = "ADMINISTRATOR")]
     public class AdministrationController(RoleManager<IdentityRole> roleManager, UserManager<User> userManager, FinancasDbContext context) : ControllerBase
     {
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
@@ -52,6 +53,14 @@ namespace TRACKEXPENSES.Server.Controllers
             var removeUserResponse = await context.SaveChangesAsync();
             return Ok("User Deleted");
 
+        }
+
+        [HttpGet("GetAllGroupsNames")]
+        public IActionResult GetAllGroupsNames()
+        {
+            var groupNames = _context.GroupOfUsers.ToList();
+
+            return Ok(new { GroupNames = groupNames });
         }
 
     }

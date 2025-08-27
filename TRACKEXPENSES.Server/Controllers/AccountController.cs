@@ -58,7 +58,7 @@ namespace TRACKEXPENSES.Server.Controllers
             }
             else
             {
-                var group = _context.GroupOfUsers.FirstOrDefault(x => x.CodeInvite == model.CodeInvite);
+                var group = _context.GroupOfUsers.FirstOrDefault(x => x.CodeInvite == model.CodeInvite || x.Id.ToString() == model.CodeInvite);
 
                 if (group == null) return BadRequest("Code Group incorrect");
                 string id = group.Id;
