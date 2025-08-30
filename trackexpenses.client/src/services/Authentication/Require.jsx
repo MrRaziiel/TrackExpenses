@@ -1,9 +1,8 @@
-// services/Authentication/Require.jsx
 import React, { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 function hasSession() {
-  try { return !!JSON.parse(localStorage.getItem("auth") || "{}")?.user?.accessToken; }
+  try { return !!JSON.parse(localStorage.getItem("auth") || "{}")?.user?.AccessToken; }
   catch { return false; }
 }
 
@@ -14,7 +13,7 @@ export default function RequireAuth() {
   useEffect(() => {
     const onChange = () => setOk(hasSession());
     window.addEventListener("token-refreshed", onChange);
-    window.addEventListener("storage", onChange); // outra aba
+    window.addEventListener("storage", onChange);
     return () => {
       window.removeEventListener("token-refreshed", onChange);
       window.removeEventListener("storage", onChange);

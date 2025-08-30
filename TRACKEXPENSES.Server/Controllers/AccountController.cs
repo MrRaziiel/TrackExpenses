@@ -2,12 +2,17 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System.Web;
+using System.Xml.Serialization;
+using TRACKEXPENSES.Server.Controllers;
 using TRACKEXPENSES.Server.Data;
 using TRACKEXPENSES.Server.Models;
+using TRACKEXPENSES.Server.Requests.Group;
 using TRACKEXPENSES.Server.Requests.User;
 using TRACKEXPENSES.Server.Services;
 using TRACKEXPENSES.Server.ViewModels;
+
 
 
 namespace TRACKEXPENSES.Server.Controllers
@@ -18,7 +23,7 @@ namespace TRACKEXPENSES.Server.Controllers
     
     public class AccountController(RoleManager<IdentityRole> roleManager, UserManager<User> userManager,
         FinancasDbContext context, IConfiguration configuration,
-        JwtService jwtService, Services.IEmailSender emailSender) : Controller
+        JwtService jwtService, Services.IEmailSender emailSender, IGroupRegistrationService _groupService) : Controller
     {
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
         private readonly UserManager<User> _userManager = userManager;
@@ -26,6 +31,8 @@ namespace TRACKEXPENSES.Server.Controllers
         private readonly IConfiguration _configuration = configuration;
         private readonly JwtService _jwtService = jwtService;
         private readonly Services.IEmailSender _emailSender = emailSender;
+        private readonly IGroupRegistrationService IGroupRegistrationService = _groupService;
+
         public sealed record RefreshRequest(string RefreshToken);
 
 
@@ -36,36 +43,20 @@ namespace TRACKEXPENSES.Server.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
+            var request = new GroupRegisterRequest
+            {
+                CodeInvite = model.CodeInvite,
+                GroupName = model.FamilyName,
+                UserEmail = model.Email,
+            };
+
+            var response = await IGroupRegistrationService.RegisterGroupAsync(request);
+
+            if (response.ToString().IsNullOrEmpty()) return BadRequest("Code Invite is wrong");
+
             var user = CreateUserFromRegister.fromRegister(model);
 
-
-
-            string role = "";
-
-            if (string.IsNullOrEmpty(model.CodeInvite))
-            {
-
-                GroupOfUsers groupOfUsers = new()
-                {
-                    Name = model.FamilyName,
-                    CodeInvite = GenerateCodeGroup()
-
-                };
-                role = "GROUPADMINISTRATOR";
-
-                await _context.GroupOfUsers.AddAsync(groupOfUsers);
-                user.GroupId = groupOfUsers.Id;
-            }
-            else
-            {
-                var group = _context.GroupOfUsers.FirstOrDefault(x => x.CodeInvite == model.CodeInvite || x.Id.ToString() == model.CodeInvite);
-
-                if (group == null) return BadRequest("Code Group incorrect");
-                string id = group.Id;
-                user.GroupId = id;
-                role = "USER";
-
-            }
+            string role = response.ToString() ;
 
             var result = await _userManager.CreateAsync(user, user.Password);
             if (!result.Succeeded) return BadRequest(result.Errors);
@@ -76,13 +67,7 @@ namespace TRACKEXPENSES.Server.Controllers
             return Created();
         }
 
-        private static readonly Random random = new();
-        private string GenerateCodeGroup()
-        {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            return new string(Enumerable.Repeat(chars, 32)
-                .Select(s => s[random.Next(s.Length)]).ToArray());
-        }
+
 
         [HttpPost("EmailCheckInDb")]
         public async Task<IActionResult> EmailCheckInDb([FromBody] string email)
@@ -94,16 +79,6 @@ namespace TRACKEXPENSES.Server.Controllers
 
         }
 
-        [HttpPost("CodeGroupCheckBd")]
-        public async Task<IActionResult> CodeGroupCheckBd([FromBody] string code)
-        {
-            if (string.IsNullOrEmpty(code)) return Ok();
-            var user = await _context?.GroupOfUsers.FirstOrDefaultAsync(userToFind => userToFind.CodeInvite == code);
-            var exists = user != null;
-            return Ok(exists);
-        }
-
-        
 
         [HttpGet("GetProfile")]
         [Authorize]
@@ -112,7 +87,7 @@ namespace TRACKEXPENSES.Server.Controllers
             var userEmail = request.UserEmail;
             if (userEmail == null) return NotFound("No Email entered");
 
-            var existUser = await context.Users.Include(user => user.Expenses).SingleOrDefaultAsync(c => c.Email == userEmail);
+            var existUser = await _context.Users.Include(user => user.Expenses).SingleOrDefaultAsync(c => c.Email == userEmail);
             if (existUser == null) return NotFound("No user found");
 
           
@@ -126,7 +101,7 @@ namespace TRACKEXPENSES.Server.Controllers
 
             if (UserToEdit == null) return NotFound("No user found");
 
-            var existUser = await context.Users.Include(user => user.Expenses).SingleOrDefaultAsync(c => c.Email == UserToEdit.Email);
+            var existUser = await _context.Users.Include(user => user.Expenses).SingleOrDefaultAsync(c => c.Email == UserToEdit.Email);
             if (existUser == null) return NotFound("No user found");
 
             UserToEdit.CopyTo(existUser);
@@ -146,7 +121,7 @@ namespace TRACKEXPENSES.Server.Controllers
             if (photo == null || photo.Length == 0)
                 return BadRequest("Invalid file.");
 
-            var user = await context.Users
+            var user = await _context.Users
                 .SingleOrDefaultAsync(u => u.Id == id);
 
             if (user == null)
@@ -168,7 +143,7 @@ namespace TRACKEXPENSES.Server.Controllers
 
             if (!string.IsNullOrEmpty(user.ProfileImageId))
             {
-                imageRecord = await context.ImagesDB
+                imageRecord = await _context.ImagesDB
                     .SingleOrDefaultAsync(i => i.Id.ToString() == user.ProfileImageId);
 
                 if (imageRecord != null)
@@ -182,7 +157,7 @@ namespace TRACKEXPENSES.Server.Controllers
                     imageRecord.Extension = extension;
                     imageRecord.Name = relativePath;
 
-                    context.ImagesDB.Update(imageRecord);
+                    _context.ImagesDB.Update(imageRecord);
                 }
             }
 
@@ -194,7 +169,7 @@ namespace TRACKEXPENSES.Server.Controllers
                     Extension = extension
                 };
 
-                await context.ImagesDB.AddAsync(imageRecord);
+                await _context.ImagesDB.AddAsync(imageRecord);
                 user.ProfileImageId = imageRecord.Id.ToString();
             }
 
@@ -204,8 +179,8 @@ namespace TRACKEXPENSES.Server.Controllers
                 await photo.CopyToAsync(stream);
             }
 
-            context.Users.Update(user);
-            await context.SaveChangesAsync();
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
 
             return Ok(new { partialPath = relativePath });
         }
@@ -219,7 +194,7 @@ namespace TRACKEXPENSES.Server.Controllers
                 return BadRequest("Invalid user ID");
 
 
-            var existUser = await context.Users
+            var existUser = await _context.Users
                 .SingleOrDefaultAsync(c => c.Email == email);
 
             if (existUser == null)
@@ -227,7 +202,7 @@ namespace TRACKEXPENSES.Server.Controllers
             if (existUser.ProfileImageId == "No_image.jpg")
                 return Ok(new { photoPath = "NoPhoto" });
 
-            var imageBd = await context.ImagesDB.SingleOrDefaultAsync(imgId => imgId.Id == existUser.ProfileImageId);
+            var imageBd = await _context.ImagesDB.SingleOrDefaultAsync(imgId => imgId.Id == existUser.ProfileImageId);
 
             if (imageBd == null)
                 return Ok(new { firstName = existUser.FirstName });

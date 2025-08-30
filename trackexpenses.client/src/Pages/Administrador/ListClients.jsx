@@ -10,6 +10,7 @@ import { useLanguage } from "../../utilis/Translate/LanguageContext";
 import AuthContext from "../../services/Authentication/AuthContext";
 import { useTheme } from "../../styles/Theme/Theme";
 import { Plus } from "lucide-react";
+import PrimaryButton from "../../components/Buttons/PrimaryButton";
 
 export default function UsersTable() {
   const [users, setUsers] = useState([]);
@@ -77,21 +78,19 @@ export default function UsersTable() {
         <div className="space-y-6">
 
 
-      {/* header igual ao Expenses: título + botão a direita */}
+
       <div className="flex justify-between items-center">
         <Title text={t("common.users")} />
 
-        <button
-          onClick={() => navigate('/Admin/Users/add')} // usa a rota que já tens
-          className="inline-flex items-center px-4 py-2 rounded-lg text-white"
-          style={{ backgroundColor: theme?.colors?.primary?.main }}
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          {t('common.add')} {t('common.user') || 'User'}
-        </button>
+<PrimaryButton
+    onClick={() => navigate('/Admin/Users/add')}
+    color={theme?.colors?.primary?.main}
+  >
+    <Plus className="h-5 w-5 mr-2" />
+    {t('common.add_user') || 'User'}
+  </PrimaryButton>
       </div>
 
-      {/* barra de pesquisa fora do cartão (igual ao Expenses) */}
       <GenericFilter
         className="
         mt-2
@@ -105,7 +104,7 @@ export default function UsersTable() {
         theme={theme}
         searchPlaceholder={t ? t("common.searchUsers") : "Search users..."}
         filters={[{ key: "group", type: "select", options: groupOptions }]}
-      />
+      />      
 
       {/* cartão com a tabela */}
       <div className="bg-white rounded-xl shadow-md overflow-hidden">

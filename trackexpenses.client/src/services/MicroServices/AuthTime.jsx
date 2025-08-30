@@ -1,211 +1,149 @@
-// services/MicroServices/AuthTime.js
-import apiCall from "../ApiCallGeneric/apiCall";
-
-let _pulseId = null;
-let _baseUrl = "";
-let _earlyMs = 30_000;
-let _refreshing = null;
-let _promptSent = false;
+import apiCall, { syncAuthHeaderFromStorage } from "../ApiCallGeneric/apiCall";
 
 const AUTH_KEY = "auth";
+let _pulseId = null;
+let _refreshing = null;
+let _earlyMs = 30_000;
+let _promptSent = false;
+
 const log = (...a) => console.log("[AuthTime]", ...a);
 
 /* ---------- storage ---------- */
-export function authRead() {
-  try {
-    return JSON.parse(localStorage.getItem(AUTH_KEY) || "{}");
-  } catch {
-    return {};
-  }
+function readAuth() {
+  try { return JSON.parse(localStorage.getItem(AUTH_KEY) || "{}"); } catch { return {}; }
 }
-export function authWrite(next) {
-  localStorage.setItem(AUTH_KEY, JSON.stringify(next));
-}
-export function authMergeUser(patch) {
-  const cur = authRead();
-  const next = { ...cur, user: { ...(cur.user || {}), ...patch } };
-  authWrite(next);
-  return next;
-}
-function getExpAt() {
-  return authRead()?.meta?.accessExpAt || 0;
-}
-function getTokens() {
-  const a = authRead();
+function writeAuth(next) { localStorage.setItem(AUTH_KEY, JSON.stringify(next)); }
+
+export function getTokens() {
+  const a = readAuth();
   return {
-    accessToken: a?.user?.accessToken || null,
-    refreshToken: a?.user?.refreshToken || null,
+    accessToken: a?.user?.AccessToken ?? null,
+    refreshToken: a?.user?.RefreshToken ?? null,
   };
 }
-
-/* ---------- normalização de payload ---------- */
-function normalizePayload(p = {}) {
-  // aceita variações conhecidas
-  const accessToken =
-    p.accessToken ?? p.AccessToken ?? p.token ?? p.Token ?? null;
-  const refreshToken =
-    p.refreshToken ?? p.RefreshToken ?? p.refresh ?? p.Refresh ?? null;
-  const email = p.email ?? p.Email ?? null;
-  const role = p.role ?? p.Role ?? null;
-
-  // expires → prioridade: minutos (ExpiresIn), depois epoch (ExpiresAt), depois segundos
-  let expiresInMin = p.expiresIn ?? p.ExpiresIn;
-  if (expiresInMin == null && (p.expiresAt || p.ExpiresAt)) {
-    const epoch = Number(p.expiresAt ?? p.ExpiresAt);
-    if (Number.isFinite(epoch)) {
-      const msLeft =
-        epoch > 10_000_000_000 ? epoch - Date.now() : epoch * 1000 - Date.now();
-      expiresInMin = Math.max(1, Math.round(msLeft / 60000));
-    }
-  }
-  if (expiresInMin == null) {
-    const secs =
-      p.expiresInSeconds ?? p.ExpiresInSeconds ?? p.expires ?? p.Expires;
-    if (secs != null) expiresInMin = Math.max(1, Math.round(Number(secs) / 60));
-  }
-  if (expiresInMin == null) expiresInMin = 1;
-
-  return { accessToken, refreshToken, email, role, expiresIn: expiresInMin };
+function getExpAt() { return readAuth()?.meta?.accessExpAt || 0; }
+function getCycleMinutes() {
+  const m = Number(readAuth()?.meta?.cycleMinutes);
+  return Number.isFinite(m) && m > 0 ? m : null;
 }
 
-function setAuthFromPayload(raw) {
-  const n = normalizePayload(raw);
-  if (!n.accessToken || !n.refreshToken) {
-    console.warn("[AuthTime] setAuthFromPayload: payload inválido →", raw);
-    return getExpAt(); // não altera nada
+/* ---------- LOGIN: guarda payload EXACTO e o ciclo ---------- */
+export function setAuthFromApiPayload(payload) {
+  if (!payload?.AccessToken || !payload?.RefreshToken) {
+    console.warn("[AuthTime] payload inválido:", payload);
+    return;
   }
-  const curUser = authRead().user || {};
-  const user = {
-    ...curUser,
-    accessToken: n.accessToken,
-    refreshToken: n.refreshToken,
-    email: n.email ?? curUser.email ?? null,
-    role: n.role ?? curUser.role ?? null,
-  };
+  const cycleMinutes = Number(payload.ExpiresIn || 1); // MINUTOS
+  const expAt = Date.now() + cycleMinutes * 60 * 1000;
 
-  const mins = Number(n.expiresIn || 1); // MINUTOS
-  const expAt = Date.now() + mins * 60 * 1000; // → ms
+  writeAuth({
+    user: payload, // guarda tal como vem: AccessToken, RefreshToken, Email, Role, ExpiresIn...
+    meta: { accessExpAt: expAt, cycleMinutes },
+  });
 
-  authWrite({ user, meta: { accessExpAt: expAt } });
-  log(
-    "setAuthFromPayload → expiresIn(min):",
-    mins,
-    "| expAt:",
-    new Date(expAt).toLocaleTimeString()
-  );
+  syncAuthHeaderFromStorage();                     // header Authorization imediato
+  window.dispatchEvent(new Event("token-refreshed"));
+  log("login → cycle:", cycleMinutes, "min | expAt:", new Date(expAt).toLocaleTimeString());
   return expAt;
 }
 
-/* ---------- heartbeat 1s ---------- */
-function stopPulse() {
-  if (_pulseId) {
-    clearInterval(_pulseId);
-    _pulseId = null;
-    log("stopPulse");
-  }
-  window.removeEventListener("visibilitychange", _tick);
-  window.removeEventListener("focus", _tick);
-  window.removeEventListener("online", _tick);
+/* ---------- REFRESH: troca AccessToken + RefreshToken, mantém Email/Role ---------- */
+function updateTokens(newAccessToken, newRefreshToken, maybeMinutes) {
+  const cur = readAuth();
+
+  const cycleMinutes =
+    Number.isFinite(maybeMinutes) && maybeMinutes > 0
+      ? maybeMinutes
+      : (getCycleMinutes() || 1);
+
+  const user = {
+    ...(cur.user || {}),
+    AccessToken: newAccessToken,
+    RefreshToken: newRefreshToken,
+  };
+
+  const expAt = Date.now() + cycleMinutes * 60 * 1000;
+
+  writeAuth({ user, meta: { ...(cur.meta || {}), accessExpAt: expAt, cycleMinutes } });
+  syncAuthHeaderFromStorage();
+  window.dispatchEvent(new Event("token-refreshed"));
+  log("refresh → cycle:", cycleMinutes, "min | expAt:", new Date(expAt).toLocaleTimeString());
+  return expAt;
 }
-function startPulse() {
-  stopPulse();
-  _promptSent = false;
-  log("startPulse → earlyMs:", _earlyMs, "ms");
-  _tick();
-  _pulseId = setInterval(_tick, 1000);
-  window.addEventListener("visibilitychange", _tick);
-  window.addEventListener("focus", _tick);
-  window.addEventListener("online", _tick);
+
+/* ---------- timers ---------- */
+function stopPulseInternal() {
+  if (_pulseId) { clearInterval(_pulseId); _pulseId = null; log("pulse: stop"); }
 }
-let _lastSec = null;
-function _tick() {
+function tick() {
   const { accessToken, refreshToken } = getTokens();
   const expAt = getExpAt();
-  if (!accessToken || !refreshToken || !expAt) { stopPulse(); return; }
+  if (!accessToken || !refreshToken || !expAt) { stopPulseInternal(); return; }
 
   const left = expAt - Date.now();
-  const sec  = Math.floor(left / 1000);
 
-  // ⬇️ NOVO: expirou → auto-logout
+  // expirou
   if (left <= 0) {
-    log("EXPIRED → token-expired (auto-logout)");
-    stopPulse();
-    try {
-      localStorage.removeItem("auth");
-      localStorage.removeItem("authExpiresAt");
-      localStorage.removeItem("tokenPopupPending");
-    } catch {}
-    window.dispatchEvent(new CustomEvent("token-expired"));
+    stopPulseInternal();
+    window.dispatchEvent(new Event("token-expired-hard"));
     return;
   }
 
-  if (_lastSec !== sec && (sec % 5 === 0 || left <= _earlyMs)) {
-    log(`tick → left: ${sec}s | expAt: ${new Date(expAt).toLocaleTimeString()} | earlyMs: ${_earlyMs}`);
-    _lastSec = sec;
-  }
   if (left <= _earlyMs && !_promptSent) {
     _promptSent = true;
-    log("DUE → token-due");
-    window.dispatchEvent(new CustomEvent("token-due"));
+    window.dispatchEvent(new Event("token-due"));
   }
+}
+function startPulseInternal() {
+  stopPulseInternal();
+  _promptSent = false;   // novo ciclo → permite novo popup perto do fim
+  tick();                // cálculo imediato (para countdown certo)
+  _pulseId = setInterval(tick, 1000);
 }
 
 /* ---------- API ---------- */
-export function AuthTimer_start(args) {
-  const { baseUrl, earlyMs = 30_000, ...raw } = args || {};
-  _baseUrl = baseUrl;
+export function AuthTimer_start(payload, { earlyMs = 30_000 } = {}) {
   _earlyMs = earlyMs;
-  setAuthFromPayload(raw); // aceita objeto do backend diretamente
-  startPulse();
+  setAuthFromApiPayload(payload);
+  startPulseInternal();
 }
-export function AuthTimer_resume({ baseUrl, earlyMs = 30_000 } = {}) {
-  if (baseUrl) _baseUrl = baseUrl;
+export function AuthTimer_resume({ earlyMs = 30_000 } = {}) {
   _earlyMs = earlyMs;
   const { accessToken, refreshToken } = getTokens();
   const expAt = getExpAt();
-  log(
-    "RESUME → hasTokens:",
-    !!accessToken && !!refreshToken,
-    "| expAt:",
-    expAt ? new Date(expAt).toLocaleTimeString() : null
-  );
-  if (!accessToken || !refreshToken || !expAt) return;
-  startPulse();
+  if (accessToken && refreshToken && expAt) startPulseInternal();
 }
-export function AuthTimer_stop() {
-  stopPulse();
-  log("STOP");
+export function AuthTimer_stop() { stopPulseInternal(); }
+export function AuthTimer_clearStorage() {
+  try { localStorage.removeItem(AUTH_KEY); } catch {}
+  try { syncAuthHeaderFromStorage(); } catch {}
+  try { window.dispatchEvent(new Event("token-refreshed")); } catch {}
 }
 
+/* ---------- refresh imediato ---------- */
 export async function AuthTimer_forceRefreshNow() {
   if (_refreshing) return _refreshing;
+
   const { refreshToken } = getTokens();
   if (!refreshToken) throw new Error("no_refresh_token");
 
   _refreshing = (async () => {
-    log("POST /auth/refresh-token");
-    const response = await apiCall.post("/User/Refresh-token", {
-      RefreshToken: refreshToken,
-    });
-    if (!response.ok)
-      throw new Error("refresh_http_ " + response.error.message);
+    const res = await apiCall.post("/User/Refresh-token", { RefreshToken: refreshToken });
+    if (!res.ok) throw new Error(res?.error?.message || "refresh_failed");
 
-    var data = response.data;
+    const data = res.data || {};
+    if (!data.AccessToken || !data.RefreshToken) throw new Error("invalid_refresh_payload");
 
-    log("refresh → status:", response.status);
+    const minutes = Number.isFinite(data.ExpiresIn) && data.ExpiresIn > 0
+      ? data.ExpiresIn
+      : getCycleMinutes();
 
-    const norm = normalizePayload(data || {});
-    if (!norm?.accessToken || !norm?.refreshToken) {
-      throw new Error("refresh_invalid_payload");
-    }
+    // ⬅️ agora troca os dois tokens
+    updateTokens(data.AccessToken, data.RefreshToken, minutes);
 
-    setAuthFromPayload(norm);
-    startPulse();
-    window.dispatchEvent(new CustomEvent("token-refreshed"));
-    return norm.accessToken;
-  })().finally(() => {
-    _refreshing = null;
-  });
+    startPulseInternal();
+    return data.AccessToken;
+  })().finally(() => { _refreshing = null; });
 
   return _refreshing;
 }

@@ -2,6 +2,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Search } from "lucide-react";
+import PrimaryButton from "../Buttons/PrimaryButton";
+
 
 /**
  * value: { q: string, [filterKey]: string | string[] }
@@ -28,18 +30,21 @@ export default function GenericFilter({
   return (
     <div className={`grid gap-3 grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto_auto] ${className}`}>
       {/* pesquisa */}
-      <div className="relative min-w-0">
-        <input
-          type="text"
-          value={value.q ?? ""}
-          onChange={handleSearch}
-          placeholder={searchPlaceholder}
-          className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 h-11"
-          style={{ backgroundColor: theme?.colors?.background?.paper }}
-        />
-        <Search className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-      </div>
+<div className="relative min-w-0">
+  {/* container da lupa ocupa toda a altura do input e centra verticalmente */}
+  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+    <Search className="h-5 w-5 text-gray-400" />
+  </span>
 
+  <input
+    type="text"
+    value={value.q ?? ""}
+    onChange={handleSearch}
+    placeholder={searchPlaceholder}
+    className="w-full h-11 pl-10 pr-4 rounded-lg border border-gray-300"
+    style={{ backgroundColor: theme?.colors?.background?.paper }}
+  />
+</div>
       {/* selects */}
       {filters.map((f) => (
         <div key={f.key} className="min-w-[180px]">
@@ -62,13 +67,15 @@ export default function GenericFilter({
         </div>
       ))}
 
-      <button
+      {/* botão limpar (tamanho fixo via PrimaryButton) */}
+      <PrimaryButton
         type="button"
         onClick={clearAll}
-        className="px-4 rounded-lg border border-gray-300 h-11 hover:bg-gray-50"
+        color="#ffffff"                                   // fundo branco (secundário)
+        className="!text-gray-700 border border-gray-300 hover:bg-gray-50"
       >
         {t ? t("common.clear") : "Limpar"}
-      </button>
+      </PrimaryButton>
     </div>
   );
 }

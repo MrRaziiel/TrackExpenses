@@ -25,11 +25,17 @@ const apiCall = axios.create({
 });
 
 apiCall.interceptors.request.use((cfg) => {
-  const t = getAccess();
-  if (t) cfg.headers.Authorization = `Bearer ${t}`;
-  else delete cfg.headers.Authorization;
+  try {
+    const a = JSON.parse(localStorage.getItem("auth") || "{}");
+    const t = a?.user?.AccessToken;
+    if (t) cfg.headers.Authorization = `Bearer ${t}`;
+    else delete cfg.headers.Authorization;
+  } catch {
+    delete cfg.headers.Authorization;
+  }
   return cfg;
 });
+
 
 /* ================== normalização ================== */
 const normalizeError = (errOrRes, fallbackMsg) => {
@@ -80,5 +86,16 @@ export const setAuthHeader = (token) => {
   if (token) apiCall.defaults.headers.Authorization = `Bearer ${token}`;
   else delete apiCall.defaults.headers.Authorization;
 };
+
+export function syncAuthHeaderFromStorage() {
+  try {
+    const a = JSON.parse(localStorage.getItem("auth") || "{}");
+    const t = a?.user?.AccessToken;
+    if (t) apiCall.defaults.headers.Authorization = `Bearer ${t}`;
+    else delete apiCall.defaults.headers.Authorization;
+  } catch {
+    delete apiCall.defaults.headers.Authorization;
+  }
+}
 
 export default apiCall;

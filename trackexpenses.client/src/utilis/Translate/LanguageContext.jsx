@@ -41,7 +41,21 @@ const translations = {
       name: 'Name',
       firstName: 'First Name',
       familyName: 'Family Name',
-      email: 'Email'
+      email: 'Email',
+      user: "User",
+      add_user: "Add a user", 
+      clear: "Clear",
+      all: "All",
+      searchUsers: "Type to search users...",
+      fullName: "Full Name",
+      group: "Group",
+      birthday: "Birthday",
+      earnings: "Earnings",
+      earning: "Earning",
+      calendar: "Calendar",
+      options: "Options",
+      option: "option"
+
     },
     settings: {
       appearance: 'Appearance',

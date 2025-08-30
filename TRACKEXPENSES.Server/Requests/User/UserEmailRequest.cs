@@ -1,12 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace TRACKEXPENSES.Server.Requests.User
 {
         public class UserEmailRequest
         {
-            /// <example>usuario@empresa.com</example>
+            /// <example>utlizador@empresa.com</example>
             [Required]
             [EmailAddress]
-            public string UserEmail { get; set; }
+        [DefaultValue("utilizador@gmail.com")]
+        public string UserEmail { get; set; }
         }
 }

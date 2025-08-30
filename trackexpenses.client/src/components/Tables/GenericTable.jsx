@@ -36,7 +36,6 @@ export default function GenericTable({
   data,
   columns = [],
 
-  // i18n/tema
   t,
   theme,
   i18nPrefix = "common",

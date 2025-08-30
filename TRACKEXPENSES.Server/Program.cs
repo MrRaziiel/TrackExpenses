@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity.UI.Services;
+﻿using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
@@ -6,6 +6,7 @@ using System.Text;
 using TRACKEXPENSES.Server.Data;
 using TRACKEXPENSES.Server.Extensions;
 using TRACKEXPENSES.Server.Services;
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -49,6 +50,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<IGroupRegistrationService, GroupRegistrationService>();
+builder.Services.AddScoped<ICodeGroupService, CodeGroupService>();
 
 var app = builder.Build();
 app.UseDefaultFiles();

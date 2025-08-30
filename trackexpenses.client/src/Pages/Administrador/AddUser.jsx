@@ -231,10 +231,8 @@ export default function AddUser() {
         Password: form.Password,
         ConfirmPassword: form.ConfirmPassword,
       };
-      console.log('payload', payload);
       const response = await apiCall.post("/User/Register", payload);
       if (!response?.ok) {
-        console.log('error', response?.error?.message);
         setErrorSubmit(response?.error?.message || "Error while registering user");
         setSaving(false);
         return;

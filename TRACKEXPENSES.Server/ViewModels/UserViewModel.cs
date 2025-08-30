@@ -6,9 +6,11 @@ namespace TRACKEXPENSES.Server.ViewModels
 {
     public abstract class UserViewModel
     {
+
         public string Id { get; set; }
 
         [MaxLength(250)]
+        //<summary>Pedido de registo de grupo</summary>
         public required string FirstName { get; set; }
 
         [MaxLength(250)]

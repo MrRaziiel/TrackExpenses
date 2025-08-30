@@ -1,11 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using System.Globalization;
-using System.Text;
-using System.Text.RegularExpressions;
 using TRACKEXPENSES.Server.Handlers;
 using TRACKEXPENSES.Server.ViewModels;
 

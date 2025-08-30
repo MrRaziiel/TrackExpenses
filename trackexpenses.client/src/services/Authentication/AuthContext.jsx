@@ -1,40 +1,61 @@
-import React, { createContext, useEffect, useMemo, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 
 const AuthContext = createContext({});
 
-function readAuth() { try { return JSON.parse(localStorage.getItem("auth") || "{}"); } catch { return {}; } }
-function getUser() { return readAuth()?.user || null; }
-function hasSession() { return !!getUser()?.accessToken; }
+function readAuth() {
+  try { return JSON.parse(localStorage.getItem("auth") || "{}"); }
+  catch { return {}; }
+}
+function hasSession() {
+  try { return !!(readAuth()?.user?.AccessToken); }
+  catch { return false; }
+}
 
 export const AuthProvider = ({ children }) => {
-  const [auth, setAuth] = useState(getUser());
-  const [isAuthenticated, setIsAuthenticated] = useState(hasSession());
-  const [role, setRole] = useState(getUser()?.role ?? null);
-  const [loading, setLoading] = useState(false);
+  const [auth, setAuth] = useState(null);            // guarda payload do backend (AccessToken, RefreshToken, Email, Role, ExpiresIn)
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [role, setRole] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  // Arranque
+  useEffect(() => {
+    const a = readAuth();
+    const ok = !!a?.user?.AccessToken;
+    setAuth(ok ? a.user : null);
+    setRole(ok ? a.user?.Role ?? null : null);
+    setIsAuthenticated(ok);
+    setLoading(false);
+  }, []);
+
+  // Sincroniza quando o login/refresh/logout acontece noutro sítio da app
   useEffect(() => {
     const sync = () => {
-      const u = getUser();
-      setAuth(u);
-      setIsAuthenticated(!!u?.accessToken);
-      setRole(u?.role ?? null);
+      const a = readAuth();
+      const ok = !!a?.user?.AccessToken;
+      setAuth(ok ? a.user : null);
+      setRole(ok ? a.user?.Role ?? null : null);
+      setIsAuthenticated(ok);
     };
-    const onStorage = (e) => { if (!e || e.key === "auth") sync(); };
-
-    sync();
     window.addEventListener("token-refreshed", sync);
-    window.addEventListener("storage", onStorage);
+    window.addEventListener("storage", sync);
     return () => {
       window.removeEventListener("token-refreshed", sync);
-      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("storage", sync);
     };
   }, []);
 
-  const value = useMemo(() => ({
-    auth, setAuth, isAuthenticated, setIsAuthenticated, role, setRole, loading, setLoading
-  }), [auth, isAuthenticated, role, loading]);
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        auth, setAuth,
+        isAuthenticated, setIsAuthenticated,
+        role, setRole,
+        loading, setLoading,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export default AuthContext;

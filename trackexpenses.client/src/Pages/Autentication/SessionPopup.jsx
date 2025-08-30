@@ -1,141 +1,125 @@
 // src/Pages/Autentication/SessionPopup.jsx
-import React, { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
 import { AuthTimer_forceRefreshNow } from "../../services/MicroServices/AuthTime";
 import useLogout from "../../services/Authentication/Logout";
+import { useTheme } from "../../styles/Theme/Theme";
 
-/* ===== helpers ===== */
 function readExpAt() {
   try { return JSON.parse(localStorage.getItem("auth") || "{}")?.meta?.accessExpAt ?? null; }
   catch { return null; }
 }
-function leftSeconds(expAt) {
-  if (!expAt) return 0;
-  return Math.max(0, Math.floor((expAt - Date.now()) / 1000));
-}
-function fmtMMSS(totalSec) {
-  const m = Math.floor(totalSec / 60);
-  const s = totalSec % 60;
-  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+function formatLeft(ms) {
+  if (ms < 0) ms = 0;
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${String(r).padStart(2, "0")}`;
 }
 
 export default function SessionPopup() {
-  const [open, setOpen] = useState(false);
-  const [err, setErr] = useState(null);
-  const [secLeft, setSecLeft] = useState(0);
-  const timerRef = useRef(null);
-  const locked = useRef(false);
-
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { theme } = useTheme();
   const logout = useLogout();
 
-  /** inicia/renova o intervalo do contador */
-  const startTick = () => {
-    stopTick();
-    const expAt = readExpAt();
-    setSecLeft(leftSeconds(expAt));
-    timerRef.current = setInterval(() => {
-      setSecLeft((prev) => {
-        const expAtNow = readExpAt();
-        return leftSeconds(expAtNow);
-      });
-    }, 1000);
-  };
-  const stopTick = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  };
+  const [open, setOpen] = useState(false);
+  const [expAt, setExpAt] = useState(() => readExpAt());
+  const [now, setNow] = useState(() => Date.now());
+  const [autoLoggingOut, setAutoLoggingOut] = useState(false); // ⬅️ NOVO
+
+  const left = useMemo(() => (expAt ? expAt - now : 0), [expAt, now]);
 
   useEffect(() => {
-    const onDue = () => {
-      const auth = JSON.parse(localStorage.getItem("auth") || "{}");
-      const has = !!auth?.user?.accessToken && !!auth?.user?.refreshToken;
-      if (!has) return;
-      if (!locked.current) {
-        locked.current = true;
-        setErr(null);
-        setOpen(true);
-        startTick();
-      }
-    };
+    const onDue = () => { setExpAt(readExpAt()); setNow(Date.now()); setOpen(true); };
+    const onRefreshed = () => { setExpAt(readExpAt()); setNow(Date.now()); setOpen(false); setAutoLoggingOut(false); };
 
-    const onExpired = () => {
-      // se expirar mesmo, garantir limpeza global (hook trata do resto)
+    // ⬇️ NOVO: se expirar sem popup, força logout global
+    const onExpiredHard = async () => {
       setOpen(false);
-      stopTick();
-      locked.current = false;
-      logout();
+      if (!autoLoggingOut) {
+        setAutoLoggingOut(true);
+        await logout();
+      }
     };
 
     window.addEventListener("token-due", onDue);
-    window.addEventListener("token-expired", onExpired);
+    window.addEventListener("token-refreshed", onRefreshed);
+    window.addEventListener("token-expired-hard", onExpiredHard);
+
     return () => {
       window.removeEventListener("token-due", onDue);
-      window.removeEventListener("token-expired", onExpired);
-      stopTick();
+      window.removeEventListener("token-refreshed", onRefreshed);
+      window.removeEventListener("token-expired-hard", onExpiredHard);
     };
-  }, [logout]);
+  }, [autoLoggingOut, logout]);
+
+  // countdown a rodar só quando aberto
+  useEffect(() => {
+    if (!open) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [open]);
+
+  // ⬇️ NOVO: auto-logout quando mostra 00:00 (popup aberto)
+  useEffect(() => {
+    if (open && left <= 0 && !autoLoggingOut) {
+      (async () => {
+        setAutoLoggingOut(true);
+        setOpen(false);
+        await logout();
+      })();
+    }
+  }, [open, left, autoLoggingOut, logout]);
 
   const renew = async () => {
-    setErr(null);
     try {
-      await AuthTimer_forceRefreshNow();             // grava tokens e reinicia contagem no AuthTime
-      window.dispatchEvent(new Event("token-refreshed"));
-      locked.current = false;
+      await AuthTimer_forceRefreshNow();
       setOpen(false);
-      stopTick();
-
-      // se o user estava no /login quando renovou, envia-o ao destino
-      if (location.pathname.toLowerCase().includes("login")) {
-        const to = location.state?.from?.pathname || "/Dashboard";
-        navigate(to, { replace: true });
-      }
-    } catch (e) {
-      console.error("[SessionPopup] refresh failed:", e);
-      setErr("Falha ao renovar a sessão. Tenta novamente ou termina.");
-      // mantém o popup aberto para nova tentativa; contador continua
+    } catch {
+      setOpen(false);
+      await logout();
     }
   };
 
   const terminate = async () => {
-    // FECHA o popup já, depois faz logout
     setOpen(false);
-    stopTick();
-    locked.current = false;
-    try { await logout(); } catch {}
+    await logout();
   };
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-2xl p-6 w-[360px] shadow-xl">
-        <div className="flex items-start justify-between">
-          <h2 className="text-lg font-semibold">Sessão expirada</h2>
-          <div className="ml-3 text-sm px-2 py-1 rounded bg-gray-100 text-gray-700">
-            expira em <span className="font-mono font-semibold">{fmtMMSS(secLeft)}</span>
-          </div>
-        </div>
-
-        <p className="mt-2 text-sm text-gray-600">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40">
+      <div
+        className="w-[92%] max-w-md rounded-2xl p-6 shadow-2xl"
+        style={{ backgroundColor: theme?.colors?.background?.paper }}
+        role="dialog" aria-modal="true"
+      >
+        <h3 className="text-lg font-semibold mb-2" style={{ color: theme?.colors?.text?.primary }}>
+          Sessão quase a expirar
+        </h3>
+        <p className="text-sm mb-3" style={{ color: theme?.colors?.text?.secondary }}>
           Pretende renovar a sessão ou terminar?
         </p>
-
-        {err && <p className="mt-3 text-sm text-red-600">{err}</p>}
-
-        <div className="mt-5 flex justify-end gap-3">
+        <div className="mb-4 text-sm" style={{ color: theme?.colors?.text?.primary }}>
+          Tempo restante: <span className="font-semibold">{formatLeft(left)}</span>
+        </div>
+        <div className="flex gap-3 justify-end">
           <button
             onClick={terminate}
-            className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
+            className="px-4 py-2 rounded-lg border"
+            style={{
+              borderColor: theme?.colors?.secondary?.light,
+              color: theme?.colors?.text?.primary,
+              backgroundColor: theme?.colors?.background?.default
+            }}
           >
             Terminar
           </button>
           <button
             onClick={renew}
-            className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
+            className="px-4 py-2 rounded-lg text-white"
+            style={{
+              background: `linear-gradient(135deg, ${theme?.colors?.primary?.main}, ${theme?.colors?.primary?.dark})`
+            }}
           >
             Renovar
           </button>
