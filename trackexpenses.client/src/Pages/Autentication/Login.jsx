@@ -1,4 +1,4 @@
-// src/Pages/Autentication/Login.jsx
+// src/Pages/Authentication/Login.jsx
 import { useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "../../styles/Theme/Theme";
@@ -10,6 +10,10 @@ import {
   setAuthFromApiPayload,
   AuthTimer_start,
 } from "../../services/MicroServices/AuthTime";
+
+import Card from "../../components/UI/Card";
+import Input from "../../components/Form/Input";
+import Button from "../../components/Buttons/Button";
 
 const Login = () => {
   const { setAuth, setIsAuthenticated, setRole } = useContext(AuthContext);
@@ -39,151 +43,110 @@ const Login = () => {
       );
     }
 
-    // A tua API devolve sempre: { AccessToken, RefreshToken, Email, Role, ExpiresIn, ... }
     const data = response.data;
 
-    // 1) guardar exatamente o payload + calcular expAt
+    // guarda payload e inicia timers
     setAuthFromApiPayload(data);
-
-    // 2) iniciar o relógio (ExpiresIn está em MINUTOS)
     AuthTimer_start(data);
 
-    // 3) atualizar o contexto para a UI reagir
+    // contexto para UI
     setAuth(data);
     setRole(data.Role || null);
     setIsAuthenticated(true);
 
-    // 4) avisar guards (NotRequire fará o redirect p/ Dashboard ou "from")
+    // dispara evento global
     window.dispatchEvent(new Event("token-refreshed"));
 
     setSubmitting(false);
   };
 
-  const fields = [
-    {
-      name: "email",
-      label: "Email",
-      type: "email",
-      icon: (
-        <Mail
-          className="h-5 w-5"
-          style={{ color: theme?.colors?.text?.secondary }}
-        />
-      ),
-      placeholder: "Enter your email",
-    },
-    {
-      name: "password",
-      label: "Password",
-      type: "password",
-      icon: (
-        <Lock
-          className="h-5 w-5"
-          style={{ color: theme?.colors?.text?.secondary }}
-        />
-      ),
-      placeholder: "Enter your password",
-    },
-  ];
-
-  const renderFields = (fields) => (
-    <div className="space-y-6">
-      {fields.map((field) => (
-        <div key={field.name} className="space-y-2">
-          <label
-            className="block text-sm font-medium"
-            style={{ color: theme?.colors?.text?.secondary }}
-          >
-            {field.label}
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              {field.icon}
-            </div>
-            <input
-              type={field.type}
-              value={formData[field.name] || ""}
-              onChange={(e) =>
-                setFormData({ ...formData, [field.name]: e.target.value })
-              }
-              required
-              className="w-full pl-12 pr-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-              placeholder={field.placeholder}
-              autoComplete={field.name === "email" ? "username" : "current-password"}
-              style={{
-                backgroundColor: theme?.colors?.background?.paper,
-                color: theme?.colors?.text?.primary,
-                borderColor: theme?.colors?.secondary?.light,
-              }}
-            />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
   return (
     <div className="flex items-center justify-center px-4 sm:px-6 lg:px-8">
-      <div
-        className="max-w-md w-full rounded-2xl shadow-2xl overflow-hidden"
-        style={{
-          backgroundColor: theme?.colors?.background?.paper,
-          boxShadow: `0 25px 50px -12px ${theme?.colors?.primary?.dark}50`,
-        }}
-      >
-        <div className="relative p-8">
+      <Card className="max-w-md w-full p-8 rounded-2xl shadow-2xl">
+        {/* Título + Subtítulo */}
+        <div className="text-center mb-8">
           <h2
-            className="text-3xl font-bold text-center mb-8"
+            className="text-3xl font-bold mb-2"
             style={{ color: theme?.colors?.text?.primary }}
           >
-            Login
+            {t("auth.loginTitle") || "Login"}
           </h2>
+          <p
+            className="text-sm"
+            style={{ color: theme?.colors?.text?.secondary }}
+          >
+            {t("auth.loginSubtitle") ||
+              "Enter your credentials to access your account"}
+          </p>
+        </div>
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {renderFields(fields)}
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          {/* Email */}
+          <Input
+            label="Email"
+            type="email"
+            value={formData.email}
+            placeholder="Enter your email"
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            icon={<Mail className="h-5 w-5" />}
+          />
 
-            <div className="mt-6 text-center">
-              <Link
-                to="/ForgotPassword"
-                className="text-sm font-medium hover:underline transition-colors duration-200"
-                style={{ color: theme?.colors?.primary?.main }}
-              >
-                {t("common.forgotPassword") || "Forgot your password?"}
-              </Link>
-            </div>
+          {/* Password */}
+          <Input
+            label={t("common.password") || "Password"}
+            type="password"
+            value={formData.password}
+            placeholder="Enter your password"
+            onChange={(e) =>
+              setFormData({ ...formData, password: e.target.value })
+            }
+            icon={<Lock className="h-5 w-5" />}
+          />
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full py-3 px-4 rounded-xl text-white font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70"
-              style={{
-                background: `linear-gradient(135deg, ${theme?.colors?.primary?.main}, ${theme?.colors?.primary?.dark})`,
-              }}
-            >
-              {submitting ? (t("common.signingIn") || "A entrar...") : "Login"}
-            </button>
-
-            {errorSubmit && (
-              <p
-                className="text-center text-sm mt-2"
-                style={{ color: theme?.colors?.error?.main }}
-              >
-                {errorSubmit}
-              </p>
-            )}
-          </form>
-
-          <div className="mt-8 text-center">
+          {/* Forgot password */}
+          <div className="mt-2 text-center">
             <Link
-              to="/Register"
+              to="/ForgotPassword"
               className="text-sm font-medium hover:underline transition-colors duration-200"
               style={{ color: theme?.colors?.primary?.main }}
             >
-              {t("common.noAccount") || "Don't have an account? Sign Up"}
+              {t("common.forgotPassword") || "Forgot Password?"}
             </Link>
           </div>
+
+          {/* Botão Login */}
+          <Button
+            type="submit"
+            size="md"
+            fullWidth
+            disabled={submitting}
+            className="mt-4"
+          >
+            {submitting ? t("common.signingIn") || "A entrar..." : "Login"}
+          </Button>
+
+          {/* Erros */}
+          {errorSubmit && (
+            <p
+              className="text-center text-sm mt-2"
+              style={{ color: theme?.colors?.error?.main }}
+            >
+              {errorSubmit}
+            </p>
+          )}
+        </form>
+
+        {/* Link para Register */}
+        <div className="mt-8 text-center">
+          <Link
+            to="/Register"
+            className="text-sm font-medium hover:underline transition-colors duration-200"
+            style={{ color: theme?.colors?.primary?.main }}
+          >
+            {t("common.noAccount") || "Don't have an account? Sign Up"}
+          </Link>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

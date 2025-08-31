@@ -35,8 +35,15 @@ export default function ProfileMenu() {
       {open && (
         <div className="absolute right-0 w-40 bg-white rounded shadow z-20">
           <Link
+            to="/Premium"
+            className="flex items-center w-full px-4 py-2 text-sm rounded hover:bg-gray-100"
+            style={{ color: theme?.colors?.text?.primary }}
+          >
+            <Settings className="h-4 w-4 mr-2" /> {t?.("common.settings") ?? "Settings"}
+          </Link>
+          <Link
             to="/settings"
-            className="flex items-center px-4 py-2 text-sm rounded hover:bg-gray-100"
+            className="flex items-center w-full px-4 py-2 text-sm rounded hover:bg-gray-100"
             style={{ color: theme?.colors?.text?.primary }}
           >
             <Settings className="h-4 w-4 mr-2" /> {t?.("common.settings") ?? "Settings"}

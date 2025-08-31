@@ -54,8 +54,13 @@ const translations = {
       earning: "Earning",
       calendar: "Calendar",
       options: "Options",
-      option: "option"
-
+      option: "option",
+      forgotPassword: "Forgot Password?",
+      password: "Password",
+      noAccount: "Don't have an account? Sign Up",
+      back: "Back",
+      value: "Value",
+      notpayed: "Remaining"
     },
     settings: {
       appearance: 'Appearance',
@@ -76,6 +81,36 @@ const translations = {
       salary: 'Salary',
       freelance: 'Freelance',
       investments: 'Investments',
+    },
+    auth:{
+      loginTitle: "LOGIN",
+      forgotTitle: "Forgot your password?",
+      forgotSubtitle: "No worries! Enter your email and we’ll send you a reset link.",
+      sendEmail: "Send email",
+      sending: "Sending...",
+      rememberPassword: " Remember your password?",
+      backToSignIn: "Back to sign in",
+      firstName: "First Name",
+      familyName: "Family Name",
+      confirmPassword: "Confirm Password",
+      next: "Next",
+      alreadyAccount: "Already have an account? Sign in",
+      createTitle: "Create your account",
+      createSubtitle: "Just one more step to complete your registration",
+      loginSubtitle: "Enter your credentials to access your account",
+      firstNamePH: "Enter your First Name...",
+      familyNamePH: "Enter your First Name...",
+      date: "BirthDay",
+      phone: "Phone",
+      CodeInvite: "Code Invite",
+      inviteCodePH: "Group Code",
+      inviteHelp: "You can ask your financial administrator that is already registered to give you. <br /><b>Leave blank if you don't have a group code (you can add or change anytime)</b>",
+      createAccount: "Create Account!"
+    
+    },
+    placeholders:{
+      email: "Enter your email...",
+      password: "Enter your password..."
     },
   },
   pt: {

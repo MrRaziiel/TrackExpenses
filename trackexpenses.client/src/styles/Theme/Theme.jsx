@@ -5,58 +5,72 @@ const ThemeContext = createContext();
 const lightTheme = {
   colors: {
     primary: {
-      main: '#2563EB',   // azul moderno (blue-600)
-      light: '#60A5FA',  // azul suave (blue-400)
-      dark: '#1E40AF',   // azul profundo (blue-900)
+      main: '#2563EB',   
+      light: '#60A5FA', 
+      dark: '#1E40AF',   
     },
     secondary: {
-      main: '#6B7280',   // cinza médio
-      light: '#E5E7EB',  // cinza claro
-      dark: '#374151',   // cinza escuro
+      main: '#6B7280',
+      light: '#E5E7EB',
+      dark: '#374151',
     },
     background: {
-      default: '#F8FAFC', // slate-50
-      paper: '#FFFFFF',   // branco puro
+      default: '#F8FAFC',
+      paper: '#FFFFFF',   
+    },
+    menu: {
+      bg: '#F1F5F9',
+      border: '#E2E8F0',
+      text: '#1E293B',
+      muted: '#64748B',
+      hoverBg: '#E0F2FE',
+      activeBg: '#DBEAFE',
+      activeText: '#1D4ED8',
     },
     text: {
-      primary: '#0F172A',   // slate-900
-      secondary: '#475569', // slate-600
+      primary: '#0F172A',
+      secondary: '#475569',
     },
     success: {
-      main: '#16A34A',  // verde confiável (green-600)
-      light: '#DCFCE7', // verde claro (green-100)
+      main: '#16A34A',
+      light: '#DCFCE7',
     },
     error: {
-      main: '#DC2626',  // vermelho forte (red-600)
-      light: '#FEE2E2', // vermelho claro (red-100)
+      main: '#DC2626',
+      light: '#FEE2E2',
     },
-
-    // já existente no teu light
-    menu: {
-      bg: '#F1F5F9',        // slate-100
-      border: '#E2E8F0',    // slate-200
-      text: '#1E293B',      // slate-800
-      muted: '#64748B',     // slate-500
-      hoverBg: '#E0F2FE',   // sky-100
-      activeBg: '#DBEAFE',  // blue-100
-      activeText: '#1D4ED8' // blue-700
-    }
+    card: {
+      bg: '#FFFFFF',
+      border: '#E2E8F0',
+      shadow: 'rgba(0, 0, 0, 0.05)',
+    },
+    input: {
+      bg: '#FFFFFF',
+      border: '#CBD5E1',
+      focus: '#2563EB',
+      placeholder: '#94A3B8',
+    },
+    button: {
+      primary: {
+        bg: '#2563EB',
+        hover: '#1D4ED8',
+        text: '#FFFFFF',
+      },
+      secondary: {
+        bg: '#F1F5F9',
+        hover: '#E2E8F0',
+        text: '#1E293B',
+      },
+    },
   },
-  breakpoints: {
-    sm: '640px',
-    md: '768px',
-    lg: '1024px',
-    xl: '1280px',
-  }
 };
-
 
 const darkTheme = {
   colors: {
     primary: {
-      main: '#60A5FA',
-      light: '#93C5FD',
-      dark: '#2563EB',
+      main: '#3B82F6',
+      light: '#60A5FA',
+      dark: '#1E40AF',
     },
     secondary: {
       main: '#9CA3AF',
@@ -64,42 +78,58 @@ const darkTheme = {
       dark: '#1F2937',
     },
     background: {
-      default: '#111827',
-      paper: '#1F2937',
+      default: '#0F172A', 
+      paper: '#1E293B',   
     },
-
-    // ⬇️ acrescentado (sidebar/menu no modo escuro)
     menu: {
-      bg: '#0F172A',         // slate-900 (ligeiramente distinto do paper)
-      border: '#1F2937',     // slate-800
-      text: '#E5E7EB',       // gray-200
-      muted: '#94A3B8',      // slate-400
-      hoverBg: '#1B2431',    // entre slate-900 e 800
-      activeBg: '#1E293B',   // slate-800
-      activeText: '#93C5FD', // blue-300
-      ring: 'rgba(96,165,250,0.35)' // foco acessível (blue-400 @ 35%)
+      bg: '#1E293B',
+      border: '#334155',
+      text: '#E2E8F0',
+      muted: '#94A3B8',
+      hoverBg: '#1E3A8A',
+      activeBg: '#1E40AF',
+      activeText: '#60A5FA',
     },
-
     text: {
       primary: '#F9FAFB',
-      secondary: '#D1D5DB',
+      secondary: '#94A3B8',
     },
     success: {
-      main: '#34D399',
-      light: '#064E3B',
+      main: '#22C55E',
+      light: '#14532D',
     },
     error: {
       main: '#F87171',
       light: '#7F1D1D',
-    }
+    },
+    card: {
+      bg: '#1E293B',
+      border: '#334155',
+      shadow: 'rgba(0,0,0,0.4)',
+    },
+    input: {
+      bg: '#0F172A',
+      border: '#334155',
+      focus: '#3B82F6',
+      placeholder: '#64748B',
+    },
+    button: {
+      primary: {
+        bg: '#3B82F6',
+        hover: '#2563EB',
+        text: '#F9FAFB',
+      },
+      secondary: {
+        bg: '#334155',
+        hover: '#475569',
+        text: '#E2E8F0',
+      },
+    },
   },
-  breakpoints: {
-    sm: '640px',
-    md: '768px',
-    lg: '1024px',
-    xl: '1280px',
-  }
 };
+
+
+
 
 
 export function ThemeProvider({ children }) {

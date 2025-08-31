@@ -187,27 +187,31 @@ namespace TRACKEXPENSES.Server.Controllers
 
 
         [Authorize]
-        [HttpGet("GetPhotoProfile/{email}")]
+        [HttpGet("GetPhotoProfileAndName/{email}")]
         public async Task<IActionResult> GetPhotoProfile(string email)
         {
             if (string.IsNullOrEmpty(email))
                 return BadRequest("Invalid user ID");
-
-
+           
             var existUser = await _context.Users
                 .SingleOrDefaultAsync(c => c.Email == email);
 
             if (existUser == null)
                 return NotFound("User not found");
-            if (existUser.ProfileImageId == "No_image.jpg")
-                return Ok(new { photoPath = "NoPhoto" });
 
-            var imageBd = await _context.ImagesDB.SingleOrDefaultAsync(imgId => imgId.Id == existUser.ProfileImageId);
+            var FirstName = existUser.FirstName;
+            var FamilyName = existUser.FamilyName;
+            var PhotoPath = "";
+            ImageDB? imageBd = null;
 
-            if (imageBd == null)
-                return Ok(new { firstName = existUser.FirstName });
+            if (existUser.ProfileImageId != "No_image.jpg")
+                imageBd = await _context.ImagesDB.SingleOrDefaultAsync(imgId => imgId.Id == existUser.ProfileImageId);
 
-            return Ok(new { photoPath = imageBd.Name });
+            if (imageBd != null)
+                PhotoPath = imageBd.Name;
+
+            return Ok(new { FirstName = FirstName, FamilyName = FamilyName, PhotoPath = PhotoPath });
+
         }
 
         [HttpPost("Forgot-password")]

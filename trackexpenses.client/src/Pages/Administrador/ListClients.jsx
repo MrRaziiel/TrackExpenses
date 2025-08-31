@@ -10,7 +10,7 @@ import { useLanguage } from "../../utilis/Translate/LanguageContext";
 import AuthContext from "../../services/Authentication/AuthContext";
 import { useTheme } from "../../styles/Theme/Theme";
 import { Plus } from "lucide-react";
-import PrimaryButton from "../../components/Buttons/PrimaryButton";
+import Button from "../../components/Buttons/Button";
 
 export default function UsersTable() {
   const [users, setUsers] = useState([]);
@@ -82,13 +82,13 @@ export default function UsersTable() {
       <div className="flex justify-between items-center">
         <Title text={t("common.users")} />
 
-<PrimaryButton
-    onClick={() => navigate('/Admin/Users/add')}
-    color={theme?.colors?.primary?.main}
-  >
-    <Plus className="h-5 w-5 mr-2" />
-    {t('common.add_user') || 'User'}
-  </PrimaryButton>
+<Button
+  variant="primary"
+  leftIcon={<Plus className="h-4 w-4" />}
+  onClick={() => navigate('/Admin/Users/add')}
+>
+  {t('common.add_user')|| 'User'}
+</Button>
       </div>
 
       <GenericFilter

@@ -2,7 +2,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Search } from "lucide-react";
-import PrimaryButton from "../Buttons/PrimaryButton";
+import Button from "../Buttons/Button";
 
 
 /**
@@ -68,14 +68,9 @@ export default function GenericFilter({
       ))}
 
       {/* botão limpar (tamanho fixo via PrimaryButton) */}
-      <PrimaryButton
-        type="button"
-        onClick={clearAll}
-        color="#ffffff"                                   // fundo branco (secundário)
-        className="!text-gray-700 border border-gray-300 hover:bg-gray-50"
-      >
-        {t ? t("common.clear") : "Limpar"}
-      </PrimaryButton>
+<Button variant="secondary" onClick={clearAll} className="!px-4">
+  {t ? t("common.clear") : "Limpar"}
+</Button>
     </div>
   );
 }

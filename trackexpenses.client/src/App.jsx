@@ -1,12 +1,12 @@
 // App.jsx
-import React, { useEffect, useContext } from "react";
+import React, { useEffect, useContext, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import { useTheme } from "./styles/Theme/Theme";
 import { useLanguage } from "./utilis/Translate/LanguageContext";
 import AuthContext from "./services/Authentication/AuthContext";
+import apiCall from "./services/ApiCallGeneric/apiCall";
 
 import AppShell from "./components/Layouts/AppShell";
-import ProfileMenu from "./components/Menus/ProfileMenu";
 import SessionPopup from "./Pages/Autentication/SessionPopup";
 
 import RequireAuth from "./services/Authentication/Require";
@@ -15,7 +15,7 @@ import { AuthTimer_resume } from "./services/MicroServices/AuthTime";
 
 // icons
 import {
-  LayoutDashboard, PiggyBank, Wallet, Users
+  LayoutDashboard, PiggyBank, Wallet, Users as UsersIcon, Calendar
 } from "lucide-react";
 
 // pages
@@ -41,7 +41,15 @@ import PremiumChoicePage from "./Pages/Premium/Prices";
 export default function App() {
   const { theme } = useTheme();
   const { t } = useLanguage();
-  const { role, isAuthenticated } = useContext(AuthContext); 
+  const { role, isAuthenticated, auth } = useContext(AuthContext);
+
+  // ---- estado local do utilizador para a sidebar/topbar ----
+  const [test, setUser] = useState({
+    email: "",
+    firstName: "",
+    lastName: "",
+    avatarUrl: "",
+  });
 
   useEffect(() => {
     AuthTimer_resume({
@@ -49,22 +57,26 @@ export default function App() {
       earlyMs: 30 * 1000,
     });
   }, []);
-  const sideItems = [
-    { section: true, label: "ADMIN", visible: role === "ADMINISTRATOR" },
-    { to: "/Users", icon: Users, label: t("common.users"), visible: role === "ADMINISTRATOR" },
-    { section: true, label: t("common.options") },
-    { to: "/Dashboard", icon: LayoutDashboard, label: t("common.dashboard") },
-    { to: "/Expenses", icon: PiggyBank, label: t("common.expenses") },
-    { to: "/Earnings", icon: Wallet, label: t("common.earning") },
-    { to: "/CalendarExpenses", icon: Wallet, label: t("common.calendar") },
+
+  const items = [
+    { to: "/Dashboard",        icon: LayoutDashboard, label: "Dashboard" },
+    { to: "/Expenses",         icon: PiggyBank,       label: "Expenses" },
+    { to: "/Earnings",         icon: Wallet,          label: "Earnings" },
+    { to: "/CalendarExpenses", icon: Calendar,        label: "Calendar" },
+    { to: "/Users",            icon: UsersIcon,       label: "Users" },
   ];
+
+
+  // (opcional) log sempre atualizado
+  // useEffect(() => {
+  //   if (user.email) console.log("USER atualizado:", user);
+  // }, [user]);
 
   return (
     <AppShell
       topbarTitle="TRACKEXPENSES"
-      sidebarItems={sideItems}
-      rightSlot={<ProfileMenu />}
-      sidebarVisible={isAuthenticated}  // ⬅️ AQUI!
+      sidebarItems={items}
+      sidebarVisible={isAuthenticated}
       bg={theme?.colors?.background?.default || "#F9FAFB"}
     >
       <SessionPopup />

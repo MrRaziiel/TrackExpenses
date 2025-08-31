@@ -4,8 +4,9 @@ import { Menu as MenuIcon, Wallet } from "lucide-react";
 
 export default function TopBar({ title, rightSlot, onToggleSideBar }) {
   return (
-    <nav className="text-white shadow-lg" style={{ backgroundColor: "#3B82F6" }}>
-      <div className="w-full px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+    <nav className="text-white shadow-lg relative" style={{ backgroundColor: "#3B82F6" }}>
+      <div className="w-full px-4 sm:px-6 lg:px-8 flex items-center h-16">
+        {/* Botão à esquerda */}
         <div className="flex items-center gap-3">
           <button
             className="md:hidden p-2 rounded-lg hover:bg-blue-600 transition-colors"
@@ -14,14 +15,18 @@ export default function TopBar({ title, rightSlot, onToggleSideBar }) {
           >
             <MenuIcon className="h-6 w-6" />
           </button>
-
-        <Link to="/" className="flex items-center gap-2">
-          <Wallet className="h-6 w-6" />
-          <span className="font-bold text-xl hidden sm:inline">{title}</span>
-        </Link>
         </div>
 
-        <div className="flex items-center">{rightSlot}</div>
+        {/* Título centrado */}
+        <div className="absolute inset-0 flex justify-center items-center pointer-events-none">
+          <Link to="/" className="flex items-center gap-2 pointer-events-auto">
+            <Wallet className="h-6 w-6" />
+            <span className="font-bold text-xl">{title}</span>
+          </Link>
+        </div>
+
+        {/* Slot à direita (se precisares no futuro) */}
+        <div className="ml-auto">{rightSlot}</div>
       </div>
     </nav>
   );

@@ -26,7 +26,7 @@ function getCycleMinutes() {
   const m = Number(readAuth()?.meta?.cycleMinutes);
   return Number.isFinite(m) && m > 0 ? m : null;
 }
-
+ 
 /* ---------- LOGIN: guarda payload EXACTO e o ciclo ---------- */
 export function setAuthFromApiPayload(payload) {
   if (!payload?.AccessToken || !payload?.RefreshToken) {

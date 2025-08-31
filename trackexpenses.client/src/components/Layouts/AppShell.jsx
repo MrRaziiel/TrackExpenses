@@ -17,7 +17,6 @@ export default function AppShell({
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: bg }}>
       <TopBar
         title={topbarTitle}
-        rightSlot={rightSlot}
         onToggleSideBar={() => setCollapsed((v) => !v)}
       />
 
