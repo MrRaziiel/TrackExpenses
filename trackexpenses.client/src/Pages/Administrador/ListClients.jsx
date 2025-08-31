@@ -46,7 +46,7 @@ export default function UsersTable() {
       (users || []).map(u => (u?.GroupOfUsers?.Name || "").trim()).filter(Boolean)
     );
     return [
-      { value: "all", label: t ? t("common.all") : "Todos" },
+      { value: "all", label: t ? t("common.allGroups") : "Todos" },
       ...Array.from(s).map(g => ({ value: g, label: g })),
     ];
   }, [users, t]);
@@ -74,30 +74,28 @@ export default function UsersTable() {
     (typeof isAuthenticated === "boolean" ? isAuthenticated : !!auth?.Email) &&
     (role ? role === "ADMINISTRATOR" : auth?.Role === "ADMINISTRATOR");
 
-   return (
-        <div className="space-y-6">
-
-
-
-      <div className="flex justify-between items-center">
+  return (
+    <div className="space-y-6 min-h-screen">
+      {/* header com título + botão */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <Title text={t("common.users")} />
-
-<Button
-  variant="primary"
-  leftIcon={<Plus className="h-4 w-4" />}
-  onClick={() => navigate('/Admin/Users/add')}
->
-  {t('common.add_user')|| 'User'}
-</Button>
+        <Button
+          variant="primary"
+          leftIcon={<Plus className="h-4 w-4" />}
+          onClick={() => navigate('/Admin/Users/add')}
+          className="!w-auto !h-11 !px-4 !rounded-lg !text-sm md:!text-base shrink-0"
+        >
+          {t('common.add_user') || 'User'}
+        </Button>
       </div>
 
       <GenericFilter
         className="
-        mt-2
-        grid items-center gap-3
-        grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto_auto]
-        [&_input]:h-11 [&_select]:h-11 [&_button]:h-11
-      "
+          mt-2
+          grid items-center gap-3
+          grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto_auto]
+          [&_input]:h-11 [&_select]:h-11 [&_button]:h-11
+        "
         value={flt}
         onChange={setFlt}
         t={t}

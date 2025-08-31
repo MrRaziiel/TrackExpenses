@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import TopBar from "./TopBar";
 import SideBar from "./SideBar";
+import Footer from "../../Pages/Footer/Footer";
 
 export default function AppShell({
   topbarTitle = "TRACKEXPENSES",
@@ -17,11 +18,11 @@ export default function AppShell({
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: bg }}>
       <TopBar
         title={topbarTitle}
-        onToggleSideBar={() => setCollapsed((v) => !v)}
+        menuItems={sidebarItems}
       />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* ⬅️ só renderiza a sidebar se sidebarVisible for true */}
+        {/* só renderiza a sidebar se sidebarVisible for true */}
         {sidebarVisible && (
           <SideBar
             items={sidebarItems}
@@ -30,14 +31,13 @@ export default function AppShell({
           />
         )}
 
-        <main
-          className={`flex-1 min-w-0 ${
-            sidebarVisible ? "p-4 md:p-8" : "py-8 px-4"
-          }`}
-        >
+       <main
+  className={`flex-1 min-w-0 min-h-screen ${sidebarVisible ? "p-4 md:p-8" : "py-8 px-4"}`}
+>
           {children}
         </main>
       </div>
+      <Footer />
     </div>
   );
 }

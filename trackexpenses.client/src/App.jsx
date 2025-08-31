@@ -59,18 +59,13 @@ export default function App() {
   }, []);
 
   const items = [
-    { to: "/Dashboard",        icon: LayoutDashboard, label: "Dashboard" },
-    { to: "/Expenses",         icon: PiggyBank,       label: "Expenses" },
-    { to: "/Earnings",         icon: Wallet,          label: "Earnings" },
-    { to: "/CalendarExpenses", icon: Calendar,        label: "Calendar" },
-    { to: "/Users",            icon: UsersIcon,       label: "Users" },
+    { to: "/Users",            icon: UsersIcon,       label: "Users", role: "ADMINISTRATOR" },
+    { to: "/Dashboard",        icon: LayoutDashboard, label: "Dashboard", role: "USER" },
+    { to: "/Expenses",         icon: PiggyBank,       label: "Expenses", role: "USER" },
+    { to: "/Earnings",         icon: Wallet,          label: "Earnings", role: "USER" },
+    { to: "/CalendarExpenses", icon: Calendar,        label: "Calendar", role: "USER" },
   ];
 
-
-  // (opcional) log sempre atualizado
-  // useEffect(() => {
-  //   if (user.email) console.log("USER atualizado:", user);
-  // }, [user]);
 
   return (
     <AppShell

@@ -46,6 +46,7 @@ const translations = {
       add_user: "Add a user", 
       clear: "Clear",
       all: "All",
+      allGroups: 'All Groups',
       searchUsers: "Type to search users...",
       fullName: "Full Name",
       group: "Group",
@@ -60,7 +61,13 @@ const translations = {
       noAccount: "Don't have an account? Sign Up",
       back: "Back",
       value: "Value",
-      notpayed: "Remaining"
+      notpayed: "Remaining",
+      premium: "Premium",
+      editProfile: "Edit Profile",
+      navigation: "Navigation",
+      admin: "Admin",
+      adminGroup: "Admin Group",
+
     },
     settings: {
       appearance: 'Appearance',

@@ -1,19 +1,13 @@
-import React, { useEffect, useMemo, useState, useContext   } from "react";
+// components/layout/SideBar.jsx
+import React, { useEffect, useMemo, useState, useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Settings, LogOut, PencilLine } from "lucide-react";
 import { useTheme } from "../../styles/Theme/Theme";
 import useLogout from "../../services/Authentication/Logout";
-// importa o teu cliente http (axios wrapper, etc.)
 import apiCall from "../../services/ApiCallGeneric/apiCall";
 import AuthContext from "../../services/Authentication/AuthContext";
+import { useLanguage } from "../../utilis/Translate/LanguageContext";
 
-/**
- * props:
- * - items: [{ to, icon: LucideIcon, label, visible=true }]
- * - collapsed: bool
- * - onToggle: fn
- * - user: { firstName, lastName, email, avatarUrl }
- */
 export default function SideBar({
   items = [],
   collapsed = false,
@@ -24,8 +18,8 @@ export default function SideBar({
   const loc = useLocation();
   const logout = useLogout();
   const { role, isAuthenticated, auth } = useContext(AuthContext);
-
-  // estado local do perfil, começa com o que vier por props
+  const {t} =useLanguage();
+  // === perfil local ===
   const [profile, setProfile] = useState(() => ({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
@@ -33,7 +27,6 @@ export default function SideBar({
     avatarUrl: user?.avatarUrl || "",
   }));
 
-  // sempre que o prop user mudar, sincroniza o estado local
   useEffect(() => {
     setProfile(prev => ({
       ...prev,
@@ -44,21 +37,17 @@ export default function SideBar({
     }));
   }, [user?.firstName, user?.lastName, user?.email, user?.avatarUrl]);
 
-  // ---- FETCH DO PERFIL (cancelável) ---------------------------------------
+  // === fetch foto ===
   useEffect(() => {
     const email = (auth?.Email || "").trim();
     if (!email) return;
-
     const controller = new AbortController();
-
     async function fetchUserProfile() {
       try {
-        // usa SEMPRE user.email (minúsculo)
         const res = await apiCall.get(
           `/User/GetPhotoProfileAndName/${encodeURIComponent(email)}`,
           { signal: controller.signal }
         );
-        console.log('res', res);
         const firstName = res?.data?.FirstName || "";
         const lastName = res?.data?.FamilyName || "";
         const photoPath = res?.data?.PhotoPath;
@@ -66,37 +55,24 @@ export default function SideBar({
         if (photoPath && photoPath !== "NoPhoto") {
           const base = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
           const path = String(photoPath).replace(/^\/+/, "");
-          // cache-buster para evitar foto antiga
           avatarUrl = `${base}/${path}?t=${Date.now()}`;
         }
-
-        setProfile(prev => ({
-          ...prev,
-          firstName,
-          lastName,
-          avatarUrl,
-          email
-        }));
+        setProfile(prev => ({ ...prev, firstName, lastName, avatarUrl, email }));
       } catch (err) {
-        // ignorar cancelamentos comuns
-        const code = err?.code || "";
         if (
           err?.name === "CanceledError" ||
           err?.name === "AbortError" ||
           err?.message === "canceled" ||
-          code === "ERR_CANCELED"
+          err?.code === "ERR_CANCELED"
         ) return;
-
         console.error("Erro ao buscar imagem/perfil:", err);
       }
     }
-
     fetchUserProfile();
     return () => controller.abort();
   }, [auth?.Email]);
 
-  // -------------------------------------------------------------------------
-
+  // === cores ===
   const colors = theme?.colors?.menu ?? {
     bg: "#0F172A",
     border: "#1E293B",
@@ -107,23 +83,107 @@ export default function SideBar({
     activeText: theme?.colors?.primary?.main || "#60A5FA",
   };
 
-const initials = useMemo(() => {
-  const f = profile?.firstName?.[0] || "";
-  const l = profile?.lastName?.[0] || "";
-  const letters = (f + l).toUpperCase();
-  return letters || "U";
-}, [profile?.firstName, profile?.lastName]);
+  // === roles ===
+  const norm = (v) => String(v ?? "").trim().toUpperCase();
+  const roles = useMemo(() => {
+    if (!role) return [];
+    if (Array.isArray(role)) return role.map(norm).filter(Boolean);
+    if (typeof role === "string") return role.split(/[,\s]+/).map(norm).filter(Boolean);
+    return [];
+  }, [role]);
+  const isAdmin = roles.includes("ADMINISTRATOR");
+
+  const canSee = (itemRoleRaw) => {
+    if (isAdmin) return true;
+    const r = norm(itemRoleRaw) || "USERS";
+    if (r === "USERS" || r === "GROUPMEMBER" || r === "") return true;
+    return roles.includes(r);
+  };
+
+  // agrupa
+  const visible = useMemo(
+    () => items.filter((i) => i?.visible !== false && canSee(i.role)),
+    [items, roles, isAdmin]
+  );
+  const groups = useMemo(() => {
+    const g = { ADMIN: [], GROUPADMIN: [], USERS: [] };
+    visible.forEach((i) => {
+      const r = norm(i.role) || "USERS";
+      if (r === "ADMINISTRATOR") g.ADMIN.push(i);
+      else if (r === "GROUPADMINISTRATOR") g.GROUPADMIN.push(i);
+      else g.USERS.push(i);
+    });
+    return g;
+  }, [visible]);
+
+  // === iniciais ===
+  const initials = useMemo(() => {
+    const f = profile?.firstName?.[0] || "";
+    const l = profile?.lastName?.[0] || "";
+    return (f + l).toUpperCase() || "U";
+  }, [profile?.firstName, profile?.lastName]);
+
+  // === componente de secção ===
+  const Section = ({ title, items }) => {
+    if (!items?.length) return null;
+    return (
+      <div className="mt-2">
+        {!collapsed && (
+          <div
+    className="w-full px-4 py-1.5 text-xs md:text-sm font-semibold uppercase tracking-wide text-center"
+    style={{ color: colors.muted }}
+  >
+            {title}
+          </div>
+        )}
+        {items.map(({ to, icon: Icon, label }) => {
+          const active = loc.pathname.toLowerCase().startsWith(to.toLowerCase());
+          return (
+            <Link
+              key={to}
+              to={to}
+              className="relative mx-2 mb-1 flex items-center gap-3 px-3 py-2 rounded-lg transition-colors"
+              style={{
+                backgroundColor: active ? colors.activeBg : "transparent",
+                color: active ? colors.activeText : colors.text,
+              }}
+              title={collapsed ? label : undefined}
+            >
+              {active && (
+                <span
+                  className="absolute left-0 top-1/2 -translate-y-1/2 rounded-r"
+                  style={{
+                    width: 4,
+                    height: 24,
+                    background:
+                      theme?.colors?.primary?.main ||
+                      "linear-gradient(180deg,#60A5FA,#2563EB)",
+                  }}
+                />
+              )}
+              {Icon ? (
+                <Icon
+                  className="h-5 w-5"
+                  style={{ color: active ? colors.activeText : colors.muted }}
+                />
+              ) : null}
+              {!collapsed && <span className="text-sm truncate">{label}</span>}
+            </Link>
+          );
+        })}
+        {collapsed && <div className="mx-3 my-2 border-t" style={{ borderColor: colors.border }} />}
+      </div>
+    );
+  };
 
   return (
     <aside
       className={`hidden md:flex flex-col flex-shrink-0 transition-[width] duration-300 ease-in-out ${collapsed ? "w-16" : "w-64"}`}
       style={{ backgroundColor: colors.bg, color: colors.text }}
     >
-      {/* topo + botão colapsar */}
-      <div
-        className="flex items-center justify-end h-12 px-2 border-b"
-        style={{ borderColor: colors.border }}
-      >
+      {/* topo */}
+      <div className="flex items-center justify-end"
+           style={{ borderColor: colors.border }}>
         <button
           onClick={onToggle}
           className="p-2 rounded-md transition-colors"
@@ -135,53 +195,20 @@ const initials = useMemo(() => {
         </button>
       </div>
 
-      {/* navegação principal */}
-      <nav className="flex-1 overflow-y-auto py-3">
-        {items
-          .filter((i) => i.visible !== false)
-          .map(({ to, icon: Icon, label }) => {
-            const active = useMemo(
-              () => loc.pathname.toLowerCase().startsWith(to.toLowerCase()),
-              [loc.pathname, to]
-            );
-            return (
-              <Link
-                key={to}
-                to={to}
-                className="relative mx-2 mb-1 flex items-center gap-3 px-3 py-2 rounded-lg transition-colors"
-                style={{
-                  backgroundColor: active ? colors.activeBg : "transparent",
-                  color: active ? colors.activeText : colors.text,
-                }}
-              >
-                {/* barra ativa à esquerda */}
-                {active && (
-                  <span
-                    className="absolute left-0 top-1/2 -translate-y-1/2 rounded-r"
-                    style={{
-                      width: 4,
-                      height: 24,
-                      background:
-                        theme?.colors?.primary?.main ||
-                        "linear-gradient(180deg,#60A5FA,#2563EB)",
-                    }}
-                  />
-                )}
+      {/* navegação */}
+      <nav className="flex-1 overflow-y-auto ">
+        <Section title={t("common.admin")} items={groups.ADMIN} />
+        <Section title={t("common.adminGroup")} items={groups.GROUPADMIN} />
+        <Section title={t("common.user")} items={groups.USERS} />
 
-                {Icon ? (
-                  <Icon
-                    className="h-5 w-5"
-                    style={{ color: active ? colors.activeText : colors.muted }}
-                  />
-                ) : null}
-
-                {!collapsed && <span className="text-sm">{label}</span>}
-              </Link>
-            );
-          })}
+        {!groups.ADMIN.length && !groups.GROUPADMIN.length && !groups.USERS.length && (
+          <div className="px-4 py-2 text-sm" style={{ color: colors.muted }}>
+            Sem permissões para navegar.
+          </div>
+        )}
       </nav>
 
-      {/* ações de conta fixas no rodapé */}
+      {/* ações fixas */}
       <div className="px-2 py-3 border-t" style={{ borderColor: colors.border }}>
         <Link
           to="/Settings"
@@ -223,49 +250,46 @@ const initials = useMemo(() => {
         </Link>
       </div>
 
-   {/* bloco do perfil no fundo — estilo “card” como no screenshot */}
-<Link
-  to="/Profile"
-  className="border-t px-4 py-3 transition-colors"
-  style={{ borderColor: colors.border }}
-  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.hoverBg)}
-  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
->
-  <div className={`flex items-center ${collapsed ? "justify-center" : "justify-start"} gap-3`}>
-    {/* avatar OU iniciais */}
-    {profile?.avatarUrl ? (
-      <img
-        src={profile.avatarUrl}
-        alt="avatar"
-        className="w-9 h-9 rounded-full object-cover ring-1"
-        style={{ ringColor: colors.border }}
-      />
-    ) : (
-      <div
-        className="w-9 h-9 rounded-full flex items-center justify-center font-semibold shadow ring-1"
-        style={{
-          ringColor: colors.border,
-          background: "rgba(255,255,255,0.85)",
-          color: "#0B1020",
-        }}
+      {/* perfil */}
+      <Link
+        to="/Profile"
+        className="border-t px-4 py-3 transition-colors"
+        style={{ borderColor: colors.border }}
+        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.hoverBg)}
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
       >
-        {initials}
-      </div>
-    )}
-
-    {/* texto só aparece expandido */}
-    {!collapsed && (
-      <div className="min-w-0 leading-tight">
-        <p className="text-sm font-semibold truncate" style={{ color: colors.text }}>
-          {(profile.firstName || "") + " " + (profile.lastName || "")}
-        </p>
-        <p className="text-xs truncate" style={{ color: colors.muted }}>
-          {profile.email}
-        </p>
-      </div>
-    )}
-  </div>
-</Link>
+        <div className={`flex items-center ${collapsed ? "justify-center" : "justify-start"} gap-3`}>
+          {profile?.avatarUrl ? (
+            <img
+              src={profile.avatarUrl}
+              alt="avatar"
+              className="w-9 h-9 rounded-full object-cover ring-1"
+              style={{ ringColor: colors.border }}
+            />
+          ) : (
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center font-semibold shadow ring-1"
+              style={{
+                ringColor: colors.border,
+                background: "rgba(255,255,255,0.85)",
+                color: "#0B1020",
+              }}
+            >
+              {initials}
+            </div>
+          )}
+          {!collapsed && (
+            <div className="min-w-0 leading-tight">
+              <p className="text-sm font-semibold truncate" style={{ color: colors.text }}>
+                {(profile.firstName || "") + " " + (profile.lastName || "")}
+              </p>
+              <p className="text-xs truncate" style={{ color: colors.muted }}>
+                {profile.email}
+              </p>
+            </div>
+          )}
+        </div>
+      </Link>
     </aside>
   );
 }
