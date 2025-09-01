@@ -1,39 +1,43 @@
 // AddExpense.jsx
-import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import apiCall from '../../services/ApiCallGeneric/apiCall';
-import AuthContext from '../../services/Authentication/AuthContext';
-import jsQR from 'jsqr';
+import React, { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import apiCall from "../../services/ApiCallGeneric/apiCall";
+import AuthContext from "../../services/Authentication/AuthContext";
+import jsQR from "jsqr";
 
 function AddExpense() {
   const { auth } = useContext(AuthContext);
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    value: '',
-    payAmount: '',
-    startDate: new Date().toISOString().split('T')[0],
-    periodicity: 'OneTime',
-    endDate: '',
-    repeatCount: '1',
+    name: "",
+    description: "",
+    value: "",
+    payAmount: "",
+    startDate: new Date().toISOString().split("T")[0],
+    periodicity: "OneTime",
+    endDate: "",
+    repeatCount: "1",
     shouldNotify: true,
-    category: '',
+    category: "",
     isTotalValue: true,
   });
   const [imageFile, setImageFile] = useState(null);
-  const [parcelValue, setParcelValue] = useState('0.00');
+  const [parcelValue, setParcelValue] = useState("0.00");
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await apiCall.get(`/Categories/GetCategoriesByType?type=Expense`);
+        const res = await apiCall.get(
+          `/Categories/GetCategoriesByType?type=Expense`
+        );
         const data = res.data;
-        const parsedCategories = Array.isArray(data) ? data : data?.$values || [];
+        const parsedCategories = Array.isArray(data)
+          ? data
+          : data?.$values || [];
         setCategories(parsedCategories);
       } catch (error) {
-        console.error('Erro ao buscar categorias:', error);
+        console.error("Erro ao buscar categorias:", error);
       }
     };
     fetchCategories();
@@ -46,8 +50,8 @@ function AddExpense() {
     };
 
     if (
-      formData.periodicity !== 'Endless' &&
-      formData.periodicity !== 'OneTime' &&
+      formData.periodicity !== "Endless" &&
+      formData.periodicity !== "OneTime" &&
       isValidDate(formData.startDate) &&
       formData.repeatCount &&
       !isNaN(parseInt(formData.repeatCount))
@@ -57,16 +61,16 @@ function AddExpense() {
       const end = new Date(start);
 
       switch (formData.periodicity) {
-        case 'Daily':
+        case "Daily":
           end.setDate(start.getDate() + repeat);
           break;
-        case 'Weekly':
+        case "Weekly":
           end.setDate(start.getDate() + 7 * repeat);
           break;
-        case 'Monthly':
+        case "Monthly":
           end.setMonth(start.getMonth() + repeat);
           break;
-        case 'Yearly':
+        case "Yearly":
           end.setFullYear(start.getFullYear() + repeat);
           break;
         default:
@@ -75,13 +79,13 @@ function AddExpense() {
 
       setFormData((prev) => ({
         ...prev,
-        endDate: end.toISOString().split('T')[0],
+        endDate: end.toISOString().split("T")[0],
       }));
     } else {
       setFormData((prev) => ({
         ...prev,
-        repeatCount: '',
-        endDate: '',
+        repeatCount: "",
+        endDate: "",
       }));
     }
   }, [formData.periodicity, formData.startDate, formData.repeatCount]);
@@ -89,17 +93,26 @@ function AddExpense() {
   useEffect(() => {
     const total = parseFloat(formData.value || 0);
     const paid = parseFloat(formData.payAmount || 0);
-    const count = formData.periodicity === 'Endless' ? 1 : parseInt(formData.repeatCount || '1');
+    const count =
+      formData.periodicity === "Endless"
+        ? 1
+        : parseInt(formData.repeatCount || "1");
 
-    let value = '0.00';
+    let value = "0.00";
     if (formData.isTotalValue) {
       const remaining = Math.max(0, total - paid);
-      value = count > 0 ? (remaining / count).toFixed(2) : '0.00';
+      value = count > 0 ? (remaining / count).toFixed(2) : "0.00";
     } else {
       value = total.toFixed(2);
     }
     setParcelValue(value);
-  }, [formData.value, formData.payAmount, formData.repeatCount, formData.isTotalValue, formData.periodicity]);
+  }, [
+    formData.value,
+    formData.payAmount,
+    formData.repeatCount,
+    formData.isTotalValue,
+    formData.periodicity,
+  ]);
 
   const handleImageUpload = (file, isQrCode) => {
     if (!file) return;
@@ -112,8 +125,8 @@ function AddExpense() {
     reader.onload = function (event) {
       const image = new Image();
       image.onload = function () {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
         canvas.width = image.width;
         canvas.height = image.height;
         ctx.drawImage(image, 0, 0);
@@ -127,7 +140,7 @@ function AddExpense() {
               ...parsed,
             }));
           } catch (err) {
-            console.warn('Erro ao analisar QR Code:', err);
+            console.warn("Erro ao analisar QR Code:", err);
           }
         } else {
         }
@@ -147,12 +160,12 @@ function AddExpense() {
       value: parseFloat(formData.value),
       payAmount: parseFloat(formData.payAmount || 0),
       startDate: formData.startDate,
-      endDate: formData.endDate || '',
+      endDate: formData.endDate || "",
       repeatCount: formData.repeatCount,
       shouldNotify: formData.shouldNotify,
       periodicity: formData.periodicity,
       category: formData.category,
-      userEmail: auth?.email || '',
+      userEmail: auth?.email || "",
       isTotalValue: formData.isTotalValue,
     };
 
@@ -161,27 +174,31 @@ function AddExpense() {
     });
 
     if (imageFile) {
-      payload.append('uploadType', 'File');
-      payload.append('image', imageFile);
+      payload.append("uploadType", "File");
+      payload.append("image", imageFile);
     }
 
     try {
-      await apiCall.post('/Expenses/CreateExpensesWithImage', payload, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      await apiCall.post("/Expenses/CreateExpensesWithImage", payload, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
-      navigate('/expenses');
+      navigate("/expenses");
     } catch (err) {
-      console.error('Erro ao criar despesa:', err);
+      console.error("Erro ao criar despesa:", err);
     }
   };
 
-  const showValueType = formData.periodicity !== 'OneTime' && formData.periodicity !== 'Endless';
+  const showValueType =
+    formData.periodicity !== "OneTime" && formData.periodicity !== "Endless";
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-      <h1 className="text-2xl font-bold">Criar Despesa</h1>
+        <h1 className="text-2xl font-bold">Criar Despesa</h1>
       </div>
-      <form onSubmit={handleSubmit} className="space-y-4 bg-white p-4 rounded shadow">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4 bg-white p-4 rounded shadow"
+      >
         <div>
           <label className="block text-sm font-medium">Nome *</label>
           <input
@@ -198,7 +215,9 @@ function AddExpense() {
           <input
             type="text"
             value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, description: e.target.value })
+            }
             className="w-full border p-2 rounded"
           />
         </div>
@@ -208,12 +227,16 @@ function AddExpense() {
           <select
             required
             value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, category: e.target.value })
+            }
             className="w-full border p-2 rounded"
           >
             <option value="">Selecione uma categoria</option>
             {categories.map((cat) => (
-              <option key={cat.Id} value={cat.Name}>{cat.Name}</option>
+              <option key={cat.Id} value={cat.Name}>
+                {cat.Name}
+              </option>
             ))}
           </select>
         </div>
@@ -225,7 +248,9 @@ function AddExpense() {
               type="number"
               step="0.01"
               value={formData.value}
-              onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, value: e.target.value })
+              }
               className="w-full border p-2 rounded"
             />
           </div>
@@ -236,24 +261,31 @@ function AddExpense() {
               type="number"
               step="0.01"
               value={formData.payAmount}
-              onChange={(e) => setFormData({ ...formData, payAmount: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, payAmount: e.target.value })
+              }
               className="w-full border p-2 rounded"
             />
-           {showValueType && (
-  <div>
-    <label className="block text-sm font-medium">Tipo de valor</label>
-    <select
-      value={formData.isTotalValue ? 'total' : 'parcelas'}
-      onChange={(e) =>
-        setFormData({ ...formData, isTotalValue: e.target.value === 'total' })
-      }
-      className="w-full border p-2 rounded"
-    >
-      <option value="total">Total</option>
-      <option value="parcelas">Por parcelas</option>
-    </select>
-  </div>
-)}
+            {showValueType && (
+              <div>
+                <label className="block text-sm font-medium">
+                  Tipo de valor
+                </label>
+                <select
+                  value={formData.isTotalValue ? "total" : "parcelas"}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      isTotalValue: e.target.value === "total",
+                    })
+                  }
+                  className="w-full border p-2 rounded"
+                >
+                  <option value="total">Total</option>
+                  <option value="parcelas">Por parcelas</option>
+                </select>
+              </div>
+            )}
           </div>
         </div>
 
@@ -262,7 +294,9 @@ function AddExpense() {
             <label className="block text-sm font-medium">Periodicidade</label>
             <select
               value={formData.periodicity}
-              onChange={(e) => setFormData({ ...formData, periodicity: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, periodicity: e.target.value })
+              }
               className="w-full border p-2 rounded"
             >
               <option value="OneTime">Única</option>
@@ -274,18 +308,21 @@ function AddExpense() {
             </select>
           </div>
 
-          {formData.periodicity !== 'OneTime' && formData.periodicity !== 'Endless' && (
-            <div>
-              <label className="block text-sm font-medium">Repetições</label>
-              <input
-                type="number"
-                min="1"
-                value={formData.repeatCount}
-                onChange={(e) => setFormData({ ...formData, repeatCount: e.target.value })}
-                className="w-full border p-2 rounded"
-              />
-            </div>
-          )}
+          {formData.periodicity !== "OneTime" &&
+            formData.periodicity !== "Endless" && (
+              <div>
+                <label className="block text-sm font-medium">Repetições</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={formData.repeatCount}
+                  onChange={(e) =>
+                    setFormData({ ...formData, repeatCount: e.target.value })
+                  }
+                  className="w-full border p-2 rounded"
+                />
+              </div>
+            )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -294,27 +331,29 @@ function AddExpense() {
             <input
               type="date"
               value={formData.startDate}
-              onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, startDate: e.target.value })
+              }
               className="w-full border p-2 rounded"
             />
           </div>
 
-         
-
-                  {showValueType && (
-          <div>
-            <label className="block text-sm font-medium">Data de Fim</label>
-            <input
-              type="date"
-              value={formData.endDate}
-              onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-              className="w-full border p-2 rounded"
-            />
-          </div>
-        )}
+          {showValueType && (
+            <div>
+              <label className="block text-sm font-medium">Data de Fim</label>
+              <input
+                type="date"
+                value={formData.endDate}
+                onChange={(e) =>
+                  setFormData({ ...formData, endDate: e.target.value })
+                }
+                className="w-full border p-2 rounded"
+              />
+            </div>
+          )}
         </div>
 
-         <div>
+        <div>
           <label className="block text-sm font-medium">Valor por parcela</label>
           <input
             type="text"
@@ -334,9 +373,11 @@ function AddExpense() {
           />
         </div>
 
-        {formData.periodicity === 'OneTime' && (
+        {formData.periodicity === "OneTime" && (
           <div>
-            <label className="block text-sm font-medium">Imagem (QR Code)</label>
+            <label className="block text-sm font-medium">
+              Imagem (QR Code)
+            </label>
             <input
               type="file"
               accept="image/*"
@@ -358,4 +399,3 @@ function AddExpense() {
 }
 
 export default AddExpense;
-

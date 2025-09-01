@@ -3,16 +3,22 @@ import { createContext, useEffect, useState } from "react";
 const AuthContext = createContext({});
 
 function readAuth() {
-  try { return JSON.parse(localStorage.getItem("auth") || "{}"); }
-  catch { return {}; }
+  try {
+    return JSON.parse(localStorage.getItem("auth") || "{}");
+  } catch {
+    return {};
+  }
 }
 function hasSession() {
-  try { return !!(readAuth()?.user?.AccessToken); }
-  catch { return false; }
+  try {
+    return !!readAuth()?.user?.AccessToken;
+  } catch {
+    return false;
+  }
 }
 
 export const AuthProvider = ({ children }) => {
-  const [auth, setAuth] = useState(null);            // guarda payload do backend (AccessToken, RefreshToken, Email, Role, ExpiresIn)
+  const [auth, setAuth] = useState(null); // guarda payload do backend (AccessToken, RefreshToken, Email, Role, ExpiresIn)
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -46,10 +52,14 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider
       value={{
-        auth, setAuth,
-        isAuthenticated, setIsAuthenticated,
-        role, setRole,
-        loading, setLoading,
+        auth,
+        setAuth,
+        isAuthenticated,
+        setIsAuthenticated,
+        role,
+        setRole,
+        loading,
+        setLoading,
       }}
     >
       {children}

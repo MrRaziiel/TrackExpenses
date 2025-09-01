@@ -1,4 +1,3 @@
-// src/Pages/Administrador/Users/AddUser.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Title from "../../components/Titles/TitlePage";
@@ -41,7 +40,7 @@ export default function AddUser() {
 
   const tt = (key, fallback) => {
     const v = t ? t(key) : undefined;
-    return v && v !== key ? v : (fallback || key);
+    return v && v !== key ? v : fallback || key;
   };
 
   // estilos
@@ -58,19 +57,22 @@ export default function AddUser() {
     // limpa erro daquele campo ao editar
     setFieldErrors((fe) => ({ ...fe, [k]: null }));
     if (k === "Email") setErrorEmail(null);
-    if (k === "Password" || k === "ConfirmPassword") setErrorPasswordCheck(null);
+    if (k === "Password" || k === "ConfirmPassword")
+      setErrorPasswordCheck(null);
   };
 
   // helper role
   const isGroupAdmin = (role) =>
-    String(role || "").toUpperCase().replace(/\s+/g, "") === "GROUPADMINISTRATOR";
+    String(role || "")
+      .toUpperCase()
+      .replace(/\s+/g, "") === "GROUPADMINISTRATOR";
 
   const onRoleChange = (e) => {
     const newRole = e.target.value;
     setForm((p) => ({
       ...p,
       Role: newRole,
-      GroupId: isGroupAdmin(newRole) ? "" : p.GroupId, 
+      GroupId: isGroupAdmin(newRole) ? "" : p.GroupId,
     }));
     setFieldErrors((fe) => ({ ...fe, Role: null, GroupId: null }));
   };
@@ -113,11 +115,11 @@ export default function AddUser() {
   };
 
   const parseBirthdayToISO = (v) => {
-  if (!v) return null;
-  // v vem como "yyyy-MM-dd"
-  const dt = new Date(v + "T00:00:00");
-  return isNaN(dt) ? null : dt.toISOString(); // "2025-08-27T01:01:43.786Z"
-};
+    if (!v) return null;
+    // v vem como "yyyy-MM-dd"
+    const dt = new Date(v + "T00:00:00");
+    return isNaN(dt) ? null : dt.toISOString(); // "2025-08-27T01:01:43.786Z"
+  };
 
   const getPasswordValidation = (pwd) => {
     const list = [
@@ -168,7 +170,9 @@ export default function AddUser() {
     if (hasErrors) {
       const messageErrorArray = [];
       validateList.forEach((item) => {
-        const message = !item.rule ? item.label + item.error : item.label + item.valid;
+        const message = !item.rule
+          ? item.label + item.error
+          : item.label + item.valid;
         messageErrorArray.push(message);
       });
       setErrorPasswordCheck(messageErrorArray);
@@ -184,12 +188,22 @@ export default function AddUser() {
       FamilyName: form.FamilyName ? null : "Family name is required",
       Email: form.Email ? null : "Email is required",
       Role: form.Role ? null : "Role is required",
-      GroupId: isGroupAdmin(form.Role) ? null : (form.GroupId ? null : "Group is required"),
+      GroupId: isGroupAdmin(form.Role)
+        ? null
+        : form.GroupId
+        ? null
+        : "Group is required",
       Password: form.Password ? null : "Password is required",
-      ConfirmPassword: form.ConfirmPassword ? null : "Confirm password is required",
+      ConfirmPassword: form.ConfirmPassword
+        ? null
+        : "Confirm password is required",
     };
 
-    if (!errs.Password && !errs.ConfirmPassword && form.Password !== form.ConfirmPassword) {
+    if (
+      !errs.Password &&
+      !errs.ConfirmPassword &&
+      form.Password !== form.ConfirmPassword
+    ) {
       errs.ConfirmPassword = "Passwords do not match";
     }
 
@@ -226,14 +240,16 @@ export default function AddUser() {
         FamilyName: form.FamilyName,
         Email: form.Email,
         Birthday: parseBirthdayToISO(form.Birthday),
-        CodeInvite: isGroupAdmin(form.Role) ? "" : form.GroupId, 
+        CodeInvite: isGroupAdmin(form.Role) ? "" : form.GroupId,
         PhoneNumber: form.Telephone,
         Password: form.Password,
         ConfirmPassword: form.ConfirmPassword,
       };
       const response = await apiCall.post("/User/Register", payload);
       if (!response?.ok) {
-        setErrorSubmit(response?.error?.message || "Error while registering user");
+        setErrorSubmit(
+          response?.error?.message || "Error while registering user"
+        );
         setSaving(false);
         return;
       }
@@ -259,25 +275,33 @@ export default function AddUser() {
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className={labelBase}>{tt("common.firstName", "First Name")}</label>
+            <label className={labelBase}>
+              {tt("common.firstName", "First Name")}
+            </label>
             <input
               className={inputBase}
               placeholder={tt("common.firstName", "First Name")}
               value={form.FirstName}
               onChange={onChange("FirstName")}
             />
-            {fieldErrors.FirstName && <p className={errorText}>{fieldErrors.FirstName}</p>}
+            {fieldErrors.FirstName && (
+              <p className={errorText}>{fieldErrors.FirstName}</p>
+            )}
           </div>
 
           <div>
-            <label className={labelBase}>{tt("common.familyName", "Family Name")}</label>
+            <label className={labelBase}>
+              {tt("common.familyName", "Family Name")}
+            </label>
             <input
               className={inputBase}
               placeholder={tt("common.familyName", "Family Name")}
               value={form.FamilyName}
               onChange={onChange("FamilyName")}
             />
-            {fieldErrors.FamilyName && <p className={errorText}>{fieldErrors.FamilyName}</p>}
+            {fieldErrors.FamilyName && (
+              <p className={errorText}>{fieldErrors.FamilyName}</p>
+            )}
           </div>
 
           <div>
@@ -290,12 +314,16 @@ export default function AddUser() {
               onChange={onChange("Email")}
               onBlur={verifyEmail_Bd}
             />
-            {fieldErrors.Email && <p className={errorText}>{fieldErrors.Email}</p>}
+            {fieldErrors.Email && (
+              <p className={errorText}>{fieldErrors.Email}</p>
+            )}
             {errorEmail && <p className={errorText}>{errorEmail}</p>}
           </div>
 
           <div>
-            <label className={labelBase}>{tt("common.birthday", "Birthday")}</label>
+            <label className={labelBase}>
+              {tt("common.birthday", "Birthday")}
+            </label>
             <input
               className={inputBase}
               type="date"
@@ -308,12 +336,18 @@ export default function AddUser() {
           {/* Role */}
           <div>
             <label className={labelBase}>{tt("common.role", "Role")}</label>
-            <select className={inputBase} value={form.Role} onChange={onRoleChange}>
+            <select
+              className={inputBase}
+              value={form.Role}
+              onChange={onRoleChange}
+            >
               <option value="USER">USER</option>
               <option value="GROUP ADMINISTRATOR">GROUP ADMINISTRATOR</option>
               <option value="ADMINISTRATOR">ADMINISTRATOR</option>
             </select>
-            {fieldErrors.Role && <p className={errorText}>{fieldErrors.Role}</p>}
+            {fieldErrors.Role && (
+              <p className={errorText}>{fieldErrors.Role}</p>
+            )}
           </div>
 
           {!isGroupAdmin(form.Role) && (
@@ -324,19 +358,25 @@ export default function AddUser() {
                 value={form.GroupId}
                 onChange={onChange("GroupId")}
               >
-                <option value="">{tt("common.selectOption", "Select an option")}</option>
+                <option value="">
+                  {tt("common.selectOption", "Select an option")}
+                </option>
                 {groupOptions.map((g) => (
                   <option key={g.value} value={g.value}>
                     {g.label}
                   </option>
                 ))}
               </select>
-              {fieldErrors.GroupId && <p className={errorText}>{fieldErrors.GroupId}</p>}
+              {fieldErrors.GroupId && (
+                <p className={errorText}>{fieldErrors.GroupId}</p>
+              )}
             </div>
           )}
 
           <div>
-            <label className={labelBase}>{tt("common.telephone", "Telephone")}</label>
+            <label className={labelBase}>
+              {tt("common.telephone", "Telephone")}
+            </label>
             <input
               className={inputBase}
               type="tel"
@@ -347,7 +387,9 @@ export default function AddUser() {
           </div>
 
           <div>
-            <label className={labelBase}>{tt("common.password", "Password")}</label>
+            <label className={labelBase}>
+              {tt("common.password", "Password")}
+            </label>
             <input
               className={inputBase}
               type="password"
@@ -356,11 +398,15 @@ export default function AddUser() {
               value={form.Password}
               onChange={onChange("Password")}
             />
-            {fieldErrors.Password && <p className={errorText}>{fieldErrors.Password}</p>}
+            {fieldErrors.Password && (
+              <p className={errorText}>{fieldErrors.Password}</p>
+            )}
           </div>
 
           <div>
-            <label className={labelBase}>{tt("common.confirmPassword", "Confirm Password")}</label>
+            <label className={labelBase}>
+              {tt("common.confirmPassword", "Confirm Password")}
+            </label>
             <input
               className={inputBase}
               type="password"
@@ -378,7 +424,9 @@ export default function AddUser() {
         {errorPasswordCheck && Array.isArray(errorPasswordCheck) && (
           <ul className="mt-4 space-y-1 text-sm">
             {errorPasswordCheck.map((msg, idx) => (
-              <li key={idx} className="text-red-600">• {msg}</li>
+              <li key={idx} className="text-red-600">
+                • {msg}
+              </li>
             ))}
           </ul>
         )}
@@ -402,7 +450,9 @@ export default function AddUser() {
           </button>
         </div>
 
-        {errorSubmit && <div className="mt-4 text-sm text-red-600">{errorSubmit}</div>}
+        {errorSubmit && (
+          <div className="mt-4 text-sm text-red-600">{errorSubmit}</div>
+        )}
       </form>
     </div>
   );

@@ -1,4 +1,3 @@
-// components/Tables/GenericTable.jsx
 import React from "react";
 import PropTypes from "prop-types";
 
@@ -26,8 +25,8 @@ function IconButton({ title, className, onClick, children }) {
  *   stickyHeader
  *   truncateKeys={["fullName","email"]}
  *   minTableWidth="56rem"
- *   headClassName="bg-gray-50"                               // ⟵ NOVO
- *   headerCellClassName="px-6 py-3 text-xs font-medium text-left uppercase tracking-wider" // ⟵ NOVO
+ *   headClassName="bg-gray-50"                              
+ *   headerCellClassName="px-6 py-3 text-xs font-medium text-left uppercase tracking-wider"
  * />
  */
 export default function GenericTable({
@@ -71,7 +70,8 @@ export default function GenericTable({
 
   const handleEditClick = (row) => {
     if (edit?.onEdit) return edit.onEdit(row);
-    if (edit?.navigateTo && edit?.navigate) return edit.navigate(edit.navigateTo(row));
+    if (edit?.navigateTo && edit?.navigate)
+      return edit.navigate(edit.navigateTo(row));
   };
 
   const handleDeleteClick = async (row) => {
@@ -89,18 +89,23 @@ export default function GenericTable({
     }
   };
 
-  // classes default do <th> (iguais às do teu ListExpenses)
   const thDefault =
     "px-6 py-3 text-xs font-medium text-left uppercase tracking-wider whitespace-nowrap";
   const thClass = headerCellClassName || thDefault;
 
   return (
-    <table className="w-full table-auto border-collapse" style={{ minWidth: minTableWidth }}>
+    <table
+      className="w-full table-auto border-collapse"
+      style={{ minWidth: minTableWidth }}
+    >
       <thead
-        className={`${stickyHeader ? "sticky top-0 z-10" : ""} ${headClassName || ""}`}
+        className={`${stickyHeader ? "sticky top-0 z-10" : ""} ${
+          headClassName || ""
+        }`}
         style={{
-          // se passares headClassName, não forço a cor de fundo do tema
-          backgroundColor: headClassName ? undefined : theme?.colors?.background?.paper,
+          backgroundColor: headClassName
+            ? undefined
+            : theme?.colors?.background?.paper,
           boxShadow: stickyHeader ? "0 1px 0 rgba(0,0,0,0.06)" : undefined,
         }}
       >
@@ -109,14 +114,14 @@ export default function GenericTable({
             const header =
               col.headerLabel ??
               (col.headerKey
-                ? (t ? t(`${i18nPrefix}.${col.headerKey}`) : col.headerKey)
+                ? t
+                  ? t(`${i18nPrefix}.${col.headerKey}`)
+                  : col.headerKey
                 : col.key);
             return (
               <th
                 key={col.key}
                 className={thClass}
-                // mantemos a cor do texto do tema; se quiseres, podes também
-                // remover este style e usar apenas a class
                 style={{ color: theme?.colors?.text?.secondary }}
                 title={typeof header === "string" ? header : undefined}
               >
@@ -139,13 +144,19 @@ export default function GenericTable({
       <tbody style={{ backgroundColor: theme?.colors?.background?.paper }}>
         {loading ? (
           <tr>
-            <td className="px-6 py-6 text-center" colSpan={columns.length + (hasActions ? 1 : 0)}>
+            <td
+              className="px-6 py-6 text-center"
+              colSpan={columns.length + (hasActions ? 1 : 0)}
+            >
               {t ? t("common.loading") : "Carregando…"}
             </td>
           </tr>
         ) : rows.length === 0 ? (
           <tr>
-            <td className="px-6 py-6 text-center" colSpan={columns.length + (hasActions ? 1 : 0)}>
+            <td
+              className="px-6 py-6 text-center"
+              colSpan={columns.length + (hasActions ? 1 : 0)}
+            >
               {emptyMessage}
             </td>
           </tr>
@@ -156,16 +167,25 @@ export default function GenericTable({
               <tr key={k} className="border-t">
                 {columns.map((col) => {
                   const raw =
-                    typeof col.accessor === "function" ? col.accessor(row) : row?.[col.key] ?? "-";
-                  const value = typeof col.cell === "function" ? col.cell(raw, row) : raw;
+                    typeof col.accessor === "function"
+                      ? col.accessor(row)
+                      : row?.[col.key] ?? "-";
+                  const value =
+                    typeof col.cell === "function" ? col.cell(raw, row) : raw;
 
                   const content = value ?? "-";
                   const isTrunc = shouldTruncate(col.key);
 
                   return (
-                    <td key={col.key} className="px-6 py-4 text-sm align-middle">
+                    <td
+                      key={col.key}
+                      className="px-6 py-4 text-sm align-middle"
+                    >
                       {isTrunc ? (
-                        <div className={`truncate ${truncateWidthClass}`} title={String(content)}>
+                        <div
+                          className={`truncate ${truncateWidthClass}`}
+                          title={String(content)}
+                        >
                           {content}
                         </div>
                       ) : (

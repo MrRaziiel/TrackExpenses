@@ -1,629 +1,360 @@
-import React, { useContext, useState, useEffect, useRef } from 'react';
-import AuthContext from '../../services/Authentication/AuthContext';
-import { useTheme } from '../../styles/Theme/Theme';
-import apiCall from '../../services/ApiCallGeneric/apiCall';
-import {
-  Edit3, Save, X, User, Mail, Calendar, Phone, Lock, Users, Shield, Key, Camera
-} from 'lucide-react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import AuthContext from "../../services/Authentication/AuthContext";
+import { useTheme } from "../../styles/Theme/Theme";
+import apiCall from "../../services/ApiCallGeneric/apiCall";
+
+import ProfileAvatar from "../../components/Profile/ProfileAvatar";
+import ProfileInfoSection from "../../components/Profile/ProfileInfoSection";
+import ProfileGroupSection from "../../components/Profile/ProfileGroupSection";
+import ProfileHeader from "../../components/Profile/ProfileHeader";
+import Title from "../../components/Titles/TitlePage";
+
+/* helpers */
+const normPath = (p) =>
+  (p || "").toString().replace(/\\/g, "/").replace(/^\/+/, "");
+const stripTrailing = (s) => (s || "").replace(/\/+$/g, "");
+const buildFileUrl = (filesBase, partialOrAbsolute) => {
+  if (!partialOrAbsolute) return null;
+  const p = String(partialOrAbsolute);
+  if (/^https?:\/\//i.test(p))
+    return `${p}${p.includes("?") ? "" : `?t=${Date.now()}`}`;
+  const root = stripTrailing(filesBase || "");
+  return `${root}/${normPath(p)}?t=${Date.now()}`;
+};
 
 function ProfilePage() {
-  const [user, setUser] = useState({});
   const { auth, setAuth } = useContext(AuthContext);
   const { theme } = useTheme();
 
-  const [errorSubmit, setErrorSubmit] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({});
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorSubmit, setErrorSubmit] = useState(null);
+
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [imageError, setImageError] = useState(null);
   const fileInputRef = useRef(null);
 
+  const API_BASE =
+    import.meta.env.VITE_API_BASE_URL || "https://localhost:5001/api";
+  const FILES_BASE =
+    import.meta.env.VITE_FILES_BASE_URL || "https://localhost:5001";
+
+  const currentImageUrl = useMemo(() => {
+    if (imagePreview) return imagePreview;
+    if (user?.profileImage) return buildFileUrl(FILES_BASE, user.profileImage);
+    if (auth?.path) return auth.path;
+    return null;
+  }, [imagePreview, user?.profileImage, auth?.path, FILES_BASE]);
+
+  const firstName = user?.firstName ?? "";
+  const familyName = user?.familyName ?? "";
+
   useEffect(() => {
-    const fetchData = async () => {
+    let cancelled = false;
+
+    async function fetchData(userEmail) {
+      setLoading(true);
       setErrorSubmit(null);
+
+      let baseUser = {
+        id: undefined,
+        email: userEmail,
+        firstName: "",
+        familyName: "",
+        birthday: "",
+        phoneNumber: "",
+        groupName: "",
+        groupRole: "Member",
+        groupId: "",
+        profileImage: "",
+        groupMembers: [],
+      };
+
       try {
-        const res = await apiCall.get('/User/GetProfile', {
-          params: { UserEmail: auth.email }
+        const res = await apiCall.get("/User/GetProfile", {
+          params: { UserEmail: userEmail },
+          validateStatus: (s) =>
+            (s >= 200 && s < 300) || s === 404 || s === 400,
         });
-        if (res.data) {
-          const userData = res.data;
-
-          const mappedUser = {
-            id: userData.id || userData.Id,
-            email: userData.email || userData.Email,
-            firstName: userData.firstName || userData.FirstName,
-            familyName: userData.familyName || userData.FamilyName,
-            birthday: userData.birthday || userData.Birthday,
-            phoneNumber: userData.phoneNumber || userData.PhoneNumber,
-            groupName: userData.groupName || userData.GroupName,
-            groupRole: userData.groupRole || userData.Role || 'Member',
-            groupId: userData.groupId || userData.GroupId,
-            profileImage: '',
-            groupMembers: userData.groupMembers || []
+        if (res?.status >= 200 && res?.status < 300 && res?.data) {
+          const d = res.data;
+          baseUser = {
+            id: d.id ?? d.Id,
+            email: d.email ?? d.Email ?? userEmail,
+            firstName: d.firstName ?? d.FirstName ?? "",
+            familyName: d.familyName ?? d.FamilyName ?? "",
+            birthday: d.birthday ?? d.Birthday ?? "",
+            phoneNumber: d.phoneNumber ?? d.PhoneNumber ?? "",
+            groupName: d.groupName ?? d.GroupName ?? "",
+            groupRole: d.groupRole ?? d.Role ?? "Member",
+            groupId: d.groupId ?? d.GroupId ?? "",
+            profileImage: "",
+            groupMembers: d.groupMembers ?? [],
           };
+        }
+      } catch {
+        // segue com baseUser
+      }
 
-          setUser(mappedUser);
-          setFormData({ ...mappedUser, birthday: mappedUser.birthday || '' });
+      if (!cancelled) {
+        setUser(baseUser);
+        setFormData({ ...baseUser, birthday: baseUser.birthday || "" });
+      }
 
-          try {
-            const res2 = await apiCall.get(`/User/GetPhotoProfile/${auth.email}`);
-            const photoPath = res2.data?.photoPath;
-            const firstName = res2.data?.firstName;
-            if (photoPath && photoPath !== 'NoPhoto') {
-              setUser(prev => ({ ...prev, profileImage: res2.data?.photoPath || '' }));
-            }
-            if (firstName)
-              auth.firstName = firstName;
-          } catch (err) {
-            console.error("Erro ao buscar photo:", err);
+      try {
+        const res2 = await apiCall.get(
+          `/User/GetPhotoProfileAndName/${encodeURIComponent(userEmail)}`,
+          { validateStatus: (s) => (s >= 200 && s < 300) || s === 404 }
+        );
+        if (!cancelled && res2?.status !== 404) {
+          const data = res2?.data || {};
+          const photoPath = data.PhotoPath ?? data.photoPath ?? "";
+          const fName = data.FirstName ?? data.firstName ?? "";
+
+          if (photoPath && photoPath !== "NoPhoto") {
+            const relative = normPath(photoPath);
+            const absolute = buildFileUrl(FILES_BASE, relative);
+            setUser((p) => ({ ...p, profileImage: relative }));
+            setFormData((p) => ({ ...p, profileImage: relative }));
+            setAuth?.((prev) => ({ ...prev, path: absolute }));
+          }
+          if (fName) {
+            setAuth?.((prev) => ({
+              ...prev,
+              firstName: prev.firstName || fName,
+            }));
           }
         }
-      } catch (err) {
-        console.error("Erro ao buscar utilizadores:", err);
-        setUser({});
+      } catch {
+        // ignora
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-    };
+    }
 
-    fetchData();
-  }, [auth.email]);
+    const email = auth?.Email;
+    if (!email) {
+      setUser({
+        email: "",
+        firstName: "",
+        familyName: "",
+        birthday: "",
+        phoneNumber: "",
+        groupName: "",
+        groupRole: "Member",
+        groupId: "",
+        profileImage: "",
+        groupMembers: [],
+      });
+      setFormData({
+        email: "",
+        firstName: "",
+        familyName: "",
+        birthday: "",
+        phoneNumber: "",
+        groupName: "",
+        groupRole: "Member",
+        groupId: "",
+        profileImage: "",
+        groupMembers: [],
+      });
+      setLoading(false);
+      return;
+    }
+
+    fetchData(email);
+    return () => {
+      cancelled = true;
+    };
+  }, [auth?.Email, setAuth, FILES_BASE]);
 
   const handleImageSelect = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     setImageError(null);
     if (!file) return;
 
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
     if (!validTypes.includes(file.type)) {
-      setImageError('Please select a valid image file (JPG, PNG, or GIF)');
+      setImageError("Please select a valid image file (JPG, PNG, or GIF)");
       return;
     }
-
     if (file.size > 5 * 1024 * 1024) {
-      setImageError('Image size must be less than 5MB');
+      setImageError("Image size must be less than 5MB");
       return;
     }
-
     setSelectedImage(file);
-
-    const reader = new FileReader();
-    reader.onload = (e) => setImagePreview(e.target.result);
-    reader.readAsDataURL(file);
+    const url = URL.createObjectURL(file);
+    setImagePreview(url);
   };
 
-const uploadImage = async () => {
-  if (!selectedImage) return null;
+  useEffect(() => {
+    return () => {
+      if (imagePreview?.startsWith("blob:")) URL.revokeObjectURL(imagePreview);
+    };
+  }, [imagePreview]);
 
-  const imageFormData = new FormData();
-  imageFormData.append('photo', selectedImage); // O nome deve ser 'photo' (veja o backend)
-
-  try {
-    const response = await apiCall.post(
-      `/User/UploadProfileImage/${user.id}`,
-      imageFormData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      }
-    );
-
-    const partialPath = response.data?.partialPath;
-    if (partialPath) return partialPath;
-
-    setImageError('Image uploaded but no path returned');
-    return null;
-  } catch (error) {
-    console.error('Error to upload image:', error);
-    setImageError('Error to upload image');
-    return null;
-  }
-};
+  const uploadImage = async () => {
+    if (!selectedImage || !user?.id) return null;
+    const imageFormData = new FormData();
+    imageFormData.append("photo", selectedImage);
+    try {
+      const response = await apiCall.post(
+        `/User/UploadProfileImage/${user.id}`,
+        imageFormData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+      const partialPath = normPath(
+        response?.data?.partialPath || response?.data?.PartialPath || ""
+      );
+      if (partialPath) return partialPath;
+      setImageError("Image uploaded but no path returned");
+      return null;
+    } catch {
+      setImageError("Error to upload image");
+      return null;
+    }
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     setErrorSubmit(null);
     setImageError(null);
+    setSubmitting(true);
 
-    let imageUrl = user.profileImage;
-
+    let imageUrl = formData.profileImage || user?.profileImage || "";
     if (selectedImage) {
-      imageUrl = await uploadImage();
-      if (!imageUrl) return;
+      const uploadedPath = await uploadImage();
+      if (!uploadedPath) {
+        setSubmitting(false);
+        return;
+      }
+      imageUrl = uploadedPath;
     }
 
     const payload = {
       ...formData,
       birthday: formData.birthday || undefined,
-      profileImage: imageUrl
+      ...(formData.password ? { password: formData.password } : {}),
+      profileImage: imageUrl,
     };
 
     try {
-      const response = await apiCall.put('/User/EditUser', payload, {
-        headers: { 'Content-Type': 'application/json' }
+      const response = await apiCall.put("/User/EditUser", payload, {
+        headers: { "Content-Type": "application/json" },
+        validateStatus: (s) =>
+          (s >= 200 && s < 300) || s === 400 || s === 404 || s === 409,
       });
 
-      if (!response.data) {
-        setErrorSubmit('Error to update user data');
-        return;
-      }
+      if (!(response?.status >= 200 && response?.status < 300)) {
+        setErrorSubmit(response?.data?.message || "Error to save user data");
+      } else {
+        const updatedUser = { ...formData, profileImage: imageUrl };
+        delete updatedUser.password;
 
-      const updatedUser = { ...formData, profileImage: imageUrl };
-      setUser(updatedUser);
-      setFormData(updatedUser);
-      setIsEditing(false);
-      setSelectedImage(null);
-      setImagePreview(null);
+        setUser(updatedUser);
+        setFormData(updatedUser);
+        setIsEditing(false);
+        setSelectedImage(null);
+        setImagePreview(null);
 
-      // Atualiza imagem no contexto auth
-      if (imageUrl) {
-        setAuth((prev) => ({
+        // URL absoluto (sem /api) + cache-buster
+        const absolute = buildFileUrl(FILES_BASE, imageUrl);
+
+        // 1) propaga no contexto
+        setAuth?.((prev) => ({
           ...prev,
-          path: `${import.meta.env.VITE_API_BASE_URL}/${imageUrl}?t=${Date.now()}`
+          firstName: updatedUser.firstName ?? prev.firstName,
+          path: absolute || prev.path,
         }));
-      }
 
-    } catch (error) {
-      setErrorSubmit(error?.response?.data?.message || 'Error to save user data');
+        // 2) dispara evento global para listeners (SideBar/TopBar)
+        window.dispatchEvent(
+          new CustomEvent("avatar-updated", { detail: { url: absolute } })
+        );
+      }
+    } catch {
+      setErrorSubmit("Error to save user data");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleCancel = () => {
-    const resetFormData = {
-      ...user,
-      birthday: user.birthday || ''
-    };
-
-    setFormData(resetFormData);
+    if (!user) return;
+    setFormData({ ...user, birthday: user.birthday || "" });
     setIsEditing(false);
     setSelectedImage(null);
     setImagePreview(null);
     setImageError(null);
   };
 
-  const removeGroupMember = (index) => {
-    const newMembers = (formData.groupMembers || []).filter((_, i) => i !== index);
-    setFormData({ ...formData, groupMembers: newMembers });
-  };
-
-  const handleImageClick = () => {
-    if (isEditing && fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  const removeImage = () => {
-    setSelectedImage(null);
-    setImagePreview(null);
-    setFormData({ ...formData, profileImage: '' });
-  };
-
-  const displayName = `${user?.firstName || ''}`.trim() || 'User';
-  const currentGroupMembers = isEditing ? (formData.groupMembers || []) : (user?.groupMembers || []);
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5285";
-  const currentImageUrl = imagePreview 
-    || (user?.profileImage ? `${API_BASE}/${user.profileImage}` : null);
-
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <Title text="Profile" />
+        <div className="animate-pulse space-y-4 mt-6">
+          <div className="h-40 w-full rounded bg-gray-200" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold" style={{ color: theme.colors.text.primary }}>
-          Profile
-        </h1>
-      {!isEditing ? (
-  <button
-    onClick={() => setIsEditing(true)}
-    className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-white font-medium hover:opacity-90 transition-colors duration-200"
-    style={{ backgroundColor: theme.colors.primary.main }}
-  >
-    <Edit3 className="h-5 w-5 mr-2" />
-    Edit Profile
-  </button>
-) : (
-  <div className="flex space-x-3">
-    <button
-      onClick={handleCancel}
-      className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
-    >
-      <X className="h-5 w-5 mr-2" />
-      Cancel
-    </button>
-    <button
-      onClick={handleSave}
-      className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-white font-medium hover:opacity-90 transition-colors duration-200"
-      style={{ backgroundColor: theme.colors.success.main }}
-    >
-      <Save className="h-5 w-5 mr-2" />
-      Save Changes
-    </button>
-  </div>
-)}
-      </div>
+    <div className="">
+      <ProfileHeader
+        isEditing={isEditing}
+        onEdit={() => setIsEditing(true)}
+        onCancel={handleCancel}
+        onSave={handleSave}
+        submitting={submitting}
+        theme={theme}
+      />
 
       {errorSubmit && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 my-4">
           <p className="text-red-800">{errorSubmit}</p>
         </div>
       )}
 
-      <div 
-        className="bg-white rounded-xl shadow-md overflow-hidden"
+      <div
+        className="bg-white rounded-xl shadow-md overflow-hidden mt-6"
         style={{ backgroundColor: theme.colors.background.paper }}
       >
-        {/* Profile Header */}
-        <div className="px-6 py-8 border-b" style={{ borderColor: theme.colors.secondary.light }}>
-          <div className="flex items-center space-x-6">
-            <div className="relative">
-              <div 
-                className={`h-24 w-24 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-lg overflow-hidden ${isEditing ? 'cursor-pointer' : ''}`}
-                style={{ backgroundColor: theme.colors.primary.main }}
-                onClick={handleImageClick}
-              >
-                {currentImageUrl ? (
-  <img 
-    src={currentImageUrl}
-    alt="Profile" 
-    className="w-full h-full object-cover"
-  />
-) : (
-  displayName.charAt(0).toUpperCase()
-)}
-                
-                {isEditing && (
-                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 rounded-full">
-                    <Camera className="h-6 w-6 text-white" />
-                  </div>
-                )}
-              </div>
-              
-              {isEditing && currentImageUrl && (
-                <button
-                  onClick={removeImage}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-              
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageSelect}
-                className="hidden"
-              />
-            </div>
-            
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold mb-2" style={{ color: theme.colors.text.primary }}>
-                {displayName}
-              </h2>
-              <p className="text-lg" style={{ color: theme.colors.text.secondary }}>
-                {user?.email || 'No email provided'}
-              </p>
-              <div className="mt-2">
-                <span 
-                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
-                  style={{ 
-                    backgroundColor: theme.colors.primary.light + '30',
-                    color: theme.colors.primary.main 
-                  }}
-                >
-                  <Shield className="h-4 w-4 mr-1" />
-                  {user?.groupRole || 'Member'}
-                </span>
-              </div>
-              
-              {isEditing && (
-                <p className="text-sm mt-2" style={{ color: theme.colors.text.secondary }}>
-                  Click on your profile picture to change it
-                </p>
-              )}
-              
-              {imageError && (
-                <p className="text-sm mt-2 text-red-600">{imageError}</p>
-              )}
-            </div>
-          </div>
-        </div>
+        <ProfileAvatar
+          currentImageUrl={currentImageUrl}
+          firstName={firstName}
+          familyName={familyName}
+          isEditing={isEditing}
+          fileInputRef={fileInputRef}
+          onFileSelect={handleImageSelect}
+          onRemoveImage={() => {
+            setSelectedImage(null);
+            setImagePreview(null);
+            setFormData((prev) => ({ ...prev, profileImage: "" }));
+          }}
+          imageError={imageError}
+          theme={theme}
+        />
 
-        {/* Profile Details */}
-        <div className="px-6 py-8">
-          <h3 className="text-lg font-semibold mb-6" style={{ color: theme.colors.text.primary }}>
-            Personal Information
-          </h3>
-          
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* First Name */}
-            <div className="flex items-start space-x-4">
-              <div 
-                className="p-2 rounded-lg"
-                style={{ backgroundColor: theme.colors.primary.light + '20' }}
-              >
-                <User className="h-5 w-5" style={{ color: theme.colors.primary.main }} />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-medium mb-1" style={{ color: theme.colors.text.secondary }}>
-                  First Name
-                </h4>
-                {!isEditing ? (
-                  <p className="text-base" style={{ color: theme.colors.text.primary }}>
-                    {user?.firstName || 'Not provided'}
-                  </p>
-                ) : (
-                  <input
-                    type="text"
-                    value={formData.firstName || ''}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    className="w-full px-3 py-2 rounded-md border focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    style={{
-                      backgroundColor: theme.colors.background.paper,
-                      borderColor: theme.colors.secondary.light,
-                      color: theme.colors.text.primary
-                    }}
-                    placeholder="Enter first name"
-                  />
-                )}
-              </div>
-            </div>
+        <ProfileInfoSection
+          isEditing={isEditing}
+          formData={formData}
+          setFormData={setFormData}
+          theme={theme}
+        />
 
-            {/* Family Name */}
-            <div className="flex items-start space-x-4">
-              <div 
-                className="p-2 rounded-lg"
-                style={{ backgroundColor: theme.colors.primary.light + '20' }}
-              >
-                <User className="h-5 w-5" style={{ color: theme.colors.primary.main }} />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-medium mb-1" style={{ color: theme.colors.text.secondary }}>
-                  Family Name
-                </h4>
-                {!isEditing ? (
-                  <p className="text-base" style={{ color: theme.colors.text.primary }}>
-                    {user?.familyName || 'Not provided'}
-                  </p>
-                ) : (
-                  <input
-                    type="text"
-                    value={formData.familyName || ''}
-                    onChange={(e) => setFormData({ ...formData, familyName: e.target.value })}
-                    className="w-full px-3 py-2 rounded-md border focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    style={{
-                      backgroundColor: theme.colors.background.paper,
-                      borderColor: theme.colors.secondary.light,
-                      color: theme.colors.text.primary
-                    }}
-                    placeholder="Enter family name"
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* Email */}
-            <div className="flex items-start space-x-4">
-              <div 
-                className="p-2 rounded-lg"
-                style={{ backgroundColor: theme.colors.primary.light + '20' }}
-              >
-                <Mail className="h-5 w-5" style={{ color: theme.colors.primary.main }} />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-medium mb-1" style={{ color: theme.colors.text.secondary }}>
-                  Email Address
-                </h4>
-                <p className="text-base" style={{ color: theme.colors.text.primary }}>
-                  {user?.email || 'Not provided'}
-                </p>
-              </div>
-            </div>
-
-            {/* Birthday */}
-            <div className="flex items-start space-x-4">
-              <div 
-                className="p-2 rounded-lg"
-                style={{ backgroundColor: theme.colors.secondary.light + '20' }}
-              >
-                <Calendar className="h-5 w-5" style={{ color: theme.colors.secondary.main }} />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-medium mb-1" style={{ color: theme.colors.text.secondary }}>
-                  Birthday
-                </h4>
-                {!isEditing ? (
-                  <p className="text-base" style={{ color: theme.colors.text.primary }}>
-                    
-                    {user?.birthday ? new Date(user.birthday).toLocaleDateString() : 'Not provided'}
-                  </p>
-                ) : (
-                  <input
-                    type="date"
-                    value={formData.birthday || ''}
-                    onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
-                    className="w-full px-3 py-2 rounded-md border focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    style={{
-                      backgroundColor: theme.colors.background.paper,
-                      borderColor: theme.colors.secondary.light,
-                      color: theme.colors.text.primary
-                    }}
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* Phone Number */}
-            <div className="flex items-start space-x-4">
-              <div 
-                className="p-2 rounded-lg"
-                style={{ backgroundColor: theme.colors.success.light + '20' }}
-              >
-                <Phone className="h-5 w-5" style={{ color: theme.colors.success.main }} />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-medium mb-1" style={{ color: theme.colors.text.secondary }}>
-                  Phone Number
-                </h4>
-                {!isEditing ? (
-                  <p className="text-base" style={{ color: theme.colors.text.primary }}>
-                    {user?.phoneNumber || 'Not provided'}
-                  </p>
-                ) : (
-                  <input
-                    type="tel"
-                    value={formData.phoneNumber || ''}
-                    onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                    className="w-full px-3 py-2 rounded-md border focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    style={{
-                      backgroundColor: theme.colors.background.paper,
-                      borderColor: theme.colors.secondary.light,
-                      color: theme.colors.text.primary
-                    }}
-                    placeholder="Enter phone number"
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* Password */}
-            {isEditing && (
-              <div className="flex items-start space-x-4">
-                <div 
-                  className="p-2 rounded-lg"
-                  style={{ backgroundColor: theme.colors.error.light + '20' }}
-                >
-                  <Lock className="h-5 w-5" style={{ color: theme.colors.error.main }} />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-medium mb-1" style={{ color: theme.colors.text.secondary }}>
-                    New Password
-                  </h4>
-                  <input
-                    type="password"
-                    value={formData.password || ''}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-3 py-2 rounded-md border focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    style={{
-                      backgroundColor: theme.colors.background.paper,
-                      borderColor: theme.colors.secondary.light,
-                      color: theme.colors.text.primary
-                    }}
-                    placeholder="Leave empty to keep current password"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Group Information Section */}
-          <div className="mt-8 pt-8 border-t" style={{ borderColor: theme.colors.secondary.light }}>
-            <h3 className="text-lg font-semibold mb-6" style={{ color: theme.colors.text.primary }}>
-              Group Information
-            </h3>
-            
-            <div className="grid gap-6 md:grid-cols-2">
-              {/* Group Name */}
-              <div className="flex items-start space-x-4">
-                <div 
-                  className="p-2 rounded-lg"
-                  style={{ backgroundColor: theme.colors.success.light + '20' }}
-                >
-                  <Shield className="h-5 w-5" style={{ color: theme.colors.success.main }} />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-medium mb-1" style={{ color: theme.colors.text.secondary }}>
-                    Group Name
-                  </h4>
-                  <p className="text-base" style={{ color: theme.colors.text.primary }}>
-                    {user?.groupName || 'Member'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Code Invite */}
-              <div className="flex items-start space-x-4">
-                <div 
-                  className="p-2 rounded-lg"
-                  style={{ backgroundColor: theme.colors.primary.light + '20' }}
-                >
-                  <Key className="h-5 w-5" style={{ color: theme.colors.primary.main }} />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-medium mb-1" style={{ color: theme.colors.text.secondary }}>
-                    Invite Code
-                  </h4>
-                  <p className="text-base font-mono" style={{ color: theme.colors.text.primary }}>
-                    {user?.groupId || 'Not provided'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Group Role */}
-              <div className="flex items-start space-x-4">
-                <div 
-                  className="p-2 rounded-lg"
-                  style={{ backgroundColor: theme.colors.success.light + '20' }}
-                >
-                  <Shield className="h-5 w-5" style={{ color: theme.colors.success.main }} />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-medium mb-1" style={{ color: theme.colors.text.secondary }}>
-                    Group Role
-                  </h4>
-                  <p className="text-base" style={{ color: theme.colors.text.primary }}>
-                    {user?.groupRole || 'Member'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Group Members */}
-            <div className="mt-6">
-              <div className="flex items-center space-x-4 mb-4">
-                <div 
-                  className="p-2 rounded-lg"
-                  style={{ backgroundColor: theme.colors.secondary.light + '20' }}
-                >
-                  <Users className="h-5 w-5" style={{ color: theme.colors.secondary.main }} />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-medium" style={{ color: theme.colors.text.secondary }}>
-                    Group Members ({currentGroupMembers.length})
-                  </h4>
-                </div>
-              </div>
-              
-              <div className="space-y-2 ml-12">
-                {currentGroupMembers.length === 0 ? (
-                  <p className="text-sm" style={{ color: theme.colors.text.secondary }}>
-                    No group members
-                  </p>
-                ) : (
-                  currentGroupMembers.map((member, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      {!isEditing ? (
-                        <p className="text-base" style={{ color: theme.colors.text.primary }}>
-                          • {member}
-                        </p>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => removeGroupMember(index)}
-                            className="px-2 py-1 text-sm rounded-md text-white"
-                            style={{ backgroundColor: theme.colors.error.main }}
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <ProfileGroupSection
+          isEditing={isEditing}
+          formData={formData}
+          setFormData={setFormData}
+          user={user}
+          theme={theme}
+        />
       </div>
     </div>
   );

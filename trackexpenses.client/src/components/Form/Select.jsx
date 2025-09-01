@@ -15,13 +15,14 @@ export default function Select({
   const c = theme.colors;
 
   const borderColor = error
-    ? (c.error?.main || "#EF4444")
-    : (c.secondary?.light || "#CBD5E1");
+    ? c.error?.main || "#EF4444"
+    : c.secondary?.light || "#CBD5E1";
 
   return (
     <div className={containerClassName}>
       {label && (
-        <label className="block mb-1 text-sm font-medium"
+        <label
+          className="block mb-1 text-sm font-medium"
           style={{ color: c.text?.secondary }}
         >
           {label}
@@ -35,10 +36,12 @@ export default function Select({
           color: c.text?.primary,
           borderColor,
           boxShadow: "0 0 0 0 rgba(0,0,0,0)",
-          ...style
+          ...style,
         }}
         onFocus={(e) => {
-          e.currentTarget.style.boxShadow = `0 0 0 3px ${ (c.menu?.ring || "rgba(37,99,235,0.3)") }`;
+          e.currentTarget.style.boxShadow = `0 0 0 3px ${
+            c.menu?.ring || "rgba(37,99,235,0.3)"
+          }`;
           e.currentTarget.style.borderColor = c.primary?.main || "#2563EB";
         }}
         onBlur={(e) => {

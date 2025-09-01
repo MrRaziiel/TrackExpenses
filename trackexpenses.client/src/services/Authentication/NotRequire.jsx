@@ -2,8 +2,12 @@ import React, { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 function hasSession() {
-  try { return !!JSON.parse(localStorage.getItem("auth") || "{}")?.user?.AccessToken; }
-  catch { return false; }
+  try {
+    return !!JSON.parse(localStorage.getItem("auth") || "{}")?.user
+      ?.AccessToken;
+  } catch {
+    return false;
+  }
 }
 
 export default function NotRequireAuth() {

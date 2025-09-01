@@ -1,5 +1,4 @@
-// App.jsx
-import React, { useEffect, useContext, useState } from "react";
+import React, { useEffect, useContext, useState, useMemo } from "react";
 import { Routes, Route } from "react-router-dom";
 import { useTheme } from "./styles/Theme/Theme";
 import { useLanguage } from "./utilis/Translate/LanguageContext";
@@ -15,7 +14,11 @@ import { AuthTimer_resume } from "./services/MicroServices/AuthTime";
 
 // icons
 import {
-  LayoutDashboard, PiggyBank, Wallet, Users as UsersIcon, Calendar
+  LayoutDashboard,
+  PiggyBank,
+  Wallet,
+  Users as UsersIcon,
+  Calendar,
 } from "lucide-react";
 
 // pages
@@ -41,10 +44,10 @@ import PremiumChoicePage from "./Pages/Premium/Prices";
 export default function App() {
   const { theme } = useTheme();
   const { t } = useLanguage();
-  const { role, isAuthenticated, auth } = useContext(AuthContext);
+  const { role, isAuthenticated } = useContext(AuthContext);
 
-  // ---- estado local do utilizador para a sidebar/topbar ----
-  const [test, setUser] = useState({
+  // ---- estado local do utilizador para a sidebar/topbar  ----
+  const [userState, setUser] = useState({
     email: "",
     firstName: "",
     lastName: "",
@@ -58,18 +61,46 @@ export default function App() {
     });
   }, []);
 
-  const items = [
-    { to: "/Users",            icon: UsersIcon,       label: "Users", role: "ADMINISTRATOR" },
-    { to: "/Dashboard",        icon: LayoutDashboard, label: "Dashboard", role: "USER" },
-    { to: "/Expenses",         icon: PiggyBank,       label: "Expenses", role: "USER" },
-    { to: "/Earnings",         icon: Wallet,          label: "Earnings", role: "USER" },
-    { to: "/CalendarExpenses", icon: Calendar,        label: "Calendar", role: "USER" },
-  ];
-
+  // Menu com traduções e visibilidade por role
+  const items = useMemo(
+    () => [
+      {
+        to: "/Users",
+        icon: UsersIcon,
+        label: t("common.users"),
+        visible: role === "ADMINISTRATOR",
+      },
+      {
+        to: "/Dashboard",
+        icon: LayoutDashboard,
+        label: t("common.dashboard"),
+        visible: role === "USER" || role === "ADMINISTRATOR",
+      },
+      {
+        to: "/Expenses",
+        icon: PiggyBank,
+        label: t("common.expenses"),
+        visible: role === "USER" || role === "ADMINISTRATOR",
+      },
+      {
+        to: "/Earnings",
+        icon: Wallet,
+        label: t("common.earnings"),
+        visible: role === "USER" || role === "ADMINISTRATOR",
+      },
+      {
+        to: "/CalendarExpenses",
+        icon: Calendar,
+        label: t("common.calendar"),
+        visible: role === "USER" || role === "ADMINISTRATOR",
+      },
+    ],
+    [t, role]
+  );
 
   return (
     <AppShell
-      topbarTitle="TRACKEXPENSES"
+      topbarTitle={"TRACKEXPENSES"}
       sidebarItems={items}
       sidebarVisible={isAuthenticated}
       bg={theme?.colors?.background?.default || "#F9FAFB"}

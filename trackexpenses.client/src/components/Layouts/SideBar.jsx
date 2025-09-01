@@ -1,7 +1,6 @@
-// components/layout/SideBar.jsx
 import React, { useEffect, useMemo, useState, useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Settings, LogOut, PencilLine } from "lucide-react";
+import { ChevronLeft, ChevronRight, Settings, LogOut } from "lucide-react";
 import { useTheme } from "../../styles/Theme/Theme";
 import useLogout from "../../services/Authentication/Logout";
 import apiCall from "../../services/ApiCallGeneric/apiCall";
@@ -17,9 +16,9 @@ export default function SideBar({
   const { theme } = useTheme();
   const loc = useLocation();
   const logout = useLogout();
-  const { role, isAuthenticated, auth } = useContext(AuthContext);
-  const {t} =useLanguage();
-  // === perfil local ===
+  const { role, auth } = useContext(AuthContext);
+  const { t } = useLanguage();
+
   const [profile, setProfile] = useState(() => ({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
@@ -28,7 +27,7 @@ export default function SideBar({
   }));
 
   useEffect(() => {
-    setProfile(prev => ({
+    setProfile((prev) => ({
       ...prev,
       firstName: user?.firstName || prev.firstName || "",
       lastName: user?.lastName || prev.lastName || "",
@@ -37,42 +36,72 @@ export default function SideBar({
     }));
   }, [user?.firstName, user?.lastName, user?.email, user?.avatarUrl]);
 
-  // === fetch foto ===
+  // 1) reage a mudanças do auth.path
+  useEffect(() => {
+    if (!auth?.path) return;
+    setProfile((prev) => ({ ...prev, avatarUrl: auth.path }));
+  }, [auth?.path]);
+
+  // 2) ouve o evento global disparado pelo Profile
+  useEffect(() => {
+    const handler = (ev) => {
+      const next = ev?.detail?.url;
+      if (next) setProfile((prev) => ({ ...prev, avatarUrl: next }));
+    };
+    window.addEventListener("avatar-updated", handler);
+    return () => window.removeEventListener("avatar-updated", handler);
+  }, []);
+
+  // fetch inicial (ou fallback)
   useEffect(() => {
     const email = (auth?.Email || "").trim();
     if (!email) return;
     const controller = new AbortController();
+
     async function fetchUserProfile() {
       try {
         const res = await apiCall.get(
           `/User/GetPhotoProfileAndName/${encodeURIComponent(email)}`,
           { signal: controller.signal }
         );
-        const firstName = res?.data?.FirstName || "";
-        const lastName = res?.data?.FamilyName || "";
-        const photoPath = res?.data?.PhotoPath;
-        let avatarUrl = "";
-        if (photoPath && photoPath !== "NoPhoto") {
-          const base = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
+        const firstName = res?.data?.FirstName ?? res?.data?.firstName ?? "";
+        const lastName = res?.data?.FamilyName ?? res?.data?.familyName ?? "";
+        const photoPath = res?.data?.PhotoPath ?? res?.data?.photoPath ?? "";
+
+        let avatarUrl = auth?.path || "";
+        if (!avatarUrl && photoPath && photoPath !== "NoPhoto") {
+          const base = (import.meta.env.VITE_FILES_BASE_URL || "").replace(
+            /\/+$/,
+            ""
+          );
           const path = String(photoPath).replace(/^\/+/, "");
           avatarUrl = `${base}/${path}?t=${Date.now()}`;
         }
-        setProfile(prev => ({ ...prev, firstName, lastName, avatarUrl, email }));
+
+        setProfile((prev) => ({
+          ...prev,
+          firstName: prev.firstName || firstName,
+          lastName: prev.lastName || lastName,
+          email,
+          avatarUrl: avatarUrl || prev.avatarUrl,
+        }));
       } catch (err) {
         if (
           err?.name === "CanceledError" ||
           err?.name === "AbortError" ||
           err?.message === "canceled" ||
           err?.code === "ERR_CANCELED"
-        ) return;
+        ) {
+          return;
+        }
         console.error("Erro ao buscar imagem/perfil:", err);
       }
     }
+
     fetchUserProfile();
     return () => controller.abort();
   }, [auth?.Email]);
 
-  // === cores ===
   const colors = theme?.colors?.menu ?? {
     bg: "#0F172A",
     border: "#1E293B",
@@ -83,12 +112,18 @@ export default function SideBar({
     activeText: theme?.colors?.primary?.main || "#60A5FA",
   };
 
-  // === roles ===
-  const norm = (v) => String(v ?? "").trim().toUpperCase();
+  const norm = (v) =>
+    String(v ?? "")
+      .trim()
+      .toUpperCase();
   const roles = useMemo(() => {
     if (!role) return [];
     if (Array.isArray(role)) return role.map(norm).filter(Boolean);
-    if (typeof role === "string") return role.split(/[,\s]+/).map(norm).filter(Boolean);
+    if (typeof role === "string")
+      return role
+        .split(/[,\s]+/)
+        .map(norm)
+        .filter(Boolean);
     return [];
   }, [role]);
   const isAdmin = roles.includes("ADMINISTRATOR");
@@ -100,7 +135,6 @@ export default function SideBar({
     return roles.includes(r);
   };
 
-  // agrupa
   const visible = useMemo(
     () => items.filter((i) => i?.visible !== false && canSee(i.role)),
     [items, roles, isAdmin]
@@ -116,37 +150,39 @@ export default function SideBar({
     return g;
   }, [visible]);
 
-  // === iniciais ===
   const initials = useMemo(() => {
     const f = profile?.firstName?.[0] || "";
     const l = profile?.lastName?.[0] || "";
     return (f + l).toUpperCase() || "U";
   }, [profile?.firstName, profile?.lastName]);
 
-  // === componente de secção ===
   const Section = ({ title, items }) => {
     if (!items?.length) return null;
     return (
-      <div className="mt-2">
+      <div className="mt-2 border-t" style={{ borderColor: colors.border }}>
         {!collapsed && (
           <div
-    className="w-full px-4 py-1.5 text-xs md:text-sm font-semibold uppercase tracking-wide text-center"
-    style={{ color: colors.muted }}
-  >
+            className="w-full px-4 py-1.5 text-xs md:text-sm font-semibold uppercase tracking-wide text-center"
+            style={{ color: colors.muted }}
+          >
             {title}
           </div>
         )}
+
         {items.map(({ to, icon: Icon, label }) => {
-          const active = loc.pathname.toLowerCase().startsWith(to.toLowerCase());
+          const active = loc.pathname
+            .toLowerCase()
+            .startsWith(to.toLowerCase());
           return (
             <Link
               key={to}
-              to={to}
-              className="relative mx-2 mb-1 flex items-center gap-3 px-3 py-2 rounded-lg transition-colors"
+              className="relative mx-2 flex items-center gap-3 px-3 py-2 rounded"
               style={{
+                borderColor: colors.border,
                 backgroundColor: active ? colors.activeBg : "transparent",
                 color: active ? colors.activeText : colors.text,
               }}
+              to={to}
               title={collapsed ? label : undefined}
             >
               {active && (
@@ -161,29 +197,35 @@ export default function SideBar({
                   }}
                 />
               )}
-              {Icon ? (
+              {Icon && (
                 <Icon
                   className="h-5 w-5"
                   style={{ color: active ? colors.activeText : colors.muted }}
                 />
-              ) : null}
+              )}
               {!collapsed && <span className="text-sm truncate">{label}</span>}
             </Link>
           );
         })}
-        {collapsed && <div className="mx-3 my-2 border-t" style={{ borderColor: colors.border }} />}
       </div>
     );
   };
 
+  // prioridade ao auth.path / evento; força reload do <img> com key
+  const avatarUrl = auth?.path || profile.avatarUrl;
+
   return (
     <aside
-      className={`hidden md:flex flex-col flex-shrink-0 transition-[width] duration-300 ease-in-out ${collapsed ? "w-16" : "w-64"}`}
+      className={`hidden md:flex flex-col flex-shrink-0 transition-[width] duration-300 ease-in-out ${
+        collapsed ? "w-14" : "w-54"
+      }`}
       style={{ backgroundColor: colors.bg, color: colors.text }}
     >
       {/* topo */}
-      <div className="flex items-center justify-end"
-           style={{ borderColor: colors.border }}>
+      <div
+        className="flex items-center justify-end"
+        style={{ borderColor: colors.border }}
+      >
         <button
           onClick={onToggle}
           className="p-2 rounded-md transition-colors"
@@ -191,34 +233,48 @@ export default function SideBar({
           title={collapsed ? "Expand" : "Collapse"}
           aria-label="toggle sidebar"
         >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          {collapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
         </button>
       </div>
 
       {/* navegação */}
-      <nav className="flex-1 overflow-y-auto ">
+      <nav className="flex-1 overflow-y-auto">
         <Section title={t("common.admin")} items={groups.ADMIN} />
         <Section title={t("common.adminGroup")} items={groups.GROUPADMIN} />
         <Section title={t("common.user")} items={groups.USERS} />
-
-        {!groups.ADMIN.length && !groups.GROUPADMIN.length && !groups.USERS.length && (
-          <div className="px-4 py-2 text-sm" style={{ color: colors.muted }}>
-            Sem permissões para navegar.
-          </div>
-        )}
+        {!groups.ADMIN.length &&
+          !groups.GROUPADMIN.length &&
+          !groups.USERS.length && (
+            <div className="px-4 py-2 text-sm" style={{ color: colors.muted }}>
+              Sem permissões para navegar.
+            </div>
+          )}
       </nav>
 
       {/* ações fixas */}
-      <div className="px-2 py-3 border-t" style={{ borderColor: colors.border }}>
+      <div
+        className="px-2 py-3 border-t"
+        style={{ borderColor: colors.border }}
+      >
         <Link
           to="/Settings"
           className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors"
           style={{ color: colors.text }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.hoverBg)}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = colors.hoverBg)
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.backgroundColor = "transparent")
+          }
         >
           <Settings className="h-4 w-4" style={{ color: colors.muted }} />
-          {!collapsed && <span className="text-sm">Settings</span>}
+          {!collapsed && (
+            <span className="text-sm">{t("common.settings")}</span>
+          )}
         </Link>
 
         <button
@@ -235,19 +291,8 @@ export default function SideBar({
           }}
         >
           <LogOut className="h-4 w-4" />
-          {!collapsed && <span className="text-sm">Logout</span>}
+          {!collapsed && <span className="text-sm">{t("common.logout")}</span>}
         </button>
-
-        <Link
-          to="/Profile/edit"
-          className="mt-1 flex items-center gap-3 px-3 py-2 rounded-lg transition-colors"
-          style={{ color: colors.text }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.hoverBg)}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-        >
-          <PencilLine className="h-4 w-4" style={{ color: colors.muted }} />
-          {!collapsed && <span className="text-sm">Edit Profile</span>}
-        </Link>
       </div>
 
       {/* perfil */}
@@ -255,13 +300,22 @@ export default function SideBar({
         to="/Profile"
         className="border-t px-4 py-3 transition-colors"
         style={{ borderColor: colors.border }}
-        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.hoverBg)}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.backgroundColor = colors.hoverBg)
+        }
+        onMouseLeave={(e) =>
+          (e.currentTarget.style.backgroundColor = "transparent")
+        }
       >
-        <div className={`flex items-center ${collapsed ? "justify-center" : "justify-start"} gap-3`}>
-          {profile?.avatarUrl ? (
+        <div
+          className={`flex items-center ${
+            collapsed ? "justify-center" : "justify-start"
+          } gap-3`}
+        >
+          {avatarUrl ? (
             <img
-              src={profile.avatarUrl}
+              key={avatarUrl}
+              src={avatarUrl}
               alt="avatar"
               className="w-9 h-9 rounded-full object-cover ring-1"
               style={{ ringColor: colors.border }}
@@ -275,12 +329,16 @@ export default function SideBar({
                 color: "#0B1020",
               }}
             >
-              {initials}
+              {(profile?.firstName?.[0] || "U").toUpperCase()}
+              {(profile?.lastName?.[0] || "").toUpperCase()}
             </div>
           )}
           {!collapsed && (
             <div className="min-w-0 leading-tight">
-              <p className="text-sm font-semibold truncate" style={{ color: colors.text }}>
+              <p
+                className="text-sm font-semibold truncate"
+                style={{ color: colors.text }}
+              >
                 {(profile.firstName || "") + " " + (profile.lastName || "")}
               </p>
               <p className="text-xs truncate" style={{ color: colors.muted }}>

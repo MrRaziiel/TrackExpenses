@@ -1,4 +1,3 @@
-// src/Pages/Autentication/SignIn.jsx
 import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Calendar, Phone } from "lucide-react";
@@ -85,7 +84,6 @@ export default function SignIn() {
     else el.click();
   };
 
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     // guarda sem espaços nas pontas
@@ -137,7 +135,9 @@ export default function SignIn() {
     const hasErrors = validateList.some((i) => i.rule === false);
     if (hasErrors) {
       setErrorPasswordCheck(
-        validateList.map((i) => (!i.rule ? i.label + i.error : i.label + i.valid))
+        validateList.map((i) =>
+          !i.rule ? i.label + i.error : i.label + i.valid
+        )
       );
       return false;
     }
@@ -202,10 +202,7 @@ export default function SignIn() {
       { lower: "codeinvite" },
     ];
 
-    const allFields = [
-      ...firstConfigurationPage,
-      ...secondconfigurationPage,
-    ];
+    const allFields = [...firstConfigurationPage, ...secondconfigurationPage];
     const payload = allFields.reduce((acc, f) => {
       acc[f.lower] = formData[f.lower] ?? "";
       return acc;
@@ -221,7 +218,6 @@ export default function SignIn() {
     }
     navigate("/login");
   };
-
 
   return (
     <div className="flex items-center justify-center px-4 sm:px-6 lg:px-8">
@@ -265,7 +261,10 @@ export default function SignIn() {
                 onChange={handleChange}
               />
               {errorEmail && (
-                <p className="text-sm -mt-4" style={{ color: theme.colors.error.main }}>
+                <p
+                  className="text-sm -mt-4"
+                  style={{ color: theme.colors.error.main }}
+                >
                   {errorEmail}
                 </p>
               )}
@@ -288,17 +287,24 @@ export default function SignIn() {
                 onChange={handleChange}
               />
               {errorPasswordMatch && (
-                <p className="text-sm -mt-4" style={{ color: theme.colors.error.main }}>
+                <p
+                  className="text-sm -mt-4"
+                  style={{ color: theme.colors.error.main }}
+                >
                   {errorPasswordMatch}
                 </p>
               )}
-              {Array.isArray(errorPasswordCheck) && errorPasswordCheck.length > 0 && (
-                <div className="text-xs -mt-4 space-y-1" style={{ color: theme.colors.text.secondary }}>
-                  {errorPasswordCheck.map((ln, idx) => (
-                    <div key={idx}>{ln}</div>
-                  ))}
-                </div>
-              )}
+              {Array.isArray(errorPasswordCheck) &&
+                errorPasswordCheck.length > 0 && (
+                  <div
+                    className="text-xs -mt-4 space-y-1"
+                    style={{ color: theme.colors.text.secondary }}
+                  >
+                    {errorPasswordCheck.map((ln, idx) => (
+                      <div key={idx}>{ln}</div>
+                    ))}
+                  </div>
+                )}
 
               <div className="pt-2">
                 <Button type="submit" size="lg" fullWidth>
@@ -312,7 +318,8 @@ export default function SignIn() {
                   className="text-sm hover:underline"
                   style={{ color: theme.colors.primary.main }}
                 >
-                  {t("auth.alreadyAccount") || "Already have an account? Sign in"}
+                  {t("auth.alreadyAccount") ||
+                    "Already have an account? Sign in"}
                 </Link>
               </div>
             </>
@@ -409,20 +416,28 @@ export default function SignIn() {
 
                 <Input
                   name="codeinvite"
-                  placeholder={t("auth.inviteCodePH") || "Group Code (optional)"}
+                  placeholder={
+                    t("auth.inviteCodePH") || "Group Code (optional)"
+                  }
                   value={formData.codeinvite}
                   onChange={handleChange}
                   inputClassName="h-12"
                 />
                 {errorCodeGroup && (
-                  <p className="text-sm mt-2" style={{ color: theme.colors.error.main }}>
+                  <p
+                    className="text-sm mt-2"
+                    style={{ color: theme.colors.error.main }}
+                  >
                     {errorCodeGroup}
                   </p>
                 )}
               </div>
 
               {errorSubmit && (
-                <p className="text-sm" style={{ color: theme.colors.error.main }}>
+                <p
+                  className="text-sm"
+                  style={{ color: theme.colors.error.main }}
+                >
                   {errorSubmit}
                 </p>
               )}
@@ -456,7 +471,8 @@ export default function SignIn() {
                   className="text-sm hover:underline"
                   style={{ color: theme.colors.primary.main }}
                 >
-                  {t("auth.alreadyAccount") || "Already have an account? Sign in"}
+                  {t("auth.alreadyAccount") ||
+                    "Already have an account? Sign in"}
                 </Link>
               </div>
             </>

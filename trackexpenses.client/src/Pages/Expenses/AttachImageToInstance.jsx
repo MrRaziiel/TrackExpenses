@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import apiCall from '../../services/apiCall';
+import React, { useState, useEffect } from "react";
+import apiCall from "../../services/apiCall";
 
 function AttachImageToInstance({ instanceId, onImageAttached }) {
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -9,13 +9,15 @@ function AttachImageToInstance({ instanceId, onImageAttached }) {
   useEffect(() => {
     const fetchImageInfo = async () => {
       try {
-        const res = await apiCall.get(`ImagesBd/GetByInstanceId?instanceId=${instanceId}`);
+        const res = await apiCall.get(
+          `ImagesBd/GetByInstanceId?instanceId=${instanceId}`
+        );
         if (res.data?.imageUrl && res.data?.id) {
           setPreviewUrl(res.data.imageUrl);
           setImageId(res.data.id);
         }
       } catch (err) {
-        console.warn('No image found for instance:', instanceId);
+        console.warn("No image found for instance:", instanceId);
       }
     };
     fetchImageInfo();
@@ -26,36 +28,40 @@ function AttachImageToInstance({ instanceId, onImageAttached }) {
     if (!file) return;
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
     try {
-      const uploadRes = await apiCall.post('ImagesBd/Upload', formData);
+      const uploadRes = await apiCall.post("ImagesBd/Upload", formData);
       const newImageId = uploadRes.data.id;
 
-      await apiCall.post(`Expenses/AttachImageToInstance?instanceId=${instanceId}&imageId=${newImageId}`);
+      await apiCall.post(
+        `Expenses/AttachImageToInstance?instanceId=${instanceId}&imageId=${newImageId}`
+      );
       setImageId(newImageId);
       setPreviewUrl(URL.createObjectURL(file));
       onImageAttached(newImageId);
     } catch (err) {
-      console.error('Upload failed:', err);
+      console.error("Upload failed:", err);
     }
   };
 
   const handleRemove = async () => {
     try {
-      await apiCall.post(`Expenses/RemoveImageFromInstance?instanceId=${instanceId}`);
+      await apiCall.post(
+        `Expenses/RemoveImageFromInstance?instanceId=${instanceId}`
+      );
       setPreviewUrl(null);
       setImageId(null);
     } catch (err) {
-      console.error('Failed to remove image:', err);
+      console.error("Failed to remove image:", err);
     }
   };
 
   const handleDownload = () => {
     if (!previewUrl) return;
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = previewUrl;
-    link.download = 'receipt.jpg';
+    link.download = "receipt.jpg";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

@@ -3,16 +3,17 @@
 
 
 :root {
-    color-scheme: light;
-  }
-  
-  .dark {
-    color-scheme: dark;
-  }
+  color-scheme: light;
+}
 
-  html {
+.dark {
+  color-scheme: dark;
+}
+
+html {
   font-size: 22px;
 }
+
 .react-calendar {
   width: 100% !important;
   max-width: 100% !important;

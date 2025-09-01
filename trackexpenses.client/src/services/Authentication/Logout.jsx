@@ -1,12 +1,20 @@
-// src/services/Authentication/Logout.js
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import apiCall from "../ApiCallGeneric/apiCall";
-import { AuthTimer_stop, AuthTimer_clearStorage } from "../MicroServices/AuthTime";
+import {
+  AuthTimer_stop,
+  AuthTimer_clearStorage,
+} from "../MicroServices/AuthTime";
 
 function getRefreshToken() {
-  try { return JSON.parse(localStorage.getItem("auth") || "{}")?.user?.RefreshToken ?? null; }
-  catch { return null; }
+  try {
+    return (
+      JSON.parse(localStorage.getItem("auth") || "{}")?.user?.RefreshToken ??
+      null
+    );
+  } catch {
+    return null;
+  }
 }
 
 export async function logoutRequest() {
@@ -21,10 +29,14 @@ export async function logoutRequest() {
   AuthTimer_clearStorage();
 
   // 3) remove Authorization default do axios (se existir)
-  try { delete apiCall.defaults.headers.Authorization; } catch {}
+  try {
+    delete apiCall.defaults.headers.Authorization;
+  } catch {}
 
   // 4) emite evento para contexts/guards sincronizarem (AuthTimer_clearStorage já emite)
-  try { window.dispatchEvent(new Event("token-refreshed")); } catch {}
+  try {
+    window.dispatchEvent(new Event("token-refreshed"));
+  } catch {}
 }
 
 export default function useLogout() {

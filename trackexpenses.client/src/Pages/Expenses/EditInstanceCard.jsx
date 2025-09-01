@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import apiCall from '../../services/ApiCallGeneric/apiCall';
-import { CheckCircle, XCircle } from 'lucide-react';
+import React, { useState } from "react";
+import apiCall from "../../services/ApiCallGeneric/apiCall";
+import { CheckCircle, XCircle } from "lucide-react";
 
 function EditInstanceCard({ instance }) {
   const [paidValue, setPaidValue] = useState(instance.paidAmount || 0);
@@ -61,7 +61,9 @@ function EditInstanceCard({ instance }) {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium">Valor da Instância</label>
+          <label className="block text-sm font-medium">
+            Valor da Instância
+          </label>
           <input
             type="number"
             value={instance.value}
@@ -82,10 +84,12 @@ function EditInstanceCard({ instance }) {
       </div>
 
       <div>
-        <p className={`text-sm font-medium ${restante <= 0 ? 'text-green-600' : 'text-yellow-600'}`}>
-          {restante <= 0
-            ? 'Pagamento completo'
-            : `Falta pagar: € ${restante}`}
+        <p
+          className={`text-sm font-medium ${
+            restante <= 0 ? "text-green-600" : "text-yellow-600"
+          }`}
+        >
+          {restante <= 0 ? "Pagamento completo" : `Falta pagar: € ${restante}`}
         </p>
       </div>
 

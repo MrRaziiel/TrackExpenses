@@ -1,9 +1,9 @@
 // EditExpense.jsx
-import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import apiCall from '../../services/ApiCallGeneric/apiCall';
-import EditInstanceCard from './EditInstanceCard';
-import { Eye, Download, Camera, X, Save } from 'lucide-react';
+import React, { useEffect, useState, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import apiCall from "../../services/ApiCallGeneric/apiCall";
+import EditInstanceCard from "./EditInstanceCard";
+import { Eye, Download, Camera, X, Save } from "lucide-react";
 
 function EditExpense() {
   const { id } = useParams();
@@ -14,7 +14,7 @@ function EditExpense() {
   const [showPreview, setShowPreview] = useState(false);
   const fileInputRef = useRef();
 
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5285';
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5285";
 
   useEffect(() => {
     const fetchExpense = async () => {
@@ -38,25 +38,26 @@ function EditExpense() {
           groupId: data.GroupId,
           imageId: data.ImageId,
           userId: data.UserId,
-          instances: data.Instances?.$values?.map((inst) => ({
-            id: inst.Id,
-            dueDate: inst.DueDate,
-            isPaid: inst.IsPaid,
-            value: Number(inst.Value),
-            paidAmount: Number(inst.PaidAmount),
-            imageId: inst.ImageId,
-          })) || [],
+          instances:
+            data.Instances?.$values?.map((inst) => ({
+              id: inst.Id,
+              dueDate: inst.DueDate,
+              isPaid: inst.IsPaid,
+              value: Number(inst.Value),
+              paidAmount: Number(inst.PaidAmount),
+              imageId: inst.ImageId,
+            })) || [],
         };
 
         setExpense(transformed);
 
         const imgRes = await apiCall.get(`/expenses/GetExpenseImage/${id}`);
         const path = imgRes?.data?.imagePath;
-        if (path && path !== 'NoPhoto') {
+        if (path && path !== "NoPhoto") {
           setImageUrl(`${API_BASE}/${path}`);
         }
       } catch (err) {
-        console.error('Erro ao carregar a despesa:', err);
+        console.error("Erro ao carregar a despesa:", err);
       }
     };
 
@@ -103,11 +104,11 @@ function EditExpense() {
   const handleUpload = async () => {
     if (!selectedImage) return;
     const formData = new FormData();
-    formData.append('Image', selectedImage);
+    formData.append("Image", selectedImage);
     try {
       await apiCall.post(`/expenses/UploadImage/${id}`, formData);
     } catch (err) {
-      console.error('Erro ao carregar imagem:', err);
+      console.error("Erro ao carregar imagem:", err);
     }
   };
 
@@ -121,7 +122,8 @@ function EditExpense() {
         category: expense.category,
         description: expense.description,
         value: Number(expense.value),
-        payAmount: expense.payAmount !== null ? Number(expense.payAmount) : null,
+        payAmount:
+          expense.payAmount !== null ? Number(expense.payAmount) : null,
         startDate: expense.startDate,
         endDate: expense.endDate,
         periodicity: expense.periodicity,
@@ -134,9 +136,9 @@ function EditExpense() {
       };
 
       await apiCall.put(`/expenses/UpdateExpense`, updatedExpense);
-      navigate('/expenses');
+      navigate("/expenses");
     } catch (err) {
-      console.error('Erro ao guardar alterações:', err);
+      console.error("Erro ao guardar alterações:", err);
     }
   };
 
@@ -148,7 +150,7 @@ function EditExpense() {
         <h1 className="text-2xl font-bold">Editar Despesa</h1>
         <div className="flex space-x-3">
           <button
-            onClick={() => navigate('/expenses')}
+            onClick={() => navigate("/expenses")}
             className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50"
           >
             <X className="h-5 w-5 mr-2" />
@@ -180,7 +182,9 @@ function EditExpense() {
             <input
               type="text"
               value={expense.category}
-              onChange={(e) => setExpense({ ...expense, category: e.target.value })}
+              onChange={(e) =>
+                setExpense({ ...expense, category: e.target.value })
+              }
               className="w-full border p-2 rounded"
             />
           </div>
@@ -244,7 +248,9 @@ function EditExpense() {
             <input
               type="date"
               value={expense.startDate?.substring(0, 10)}
-              onChange={(e) => setExpense({ ...expense, startDate: e.target.value })}
+              onChange={(e) =>
+                setExpense({ ...expense, startDate: e.target.value })
+              }
               className="w-full border p-2 rounded"
             />
           </div>
@@ -252,8 +258,10 @@ function EditExpense() {
             <label className="block text-sm font-medium">Data de Fim</label>
             <input
               type="date"
-              value={expense.endDate?.substring(0, 10) || ''}
-              onChange={(e) => setExpense({ ...expense, endDate: e.target.value })}
+              value={expense.endDate?.substring(0, 10) || ""}
+              onChange={(e) =>
+                setExpense({ ...expense, endDate: e.target.value })
+              }
               className="w-full border p-2 rounded"
             />
           </div>
@@ -324,7 +332,11 @@ function EditExpense() {
       {showPreview && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
           <div className="relative">
-            <img src={imageUrl} alt="Preview" className="max-h-[90vh] max-w-[90vw]" />
+            <img
+              src={imageUrl}
+              alt="Preview"
+              className="max-h-[90vh] max-w-[90vw]"
+            />
             <button
               onClick={() => setShowPreview(false)}
               className="absolute top-2 right-2 bg-white p-1 rounded-full shadow"

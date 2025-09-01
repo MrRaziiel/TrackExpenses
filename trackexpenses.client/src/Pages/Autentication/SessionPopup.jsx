@@ -5,8 +5,14 @@ import useLogout from "../../services/Authentication/Logout";
 import { useTheme } from "../../styles/Theme/Theme";
 
 function readExpAt() {
-  try { return JSON.parse(localStorage.getItem("auth") || "{}")?.meta?.accessExpAt ?? null; }
-  catch { return null; }
+  try {
+    return (
+      JSON.parse(localStorage.getItem("auth") || "{}")?.meta?.accessExpAt ??
+      null
+    );
+  } catch {
+    return null;
+  }
 }
 function formatLeft(ms) {
   if (ms < 0) ms = 0;
@@ -28,8 +34,17 @@ export default function SessionPopup() {
   const left = useMemo(() => (expAt ? expAt - now : 0), [expAt, now]);
 
   useEffect(() => {
-    const onDue = () => { setExpAt(readExpAt()); setNow(Date.now()); setOpen(true); };
-    const onRefreshed = () => { setExpAt(readExpAt()); setNow(Date.now()); setOpen(false); setAutoLoggingOut(false); };
+    const onDue = () => {
+      setExpAt(readExpAt());
+      setNow(Date.now());
+      setOpen(true);
+    };
+    const onRefreshed = () => {
+      setExpAt(readExpAt());
+      setNow(Date.now());
+      setOpen(false);
+      setAutoLoggingOut(false);
+    };
 
     // ⬇️ NOVO: se expirar sem popup, força logout global
     const onExpiredHard = async () => {
@@ -91,16 +106,27 @@ export default function SessionPopup() {
       <div
         className="w-[92%] max-w-md rounded-2xl p-6 shadow-2xl"
         style={{ backgroundColor: theme?.colors?.background?.paper }}
-        role="dialog" aria-modal="true"
+        role="dialog"
+        aria-modal="true"
       >
-        <h3 className="text-lg font-semibold mb-2" style={{ color: theme?.colors?.text?.primary }}>
+        <h3
+          className="text-lg font-semibold mb-2"
+          style={{ color: theme?.colors?.text?.primary }}
+        >
           Sessão quase a expirar
         </h3>
-        <p className="text-sm mb-3" style={{ color: theme?.colors?.text?.secondary }}>
+        <p
+          className="text-sm mb-3"
+          style={{ color: theme?.colors?.text?.secondary }}
+        >
           Pretende renovar a sessão ou terminar?
         </p>
-        <div className="mb-4 text-sm" style={{ color: theme?.colors?.text?.primary }}>
-          Tempo restante: <span className="font-semibold">{formatLeft(left)}</span>
+        <div
+          className="mb-4 text-sm"
+          style={{ color: theme?.colors?.text?.primary }}
+        >
+          Tempo restante:{" "}
+          <span className="font-semibold">{formatLeft(left)}</span>
         </div>
         <div className="flex gap-3 justify-end">
           <button
@@ -109,7 +135,7 @@ export default function SessionPopup() {
             style={{
               borderColor: theme?.colors?.secondary?.light,
               color: theme?.colors?.text?.primary,
-              backgroundColor: theme?.colors?.background?.default
+              backgroundColor: theme?.colors?.background?.default,
             }}
           >
             Terminar
@@ -118,7 +144,7 @@ export default function SessionPopup() {
             onClick={renew}
             className="px-4 py-2 rounded-lg text-white"
             style={{
-              background: `linear-gradient(135deg, ${theme?.colors?.primary?.main}, ${theme?.colors?.primary?.dark})`
+              background: `linear-gradient(135deg, ${theme?.colors?.primary?.main}, ${theme?.colors?.primary?.dark})`,
             }}
           >
             Renovar

@@ -1,4 +1,3 @@
-// src/Pages/Authentication/Login.jsx
 import { useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "../../styles/Theme/Theme";
@@ -87,7 +86,9 @@ const Login = () => {
             type="email"
             value={formData.email}
             placeholder="Enter your email"
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, email: e.target.value })
+            }
             icon={<Mail className="h-5 w-5" />}
           />
 

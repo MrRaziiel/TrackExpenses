@@ -1,24 +1,30 @@
 /* altura consistente para os controlos */
-.users-filter { --control-h: 44px; }
+.users-filter {
+  --control-h: 44px;
+}
 
 /* o root interno do GenericFilter vira uma barra fluida */
-.users-filter > * {
+.users-filter>* {
   display: flex;
-  flex-wrap: wrap;          /* no ecrã estreito pode partir para 2 linhas */
+  flex-wrap: wrap;
+  /* no ecrã estreito pode partir para 2 linhas */
   gap: 12px;
   align-items: center;
   width: 100%;
 }
 
 /* 1º filho (o wrapper do input de pesquisa) ocupa o espaço livre */
-.users-filter > * > *:first-child {
-  flex: 1 1 260px;          /* cresce/encolhe, com base ~260px */
-  min-width: 0;             /* permite encolher sem “empurrar” a página */
+.users-filter>*>*:first-child {
+  flex: 1 1 260px;
+  /* cresce/encolhe, com base ~260px */
+  min-width: 0;
+  /* permite encolher sem “empurrar” a página */
 }
 
 /* os restantes (select, botão...) ficam em largura automática */
-.users-filter > * > *:not(:first-child) {
-  flex: 0 0 auto;           /* não esticam nem encolhem o input */
+.users-filter>*>*:not(:first-child) {
+  flex: 0 0 auto;
+  /* não esticam nem encolhem o input */
 }
 
 /* altura e alinhamento iguais para todos os controlos */
@@ -36,5 +42,7 @@
 
 /* opcional: em écrans muito pequenos, força cada peça a ficar 100% */
 @media (max-width: 480px) {
-  .users-filter > * > * { flex: 1 1 100%; }
+  .users-filter>*>* {
+    flex: 1 1 100%;
+  }
 }

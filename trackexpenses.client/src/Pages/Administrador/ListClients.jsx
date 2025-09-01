@@ -30,12 +30,15 @@ export default function UsersTable() {
         const list = res?.data?.ListUsers?.$values ?? [];
         if (alive) setUsers(list);
       } catch (e) {
-        if (alive) setErrorSubmit(e.message || "Erro ao carregar utilizadores.");
+        if (alive)
+          setErrorSubmit(e.message || "Erro ao carregar utilizadores.");
       } finally {
         if (alive) setLoading(false);
       }
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, []);
 
   // filtro
@@ -43,31 +46,49 @@ export default function UsersTable() {
 
   const groupOptions = useMemo(() => {
     const s = new Set(
-      (users || []).map(u => (u?.GroupOfUsers?.Name || "").trim()).filter(Boolean)
+      (users || [])
+        .map((u) => (u?.GroupOfUsers?.Name || "").trim())
+        .filter(Boolean)
     );
     return [
       { value: "all", label: t ? t("common.allGroups") : "Todos" },
-      ...Array.from(s).map(g => ({ value: g, label: g })),
+      ...Array.from(s).map((g) => ({ value: g, label: g })),
     ];
   }, [users, t]);
 
   const filteredUsers = useMemo(() => {
     const q = (flt.q || "").toLowerCase().trim();
-    return (users || []).filter(u => {
-      const name  = `${u?.FirstName || ""} ${u?.FamilyName || ""}`.toLowerCase();
+    return (users || []).filter((u) => {
+      const name = `${u?.FirstName || ""} ${u?.FamilyName || ""}`.toLowerCase();
       const email = (u?.Email || "").toLowerCase();
       const group = (u?.GroupOfUsers?.Name || "").toLowerCase();
-      const matchesText  = !q || name.includes(q) || email.includes(q) || group.includes(q);
-      const matchesGroup = flt.group === "all" || group === flt.group.toLowerCase();
+      const matchesText =
+        !q || name.includes(q) || email.includes(q) || group.includes(q);
+      const matchesGroup =
+        flt.group === "all" || group === flt.group.toLowerCase();
       return matchesText && matchesGroup;
     });
   }, [users, flt]);
 
   const columns = [
-    { key: "fullName", headerKey: "fullName", accessor: (u) => `${u.FirstName || ""} ${u.FamilyName || ""}`.trim() || "-" },
-    { key: "email",    headerKey: "email",    accessor: (u) => u.Email },
-    { key: "group",    headerKey: "group",    accessor: (u) => u.GroupOfUsers?.Name || "-" },
-    { key: "birthday", headerKey: "birthday", accessor: (u) => (u.Birthday ? new Date(u.Birthday).toLocaleDateString() : "-") },
+    {
+      key: "fullName",
+      headerKey: "fullName",
+      accessor: (u) =>
+        `${u.FirstName || ""} ${u.FamilyName || ""}`.trim() || "-",
+    },
+    { key: "email", headerKey: "email", accessor: (u) => u.Email },
+    {
+      key: "group",
+      headerKey: "group",
+      accessor: (u) => u.GroupOfUsers?.Name || "-",
+    },
+    {
+      key: "birthday",
+      headerKey: "birthday",
+      accessor: (u) =>
+        u.Birthday ? new Date(u.Birthday).toLocaleDateString() : "-",
+    },
   ];
 
   const canDelete = () =>
@@ -82,10 +103,10 @@ export default function UsersTable() {
         <Button
           variant="primary"
           leftIcon={<Plus className="h-4 w-4" />}
-          onClick={() => navigate('/Admin/Users/add')}
+          onClick={() => navigate("/Admin/Users/add")}
           className="!w-auto !h-11 !px-4 !rounded-lg !text-sm md:!text-base shrink-0"
         >
-          {t('common.add_user') || 'User'}
+          {t("common.add_user") || "User"}
         </Button>
       </div>
 
@@ -102,7 +123,7 @@ export default function UsersTable() {
         theme={theme}
         searchPlaceholder={t ? t("common.searchUsers") : "Search users..."}
         filters={[{ key: "group", type: "select", options: groupOptions }]}
-      />      
+      />
 
       {/* cartão com a tabela */}
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
@@ -128,17 +149,22 @@ export default function UsersTable() {
             remove={{
               enabled: true,
               confirmMessage:
-                t?.("common.confirmDelete") || "Tens a certeza que queres apagar este utilizador?",
+                t?.("common.confirmDelete") ||
+                "Tens a certeza que queres apagar este utilizador?",
               doDelete: async (u) => {
                 if (!canDelete()) return false;
-                const res = await apiCall.post("Administrator/User/DeleteUser", u.Id);
+                const res = await apiCall.post(
+                  "Administrator/User/DeleteUser",
+                  u.Id
+                );
                 if (res?.status === 200) {
-                  setUsers(prev => prev.filter(x => x.Id !== u.Id));
+                  setUsers((prev) => prev.filter((x) => x.Id !== u.Id));
                   return true;
                 }
                 return false;
               },
-              onError: (err) => setErrorSubmit(err?.message || "Erro ao apagar utilizador."),
+              onError: (err) =>
+                setErrorSubmit(err?.message || "Erro ao apagar utilizador."),
             }}
           />
         </div>

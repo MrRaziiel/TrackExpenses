@@ -1,4 +1,3 @@
-// src/Pages/Authentication/ForgotPassword.jsx
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, ArrowLeft } from "lucide-react";
@@ -34,29 +33,38 @@ const ForgotPassword = () => {
 
   return (
     <div className="flex items-center justify-center px-4 sm:px-6 lg:px-8">
-          <Card
-      className="w-full max-w-md"
-      style={{
-        backgroundColor: theme.colors.background.paper,
-        boxShadow: `0 25px 50px -12px ${theme.colors.primary.dark}3D`,
-      }}
-    >
+      <Card
+        className="w-full max-w-md"
+        style={{
+          backgroundColor: theme.colors.background.paper,
+          boxShadow: `0 25px 50px -12px ${theme.colors.primary.dark}3D`,
+        }}
+      >
         {/* Ícone */}
         <div className="flex justify-center mb-6">
-          <div className="w-14 h-14 flex items-center justify-center rounded-full"
-               style={{ backgroundColor: theme?.colors?.primary?.light }}>
+          <div
+            className="w-14 h-14 flex items-center justify-center rounded-full"
+            style={{ backgroundColor: theme?.colors?.primary?.light }}
+          >
             <Mail className="h-7 w-7 text-white" />
           </div>
         </div>
 
         {/* Título */}
-        <h2 className="text-2xl font-bold mb-2" style={{ color: theme?.colors?.text?.primary }}>
+        <h2
+          className="text-2xl font-bold mb-2"
+          style={{ color: theme?.colors?.text?.primary }}
+        >
           {t("auth.forgotTitle") || "Forgot your password?"}
         </h2>
 
         {/* Subtítulo */}
-        <p className="text-sm mb-6" style={{ color: theme?.colors?.text?.secondary }}>
-          {t("auth.forgotSubtitle") || "No worries! Enter your email and we’ll send you a reset link."}
+        <p
+          className="text-sm mb-6"
+          style={{ color: theme?.colors?.text?.secondary }}
+        >
+          {t("auth.forgotSubtitle") ||
+            "No worries! Enter your email and we’ll send you a reset link."}
         </p>
 
         {/* Form */}
@@ -70,38 +78,41 @@ const ForgotPassword = () => {
             icon={<Mail className="h-5 w-5" />}
             required
           />
-<Button
-  type="submit"
-  size="md"
-  variant="primary"
-  disabled={submitting}
-  className="w-full"
->
-  {submitting ? (t("auth.sending") || "A enviar...") : (t("auth.sendEmail") || "Send reset link")}
-</Button>
-
-
+          <Button
+            type="submit"
+            size="md"
+            variant="primary"
+            disabled={submitting}
+            className="w-full"
+          >
+            {submitting
+              ? t("auth.sending") || "A enviar..."
+              : t("auth.sendEmail") || "Send reset link"}
+          </Button>
         </form>
 
         {message && (
-          <p className="mt-4 text-sm" style={{ color: theme?.colors?.success?.main }}>
+          <p
+            className="mt-4 text-sm"
+            style={{ color: theme?.colors?.success?.main }}
+          >
             {message}
           </p>
         )}
 
-       {/* Link de volta */}
-<div className="mt-6 text-sm flex flex-col items-center">
-  <span style={{ color: theme?.colors?.text?.secondary }}>
-    {t("auth.rememberPassword") || "Remember your password?"}
-  </span>
-  <Link
-    to="/login"
-    className="font-medium hover:underline mt-1"
-    style={{ color: theme?.colors?.primary?.main }}
-  >
-    {t("auth.backToSignIn") || "Back to sign in"}
-  </Link>
-</div>
+        {/* Link de volta */}
+        <div className="mt-6 text-sm flex flex-col items-center">
+          <span style={{ color: theme?.colors?.text?.secondary }}>
+            {t("auth.rememberPassword") || "Remember your password?"}
+          </span>
+          <Link
+            to="/login"
+            className="font-medium hover:underline mt-1"
+            style={{ color: theme?.colors?.primary?.main }}
+          >
+            {t("auth.backToSignIn") || "Back to sign in"}
+          </Link>
+        </div>
       </Card>
     </div>
   );

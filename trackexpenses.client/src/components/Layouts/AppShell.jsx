@@ -1,4 +1,3 @@
-// components/layout/AppShell.jsx
 import React, { useState } from "react";
 import TopBar from "./TopBar";
 import SideBar from "./SideBar";
@@ -16,10 +15,7 @@ export default function AppShell({
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: bg }}>
-      <TopBar
-        title={topbarTitle}
-        menuItems={sidebarItems}
-      />
+      <TopBar title={topbarTitle} menuItems={sidebarItems} />
 
       <div className="flex flex-1 overflow-hidden">
         {/* só renderiza a sidebar se sidebarVisible for true */}
@@ -31,9 +27,11 @@ export default function AppShell({
           />
         )}
 
-       <main
-  className={`flex-1 min-w-0 min-h-screen ${sidebarVisible ? "p-4 md:p-8" : "py-8 px-4"}`}
->
+        <main
+          className={`flex-1 min-w-0 ${
+            sidebarVisible ? "p-4 md:p-8" : "py-8 px-4"
+          }`}
+        >
           {children}
         </main>
       </div>
