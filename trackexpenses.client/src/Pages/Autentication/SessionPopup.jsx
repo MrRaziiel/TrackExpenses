@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { AuthTimer_forceRefreshNow } from "../../services/MicroServices/AuthTime";
 import useLogout from "../../services/Authentication/Logout";
 import { useTheme } from "../../styles/Theme/Theme";
+import { useLanguage } from "../../utilis/Translate/LanguageContext";
 
 function readExpAt() {
   try {
@@ -30,7 +31,7 @@ export default function SessionPopup() {
   const [expAt, setExpAt] = useState(() => readExpAt());
   const [now, setNow] = useState(() => Date.now());
   const [autoLoggingOut, setAutoLoggingOut] = useState(false); // ⬅️ NOVO
-
+  const {t} = useLanguage();
   const left = useMemo(() => (expAt ? expAt - now : 0), [expAt, now]);
 
   useEffect(() => {
@@ -113,19 +114,22 @@ export default function SessionPopup() {
           className="text-lg font-semibold mb-2"
           style={{ color: theme?.colors?.text?.primary }}
         >
-          Sessão quase a expirar
+          {t("session.almostExpire")}
+          
         </h3>
         <p
           className="text-sm mb-3"
           style={{ color: theme?.colors?.text?.secondary }}
         >
-          Pretende renovar a sessão ou terminar?
+          {t("session.chose_Renew_Or_Logout")}
+          
         </p>
         <div
           className="mb-4 text-sm"
           style={{ color: theme?.colors?.text?.primary }}
         >
-          Tempo restante:{" "}
+          {t("session.time_Left")}:{" "}
+
           <span className="font-semibold">{formatLeft(left)}</span>
         </div>
         <div className="flex gap-3 justify-end">
@@ -138,7 +142,7 @@ export default function SessionPopup() {
               backgroundColor: theme?.colors?.background?.default,
             }}
           >
-            Terminar
+          {t("session.logout")}:{" "}
           </button>
           <button
             onClick={renew}
@@ -147,7 +151,8 @@ export default function SessionPopup() {
               background: `linear-gradient(135deg, ${theme?.colors?.primary?.main}, ${theme?.colors?.primary?.dark})`,
             }}
           >
-            Renovar
+          {t("session.renew")}:{" "}
+
           </button>
         </div>
       </div>

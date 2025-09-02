@@ -55,45 +55,17 @@ export default function App() {
   });
 
   useEffect(() => {
-    AuthTimer_resume({
-      baseUrl: import.meta.env.VITE_API_BASE_URL,
-      earlyMs: 30 * 1000,
-    });
+    AuthTimer_resume({ earlyMs: 30_000, graceMs: 5000 });
   }, []);
 
   // Menu com traduções e visibilidade por role
   const items = useMemo(
     () => [
-      {
-        to: "/Users",
-        icon: UsersIcon,
-        label: t("common.users"),
-        visible: role === "ADMINISTRATOR",
-      },
-      {
-        to: "/Dashboard",
-        icon: LayoutDashboard,
-        label: t("common.dashboard"),
-        visible: role === "USER" || role === "ADMINISTRATOR",
-      },
-      {
-        to: "/Expenses",
-        icon: PiggyBank,
-        label: t("common.expenses"),
-        visible: role === "USER" || role === "ADMINISTRATOR",
-      },
-      {
-        to: "/Earnings",
-        icon: Wallet,
-        label: t("common.earnings"),
-        visible: role === "USER" || role === "ADMINISTRATOR",
-      },
-      {
-        to: "/CalendarExpenses",
-        icon: Calendar,
-        label: t("common.calendar"),
-        visible: role === "USER" || role === "ADMINISTRATOR",
-      },
+      { to: "/Users",            icon: UsersIcon,       label: "common.users",     role: "ADMINISTRATOR" },
+  { to: "/Dashboard",        icon: LayoutDashboard, label: "common.dashboard", role: "USER" },
+  { to: "/Expenses",         icon: PiggyBank,       label: "common.expenses",  role: "USER" },
+  { to: "/Earnings",         icon: Wallet,          label: "common.earnings",  role: "USER" },
+  { to: "/CalendarExpenses", icon: Calendar,        label: "common.calendar",  role: "USER" },
     ],
     [t, role]
   );

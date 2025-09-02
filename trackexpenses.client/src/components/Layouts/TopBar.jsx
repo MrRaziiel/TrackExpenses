@@ -1,12 +1,7 @@
+// src/components/Layouts/TopBar.jsx
 import React, { useState, useMemo, useContext } from "react";
 import { Link } from "react-router-dom";
-import {
-  Menu as MenuIcon,
-  Wallet,
-  Settings,
-  LogOut,
-  PencilLine,
-} from "lucide-react";
+import { Menu as MenuIcon, Wallet, Settings, LogOut } from "lucide-react";
 import { useTheme } from "../../styles/Theme/Theme";
 import AuthContext from "../../services/Authentication/AuthContext";
 import useLogout from "../../services/Authentication/Logout";
@@ -18,17 +13,17 @@ export default function TopBar({ title, menuItems = [] }) {
   const { theme } = useTheme();
   const { role, isAuthenticated, auth } = useContext(AuthContext) || {};
   const logout = useLogout();
-  const c = theme?.colors || {};
   const { t } = useLanguage();
 
-  // cores (topo igual ao background da página)
-  const topBg = c.background?.default || c.background?.paper || "#0B1020";
+  const c = theme?.colors || {};
+
+  // cores
+  const topBg = c.background?.default || "#0B1020";
   const topText = c.text?.primary || "#E5E7EB";
-  const topBorder =
-    c.menu?.border || c.secondary?.light || "rgba(255,255,255,0.08)";
+  const topBorder = c.menu?.border || "rgba(255,255,255,0.08)";
   const navShadow =
     "0 1px 0 rgba(255,255,255,0.08) inset, " +
-    "0 4px 12px rgba(0,0,0,0.18), " + // sombra escura (light)
+    "0 4px 12px rgba(0,0,0,0.18), " +
     "0 4px 16px rgba(255,255,255,0.25)";
 
   const ddBg = c.background?.paper || "#fff";
@@ -36,31 +31,22 @@ export default function TopBar({ title, menuItems = [] }) {
   const ddMuted = c.text?.secondary || "#64748B";
   const ddBorder = c.secondary?.light || "#E5E7EB";
   const ddHover = c.menu?.hoverBg || "rgba(0,0,0,0.06)";
-  const iconCol = c.menu?.activeText || c.primary?.main || "#2563EB";
+  const iconCol = c.primary?.main || "#2563EB";
 
-  // roles → secções
-  const norm = (v) =>
-    String(v ?? "")
-      .trim()
-      .toUpperCase();
+  // roles
+  const norm = (v) => String(v ?? "").trim().toUpperCase();
   const roles = useMemo(() => {
     if (!role) return [];
     if (Array.isArray(role)) return role.map(norm).filter(Boolean);
-    if (typeof role === "string")
-      return role
-        .split(/[,\s]+/)
-        .map(norm)
-        .filter(Boolean);
+    if (typeof role === "string") return role.split(/[,\s]+/).map(norm).filter(Boolean);
     return [];
   }, [role]);
-
   const isAdmin = roles.includes("ADMINISTRATOR");
 
   const canSee = (itemRoleRaw) => {
     if (isAdmin) return true;
     const r = norm(itemRoleRaw) || "USERS";
-    if (r === "USERS" || r === "GROUPMEMBER" || r === "") return true;
-    return roles.includes(r);
+    return ["USERS", "GROUPMEMBER", ""].includes(r) || roles.includes(r);
   };
 
   const visible = useMemo(
@@ -79,12 +65,36 @@ export default function TopBar({ title, menuItems = [] }) {
     return g;
   }, [visible]);
 
-  const Section = ({ title, items }) => {
-    if (!items?.length) return null;
-    return (
-      <div className="py-2">
+  // dados da conta
+  const pick = (...vals) => vals.find((v) => typeof v === "string" && v.trim())?.trim();
+
+  const fullName =
+    pick(
+      auth?.name,
+      auth?.firstName,
+      auth?.FirstName,
+      auth?.given_name,
+      auth?.givenName,
+      auth?.displayName,
+      auth?.preferred_username,
+      auth?.email,
+      auth?.Email
+    ) || "";
+
+  const email = auth?.Email || auth?.email || "";
+
+  // URL da foto (se existir) — igual ao SideBar (usa buildAssetUrl)
+  const avatar = pick(auth?.path) ? buildAssetUrl(auth.path) : undefined;
+
+  // iniciais fallback
+  const initial =
+    (fullName || auth?.preferred_username || email || "?").trim()[0]?.toUpperCase() || "?";
+
+  const Section = ({ title, items }) =>
+    !items?.length ? null : (
+      <div className="py-2 text-center">
         <div
-          className="w-full px-2 py-1.5 text-xs md:text-sm font-semibold uppercase tracking-wide text-center"
+          className="w-full px-2 py-1.5 text-sm font-bold uppercase text-center"
           style={{ color: ddMuted }}
         >
           {title}
@@ -93,14 +103,10 @@ export default function TopBar({ title, menuItems = [] }) {
           <Link
             key={to}
             to={to}
-            className="flex items-center gap-3 px-4 py-3 border-t transition-colors"
+            className="flex justify-center items-center gap-3 px-4 py-3 border-t transition-colors"
             style={{ borderColor: ddBorder, color: ddText }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor = ddHover)
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "transparent")
-            }
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = ddHover)}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
             onClick={() => setMobileOpen(false)}
           >
             {Icon && <Icon className="h-5 w-5" style={{ color: iconCol }} />}
@@ -109,14 +115,6 @@ export default function TopBar({ title, menuItems = [] }) {
         ))}
       </div>
     );
-  };
-
-  // dados da conta
-  const fullName = `${auth?.firstName || auth?.FirstName || ""} ${
-    auth?.lastName || auth?.FamilyName || ""
-  }`.trim();
-  const email = auth?.Email || auth?.email || "";
-  const avatar = auth?.path;
 
   return (
     <nav
@@ -125,97 +123,60 @@ export default function TopBar({ title, menuItems = [] }) {
         backgroundColor: topBg,
         color: topText,
         borderBottom: `1px solid ${topBorder}`,
-        boxShadow: navShadow, // ⬅️ ADICIONA ISTO
+        boxShadow: navShadow,
       }}
     >
-      <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-3">
-        {/* Hamburguer (apenas mobile) */}
-        <div className="md:hidden">
+      {/* barra superior */}
+      <div className="w-full h-16 flex items-center justify-center relative">
+        {/* botão menu mobile */}
+        <div className="absolute left-4 md:hidden">
           <button
             className="p-2 rounded-lg"
             onClick={() => setMobileOpen((v) => !v)}
             aria-label="Menu"
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.15)")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "transparent")
-            }
           >
             <MenuIcon className="h-6 w-6" style={{ color: topText }} />
           </button>
         </div>
 
-        {/* Título centrado */}
-        <div className="absolute inset-0 flex justify-center items-center pointer-events-none">
-          <Link
-            to="/"
-            className="flex items-center gap-2 pointer-events-auto"
-            style={{ color: topText }}
-          >
-            <Wallet className="h-6 w-6" style={{ color: topText }} />
-            <span className="font-bold text-xl">{title}</span>
-          </Link>
-        </div>
-
-        {/* (Desktop) — aqui podes manter o ProfileMenu se quiseres */}
-        <div className="ml-auto hidden md:flex"></div>
+        {/* título centrado */}
+        <Link to="/" className="flex items-center gap-2">
+          <Wallet className="h-6 w-6" style={{ color: topText }} />
+          <span className="font-bold text-xl">{title}</span>
+        </Link>
       </div>
 
-      {/* Dropdown NAV + CONTA (só mobile) */}
+      {/* menu mobile */}
       {mobileOpen && (
         <div
-          className="md:hidden absolute top-16 left-0 right-0 z-50 shadow-2xl ring-1"
-          style={{ backgroundColor: ddBg, ringColor: ddBorder }}
+          className="md:hidden absolute top-16 left-0 right-0 z-50 shadow-2xl ring-1 text-center"
+          style={{ backgroundColor: ddBg }}
         >
-          <div
-            className="w-full px-2 py-1.5 text-xss md:text-sm font-semibold uppercase tracking-wide text-center"
-            style={{ borderColor: ddBorder, color: ddMuted }}
-          >
-            {t("common.menu")}
-          </div>
+          <Section title={t("common.admin")} items={groups.ADMIN} />
+          <Section title={t("common.adminGroup")} items={groups.GROUPADMIN} />
+          <Section title={t("common.user")} items={groups.USERS} />
 
-          <Section title="Admin" items={groups.ADMIN} />
-          <Section title="Group Admin" items={groups.GROUPADMIN} />
-          <Section title="Users" items={groups.USERS} />
-
-          {/* ——— Secção Conta ——— */}
           {isAuthenticated && (
             <>
               <div
-                className="w-full px-2 py-1.5 text-xs md:text-sm font-semibold uppercase tracking-wide text-center"
-                style={{ borderColor: ddBorder, color: ddMuted }}
+                className="w-full px-2 py-1.5 text-sm font-bold uppercase"
+                style={{ color: ddMuted }}
               >
                 {t("common.account")}
               </div>
 
               <Link
                 to="/Settings"
-                className="flex items-center gap-2 px-4 py-3 border-t transition-colors"
+                className="flex justify-center items-center gap-2 px-4 py-3 border-t"
                 style={{ borderColor: ddBorder, color: ddText }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.backgroundColor = ddHover)
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.backgroundColor = "transparent")
-                }
                 onClick={() => setMobileOpen(false)}
               >
                 <Settings className="h-5 w-5" /> {t("common.settings")}
               </Link>
 
               <button
-                className="w-full flex items-center gap-2 px-4 py-3 border-t transition-colors text-left"
+                className="w-full flex justify-center items-center gap-2 px-4 py-3 border-t text-center"
                 style={{ borderColor: ddBorder, color: ddText }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor =
-                    "rgba(248,113,113,0.12)";
-                  e.currentTarget.style.color = "#ef4444";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.color = ddText;
-                }}
                 onClick={() => {
                   setMobileOpen(false);
                   logout();
@@ -224,37 +185,28 @@ export default function TopBar({ title, menuItems = [] }) {
                 <LogOut className="h-5 w-5" /> {t("common.logout")}
               </button>
 
-              {/* Cabeçalho com avatar/nome/email (atalho para editar perfil) */}
+              {/* bloco perfil no menu mobile (mesma estrutura pedida) */}
               <Link
-                to="/Profile/edit"
-                className="flex items-center gap-3 px-4 py-3 border-t"
+                to="/Profile"
+                className="flex justify-center items-center gap-3 px-4 py-3 border-t"
                 style={{ borderColor: ddBorder, color: ddText }}
                 onClick={() => setMobileOpen(false)}
               >
-                <div
-                  className="h-9 w-9 rounded-full overflow-hidden ring-2"
-                  style={{ ringColor: ddBorder }}
-                >
+                <div className="h-9 w-9 rounded-full overflow-hidden ring-2 ring-gray-300">
                   {avatar ? (
-                    <img
-                      src={avatar}
-                      alt="avatar"
-                      className="h-full w-full object-cover"
-                    />
+                    <img src={avatar} alt="avatar" className="h-full w-full object-cover" />
                   ) : (
                     <div
                       className="h-full w-full flex items-center justify-center font-semibold"
                       style={{ backgroundColor: "#6D28D9", color: "#fff" }}
                     >
-                      {(auth?.firstName ||
-                        auth?.FirstName ||
-                        "?")[0]?.toUpperCase() || "?"}
+                      {initial}
                     </div>
                   )}
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 text-left">
                   <div className="text-sm font-semibold truncate">
-                    {fullName || "Perfil"}
+                    {fullName || "Profile"}
                   </div>
                   <div className="text-xs truncate" style={{ color: ddMuted }}>
                     {email}

@@ -88,13 +88,13 @@ function EditUserProfile() {
         if (path && path !== 'NoPhoto') mappedUser.profileImage = path;
       }
       // Fallback de foto (opcional)
-      if (!mappedUser.profileImage) {
-        const fp = await safeGet(`/User/GetPhotoProfile/${encodeURIComponent(decodedEmail)}`, { signal });
-        if (fp.status >= 200 && fp.status < 300) {
-          const photoPath = fp?.data?.photoPath ?? fp?.data?.PhotoPath ?? fp?.data?.path;
-          if (photoPath && photoPath !== 'NoPhoto') mappedUser.profileImage = photoPath;
-        }
-      }
+      // if (!mappedUser.profileImage) {
+      //   const fp = await safeGet(`/User/GetPhotoProfile/${encodeURIComponent(decodedEmail)}`, { signal });
+      //   if (fp.status >= 200 && fp.status < 300) {
+      //     const photoPath = fp?.data?.photoPath ?? fp?.data?.PhotoPath ?? fp?.data?.path;
+      //     if (photoPath && photoPath !== 'NoPhoto') mappedUser.profileImage = photoPath;
+      //   }
+      // }
 
       setUser(mappedUser);
       setFormData({ ...mappedUser, birthday: mappedUser.birthday || '' });

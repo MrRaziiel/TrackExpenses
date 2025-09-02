@@ -123,7 +123,7 @@ const Login = () => {
             disabled={submitting}
             className="mt-4"
           >
-            {submitting ? t("common.signingIn") || "A entrar..." : "Login"}
+            {submitting ? t("common.signingIn") || "A entrar..." : t("common.login")}
           </Button>
 
           {/* Erros */}

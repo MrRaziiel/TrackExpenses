@@ -20,7 +20,7 @@ namespace TRACKEXPENSES.Server.Controllers
 
     [ApiController]
     [Route("api/User")]
-    
+
     public class AccountController(RoleManager<IdentityRole> roleManager, UserManager<User> userManager,
         FinancasDbContext context, IConfiguration configuration,
         JwtService jwtService, Services.IEmailSender emailSender, IGroupRegistrationService _groupService) : Controller
@@ -56,7 +56,7 @@ namespace TRACKEXPENSES.Server.Controllers
 
             var user = CreateUserFromRegister.fromRegister(model);
 
-            string role = response.ToString() ;
+            string role = response.ToString();
 
             var result = await _userManager.CreateAsync(user, user.Password);
             if (!result.Succeeded) return BadRequest(result.Errors);
@@ -90,7 +90,7 @@ namespace TRACKEXPENSES.Server.Controllers
             var existUser = await _context.Users.Include(user => user.Expenses).SingleOrDefaultAsync(c => c.Email == userEmail);
             if (existUser == null) return NotFound("No user found");
 
-          
+
             return Ok(existUser);
         }
 
@@ -118,8 +118,7 @@ namespace TRACKEXPENSES.Server.Controllers
             if (string.IsNullOrWhiteSpace(id))
                 return BadRequest("Invalid user ID.");
 
-            if (photo == null || photo.Length == 0)
-                return BadRequest("Invalid file.");
+          
 
             var user = await _context.Users
                 .SingleOrDefaultAsync(u => u.Id == id);
@@ -127,13 +126,21 @@ namespace TRACKEXPENSES.Server.Controllers
             if (user == null)
                 return NotFound("User not found");
 
-            var extension = Path.GetExtension(photo.FileName);
+            if (photo == null || photo.Length == 0)
+            {
+                DeleteProfileImage(id);
+            }
+            else
+            {
+
+            }
+                var extension = Path.GetExtension(photo.FileName);
             if (string.IsNullOrWhiteSpace(extension))
                 return BadRequest("File must have an extension.");
 
             var folderName = Path.Combine("Images", "Users", id, "Profile");
             var rootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", folderName);
-            Directory.CreateDirectory(rootPath); 
+            Directory.CreateDirectory(rootPath);
 
             var fileName = id + extension;
             var fullPath = Path.Combine(rootPath, fileName);
@@ -192,7 +199,7 @@ namespace TRACKEXPENSES.Server.Controllers
         {
             if (string.IsNullOrEmpty(email))
                 return BadRequest("Invalid user ID");
-           
+
             var existUser = await _context.Users
                 .SingleOrDefaultAsync(c => c.Email == email);
 
@@ -258,15 +265,38 @@ namespace TRACKEXPENSES.Server.Controllers
             {
                 return BadRequest(new { errors = result.Errors.Select(e => e.Description) });
             }
-   
+
             return Ok(new { message = user });
         }
-    
-    [HttpPost("Test-email")]
+
+        [HttpPost("Test-email")]
         public async Task<IActionResult> TestEmail(string to)
         {
             await _emailSender.SendAsync(to, "Teste", "<p>Funciona!</p>");
             return Ok(new { message = "Email enviado" });
+        }
+
+        [NonAction]
+        public async Task<bool> DeleteProfileImage(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                return false;
+
+
+            var user = await _context.Users
+                .SingleOrDefaultAsync(u => u.Id == id);
+
+            if (user == null)
+                return false;
+
+            var folderName = Path.Combine("Images", "Users", id, "Profile");
+            var rootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", folderName);
+
+            if (!Directory.Exists(rootPath)) return false;
+
+
+            Directory.Delete(rootPath, true);
+            return true;
         }
 
 
