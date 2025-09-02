@@ -28,10 +28,10 @@ export default function AppShell({
         )}
 
         <main
-          className={`flex-1 min-w-0 ${
-            sidebarVisible ? "p-4 md:p-8" : "py-8 px-4"
-          }`}
-        >
+  className={`flex-1 min-w-0 ${
+    sidebarVisible ? "p-4 md:p-8" : "py-8 px-4"
+  } min-h-[1200px]`}   
+>
           {children}
         </main>
       </div>

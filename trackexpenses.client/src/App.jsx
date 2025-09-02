@@ -40,6 +40,7 @@ import RecoverPassword from "./Pages/Autentication/RecoverPassword";
 import SettingsPage from "./Pages/Settings";
 import ProfilePage from "./Pages/User/Profile";
 import PremiumChoicePage from "./Pages/Premium/Prices";
+import AddUser from "./Pages/Administrador/AddUser";
 
 export default function App() {
   const { theme } = useTheme();
@@ -104,6 +105,8 @@ export default function App() {
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/Profile" element={<ProfilePage />} />
           <Route path="/Premium" element={<PremiumChoicePage />} />
+          <Route path="/users/new" element={<AddUser />} />
+
         </Route>
       </Routes>
     </AppShell>

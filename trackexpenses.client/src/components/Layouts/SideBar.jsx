@@ -1,7 +1,7 @@
 // src/components/Layouts/SideBar.jsx
 import React, { useEffect, useMemo, useState, useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Settings, LogOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, Settings, LogOut, DollarSign  } from "lucide-react";
 import { useTheme } from "../../styles/Theme/Theme";
 import useLogout from "../../services/Authentication/Logout";
 import apiCall from "../../services/ApiCallGeneric/apiCall";
@@ -152,7 +152,7 @@ export default function SideBar({
   }, [items, userRoles, isAdmin]);
 
   // ---------------- UI ----------------
- const Section = ({ title, list, first = false }) => {
+const Section = ({ title, list, first = false }) => {
   if (!list?.length) return null;
   return (
     <div
@@ -179,7 +179,7 @@ export default function SideBar({
               backgroundColor: active ? colors.activeBg : "transparent",
               color: active ? colors.activeText : colors.text,
             }}
-            title={collapsed ? label : undefined}
+            title={collapsed ? tr(label) : undefined}
           >
             {active && (
               <span
@@ -196,13 +196,14 @@ export default function SideBar({
                 style={{ color: active ? colors.activeText : colors.muted }}
               />
             )}
-            {!collapsed && <span className="text-sm truncate">{label}</span>}
+            {!collapsed && <span className="text-sm truncate">{tr(label)}</span>}
           </Link>
         );
       })}
     </div>
   );
 };
+
 
   const avatarUrl = auth?.path || profile.avatarUrl;
 
@@ -240,6 +241,16 @@ export default function SideBar({
 
       {/* ações */}
       <div className="px-2 py-3 border-t" style={{ borderColor: colors.border }}>
+        <Link
+          to="/Premium"
+          className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors"
+          style={{ color: colors.text }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.hoverBg)}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+        >
+          <DollarSign  className="h-4 w-4" style={{ color: colors.muted }} />
+          {!collapsed && <span className="text-sm">{t("common.premium") || "Settings"}</span>}
+        </Link>
         <Link
           to="/Settings"
           className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors"

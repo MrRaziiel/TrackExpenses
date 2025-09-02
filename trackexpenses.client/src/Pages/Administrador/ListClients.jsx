@@ -103,7 +103,7 @@ export default function UsersTable() {
         <Button
           variant="primary"
           leftIcon={<Plus className="h-4 w-4" />}
-          onClick={() => navigate("/Admin/Users/add")}
+          onClick={() => navigate("/users/new")}
           className="!w-auto !h-11 !px-4 !rounded-lg !text-sm md:!text-base shrink-0"
         >
           {t("common.add_user") || "User"}
