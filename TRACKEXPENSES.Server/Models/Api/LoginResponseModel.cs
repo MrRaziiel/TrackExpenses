@@ -8,7 +8,7 @@
 
         public int ExpiresIn { get; set; }
 
-        public string? Role { get; set; }
+        public List<string> Roles { get; set; }
 
         public string? RefreshToken { get; internal set; }
     }

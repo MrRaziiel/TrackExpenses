@@ -14,47 +14,22 @@ function IconButton({ title, className, onClick, children }) {
   );
 }
 
-/**
- * Uso:
- * <GenericTable
- *   filteredData={rows}               // preferido (ou "data" como fallback)
- *   columns={[{ key, headerKey, headerLabel, accessor?, cell? }]}
- *   t={t} theme={theme}
- *   loading={false}
- *   rowKey={(row)=>row.id}
- *   stickyHeader
- *   truncateKeys={["fullName","email"]}
- *   minTableWidth="56rem"
- *   headClassName="bg-gray-50"                              
- *   headerCellClassName="px-6 py-3 text-xs font-medium text-left uppercase tracking-wider"
- * />
- */
 export default function GenericTable({
-  // dados
   filteredData,
   data,
   columns = [],
-
   t,
   theme,
   i18nPrefix = "common",
-
-  // estados
   loading = false,
   emptyMessage = "Sem resultados",
-
-  // ações
   edit,
   remove,
   rowKey,
-
-  // UX extra
   stickyHeader = true,
   truncateKeys = [],
   minTableWidth = "56rem",
   truncateWidthClass = "max-w-[180px] sm:max-w-[260px]",
-
-  // ⟵ NOVOS overrides de header
   headClassName,
   headerCellClassName,
 }) {
@@ -90,23 +65,32 @@ export default function GenericTable({
   };
 
   const thDefault =
-    "px-6 py-3 text-xs font-medium text-left uppercase tracking-wider whitespace-nowrap";
+    "px-6 py-3 text-sm font-bold uppercase tracking-wider whitespace-nowrap text-center";
   const thClass = headerCellClassName || thDefault;
 
   return (
     <table
-      className="w-full table-auto border-collapse"
-      style={{ minWidth: minTableWidth }}
-    >
+  className="
+    relative w-full table-auto rounded-2xl
+    before:content-[''] before:absolute before:inset-0
+    before:rounded-[inherit] before:border before:border-white/80
+    before:pointer-events-none before:z-50  
+  "
+  style={{
+    minWidth: minTableWidth,
+    borderCollapse: "separate",
+    borderSpacing: 0,
+    backgroundColor: theme?.colors?.background?.paper,
+  }}
+>
       <thead
-        className={`${stickyHeader ? "sticky top-0 z-10" : ""} ${
-          headClassName || ""
-        }`}
+        className={`${stickyHeader ? "sticky top-0 z-10" : ""} ${headClassName || ""}`}
         style={{
           backgroundColor: headClassName
             ? undefined
             : theme?.colors?.background?.paper,
-          boxShadow: stickyHeader ? "0 1px 0 rgba(0,0,0,0.06)" : undefined,
+          // linha branca fina por baixo do cabeçalho
+          boxShadow: "inset 0 -1px 0 rgba(255,255,255,0.6)",
         }}
       >
         <tr>
@@ -122,18 +106,23 @@ export default function GenericTable({
               <th
                 key={col.key}
                 className={thClass}
-                style={{ color: theme?.colors?.text?.secondary }}
+                style={{
+                  color: theme?.colors?.primary?.main || "#2563EB",
+                  opacity: 0.95,
+                }}
                 title={typeof header === "string" ? header : undefined}
               >
                 {header}
               </th>
             );
           })}
-
           {hasActions && (
             <th
               className={thClass}
-              style={{ color: theme?.colors?.text?.secondary }}
+              style={{
+                color: theme?.colors?.primary?.main || "#2563EB",
+                opacity: 0.95,
+              }}
             >
               {t ? t("common.actions") : "Ações"}
             </th>
@@ -143,7 +132,7 @@ export default function GenericTable({
 
       <tbody style={{ backgroundColor: theme?.colors?.background?.paper }}>
         {loading ? (
-          <tr>
+          <tr style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6)" }}>
             <td
               className="px-6 py-6 text-center"
               colSpan={columns.length + (hasActions ? 1 : 0)}
@@ -152,7 +141,7 @@ export default function GenericTable({
             </td>
           </tr>
         ) : rows.length === 0 ? (
-          <tr>
+          <tr style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6)" }}>
             <td
               className="px-6 py-6 text-center"
               colSpan={columns.length + (hasActions ? 1 : 0)}
@@ -164,7 +153,11 @@ export default function GenericTable({
           rows.map((row, idx) => {
             const k = rowKey ? rowKey(row, idx) : idx;
             return (
-              <tr key={k} className="border-t">
+              <tr
+                key={k}
+                // linhas brancas internas entre as linhas
+                style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6)" }}
+              >
                 {columns.map((col) => {
                   const raw =
                     typeof col.accessor === "function"
@@ -179,17 +172,17 @@ export default function GenericTable({
                   return (
                     <td
                       key={col.key}
-                      className="px-6 py-4 text-sm align-middle"
+                      className="px-6 py-4 text-sm align-middle text-center"
                     >
                       {isTrunc ? (
                         <div
-                          className={`truncate ${truncateWidthClass}`}
+                          className={`truncate ${truncateWidthClass} mx-auto text-center`}
                           title={String(content)}
                         >
                           {content}
                         </div>
                       ) : (
-                        <div className="break-words">{content}</div>
+                        <div className="break-words text-center">{content}</div>
                       )}
                     </td>
                   );
@@ -197,7 +190,7 @@ export default function GenericTable({
 
                 {hasActions && (
                   <td className="px-6 py-4 text-sm">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center gap-2">
                       {edit?.enabled && (
                         <IconButton
                           title={t ? t("common.edit") : "Editar"}
@@ -263,8 +256,6 @@ GenericTable.propTypes = {
   truncateKeys: PropTypes.arrayOf(PropTypes.string),
   minTableWidth: PropTypes.string,
   truncateWidthClass: PropTypes.string,
-
-  // NOVOS
   headClassName: PropTypes.string,
   headerCellClassName: PropTypes.string,
 };

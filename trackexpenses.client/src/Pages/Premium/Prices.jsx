@@ -10,9 +10,9 @@ import apiCall from "../../services/ApiCallGeneric/apiCall";
 
 const AUTH_KEY = "auth";
 
-function isUserPremium(auth, role) {
+function isUserPremium(auth, roles) {
   if (!auth) return false;
-  if (role && String(role).toUpperCase() === "PREMIUM") return true;
+  if (roles) return roles.includes("PREMIUM");
   const tier = auth?.subscription?.tier || auth?.user?.subscription?.tier;
   return String(tier || "").toLowerCase() === "premium";
 }
@@ -29,12 +29,12 @@ function PlanRow({ label, value }) {
 export default function PremiumChoicePage() {
   const { theme } = useTheme();
   const { t } = useLanguage();
-  const { auth, setAuth, role, setRole } = useContext(AuthContext);
+  const { auth, setAuth, roles, setRoles } = useContext(AuthContext);
 
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const premium = useMemo(() => isUserPremium(auth, role), [auth, role]);
+  const premium = useMemo(() => isUserPremium(auth, roles), [auth, roles]);
 
   const readAuth = () => {
     try { return JSON.parse(localStorage.getItem(AUTH_KEY) || "{}"); } catch { return {}; }
@@ -50,7 +50,7 @@ export default function PremiumChoicePage() {
   async function handleUpgrade() {
     setErrorMsg("");
     setBusy(true);
-    const res = await apiCall.post("/Premium/Subscribe", { plan: "premium_monthly" });
+    const res = await apiCall.post("/Premium/Subscribe", { UserEmail: auth.Email });
     setBusy(false);
 
     if (!res.ok) {
@@ -60,7 +60,7 @@ export default function PremiumChoicePage() {
 
     const data = res.data || {};
     const nextTier = data?.subscription?.tier || "premium";
-    if (data?.Role) setRole(data.Role);
+    if (data?.Roles) setRoles(data.Roles);
 
     mergeUser({
       subscription: { ...(auth?.subscription || {}), tier: nextTier, ...data?.subscription },
@@ -70,7 +70,7 @@ export default function PremiumChoicePage() {
   async function handleCancel() {
     setErrorMsg("");
     setBusy(true);
-    const res = await apiCall.post("/Premium/Cancel", {});
+    const res = await apiCall.post("/Premium/Cancel", { UserEmail: auth.Email });
     setBusy(false);
 
     if (!res.ok) {
@@ -80,7 +80,7 @@ export default function PremiumChoicePage() {
 
     const data = res.data || {};
     const nextTier = data?.subscription?.tier || "free";
-    if (data?.Role) setRole(data.Role);
+    if (data?.Roles) setRoles(data.Roles);
 
     mergeUser({
       subscription: { ...(auth?.subscription || {}), tier: nextTier, ...data?.subscription },
@@ -145,19 +145,6 @@ function PlanCardFree() {
         <Feature text={t("premium.features.prioritySupport") || "Priority support"} enabled={false} divider={false} />
       </div>
 
-      <div className="mt-6">
-        <Button
-          fullWidth
-          variant={isCurrent ? "secondary" : "primary"}
-          disabled={busy || isCurrent}
-          onClick={!isCurrent ? handleCancel : undefined}
-          className="h-11 rounded-xl"
-        >
-          {isCurrent
-            ? (t("premium.currentPlan") || "Current plan")
-            : (t("premium.chooseFree") || "Switch to Free")}
-        </Button>
-      </div>
     </Card>
   );
 }
@@ -228,15 +215,6 @@ function PlanCardPremium() {
     </Button>
   ) : (
     <>
-      <Button
-        fullWidth
-        variant="secondary"
-        disabled={busy}
-        onClick={() => window.open("/billing", "_blank")}
-        className="h-11 rounded-xl"
-      >
-        {t("premium.manage") || "Manage Subscription"}
-      </Button>
       <Button
         fullWidth
         variant="danger"

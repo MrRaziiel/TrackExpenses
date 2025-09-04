@@ -18,16 +18,16 @@ function hasSession() {
 }
 
 export const AuthProvider = ({ children }) => {
-  const [auth, setAuth] = useState(null); // guarda payload do backend (AccessToken, RefreshToken, Email, Role, ExpiresIn)
+  const [auth, setAuth] = useState(null); // guarda payload do backend (AccessToken, RefreshToken, Email, Roles, ExpiresIn)
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [role, setRole] = useState(null);
+  const [roles, setRoles] = useState(null);
   const [loading, setLoading] = useState(true);
   // Arranque
   useEffect(() => {
     const a = readAuth();
     const ok = !!a?.user?.AccessToken;
     setAuth(ok ? a.user : null);
-    setRole(ok ? a.user?.Role ?? null : null);
+    setRoles(ok ? a.user?.Roles ?? null : null);
     setIsAuthenticated(ok);
     setLoading(false);
   }, []);
@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }) => {
       const a = readAuth();
       const ok = !!a?.user?.AccessToken;
       setAuth(ok ? a.user : null);
-      setRole(ok ? a.user?.Role ?? null : null);
+      setRoles(ok ? a.user?.Roles ?? null : null);
       setIsAuthenticated(ok);
     };
     window.addEventListener("token-refreshed", sync);
@@ -56,8 +56,8 @@ export const AuthProvider = ({ children }) => {
         setAuth,
         isAuthenticated,
         setIsAuthenticated,
-        role,
-        setRole,
+        roles,
+        setRoles,
         loading,
         setLoading,
       }}

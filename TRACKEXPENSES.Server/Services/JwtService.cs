@@ -36,7 +36,7 @@ namespace TRACKEXPENSES.Server.Services
             return Convert.ToHexString(sha.ComputeHash(Encoding.UTF8.GetBytes(value)));
         }
 
-        private string GenerateJwt(User user, string? roleName)
+        private string GenerateJwt(User user, List<string> roles)
         {
             var issuer = _configuration["JwtSettings:Issuer"];
             var audience = _configuration["JwtSettings:Audience"];
@@ -49,8 +49,7 @@ namespace TRACKEXPENSES.Server.Services
                 new Claim(ClaimTypes.Email, user.Email ?? ""),
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
             };
-            if (!string.IsNullOrEmpty(roleName))
-                claims.Add(new Claim(ClaimTypes.Role, roleName));
+            if (roles is not null) claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -92,10 +91,11 @@ namespace TRACKEXPENSES.Server.Services
             if (user is null || !PasswordHashHandler.VerifyPassword(request.Password, user.Password!))
                 return null;
 
-            var roles = await _userManager.GetRolesAsync(user);
-            var roleName = roles.FirstOrDefault() ?? "User";
+            var roles = (await _userManager.GetRolesAsync(user)) is { Count: > 0 } r
+            ? new List<string>(r)
+            : new List<string> { "User" };
             await DeleteAllTokensForUserAsync(user.Id);
-            var access = GenerateJwt(user, roleName);
+            var access = GenerateJwt(user, roles);
             var (rawRefresh, model) = GenerateRefreshPair(http);
             model.UserId = user.Id;
 
@@ -108,7 +108,7 @@ namespace TRACKEXPENSES.Server.Services
                 AccessToken = access,
                 RefreshToken = rawRefresh,      
                 Email = request.Email,
-                Role = roleName,
+                Roles = roles,
                 ExpiresIn = minutes
             };
         }
@@ -138,9 +138,10 @@ namespace TRACKEXPENSES.Server.Services
             await _dbcontext.SaveChangesAsync();
             await tx.CommitAsync();
 
-            var roles = await _userManager.GetRolesAsync(user);
-            var roleName = roles.FirstOrDefault() ?? "User";
-            var newAccess = GenerateJwt(user, roleName);
+            var roles = (await _userManager.GetRolesAsync(user)) is { Count: > 0 } r
+    ? new List<string>(r)
+    : new List<string> { "User" };
+            var newAccess = GenerateJwt(user, roles);
 
             return new TokenResponse(newAccess, newRaw);
         }

@@ -12,7 +12,7 @@ export  const getAllUsers = async () => {
       firstName: u.FirstName || u.firstName,
       familyName: u.FamilyName || u.familyName,
       birthday: u.BirthdayString || u.birthday,
-      role: u.Role || u.role || '-',
+      roles: u.Roles || u.roles || '-',
       groupOfUsers: u.GroupOfUsers || null
     }));
     return listUsers;

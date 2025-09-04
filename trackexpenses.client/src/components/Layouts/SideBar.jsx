@@ -1,7 +1,6 @@
-// src/components/Layouts/SideBar.jsx
 import React, { useEffect, useMemo, useState, useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Settings, LogOut, DollarSign  } from "lucide-react";
+import { ChevronLeft, ChevronRight, Settings, LogOut, PencilLine, DollarSign  } from "lucide-react";
 import { useTheme } from "../../styles/Theme/Theme";
 import useLogout from "../../services/Authentication/Logout";
 import apiCall from "../../services/ApiCallGeneric/apiCall";
@@ -15,12 +14,12 @@ export default function SideBar({
   user = {},
 }) {
   const { theme } = useTheme();
+  const { t } = useLanguage();
   const loc = useLocation();
   const logout = useLogout();
-  const { role, auth } = useContext(AuthContext);
-  const { t } = useLanguage();
+  const { auth, roles } = useContext(AuthContext); // roles vem do contexto
 
-  // ---------------- perfil ----------------
+  // ---------- perfil ----------
   const [profile, setProfile] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
@@ -28,22 +27,14 @@ export default function SideBar({
     avatarUrl: user?.avatarUrl || "",
   });
 
-  const shallowEqual = (a, b) => {
-    const ak = Object.keys(a);
-    const bk = Object.keys(b);
-    if (ak.length !== bk.length) return false;
-    for (const k of ak) if (a[k] !== b[k]) return false;
-    return true;
-  };
-
   useEffect(() => {
-    const next = {
-      firstName: user?.firstName ?? "",
-      lastName: user?.lastName ?? "",
-      email: user?.email ?? "",
-      avatarUrl: user?.avatarUrl ?? "",
-    };
-    setProfile((p) => (shallowEqual(p, next) ? p : next));
+    setProfile((p) => ({
+      ...p,
+      firstName: user?.firstName ?? p.firstName ?? "",
+      lastName: user?.lastName ?? p.lastName ?? "",
+      email: user?.email ?? p.email ?? "",
+      avatarUrl: user?.avatarUrl ?? p.avatarUrl ?? "",
+    }));
   }, [user?.firstName, user?.lastName, user?.email, user?.avatarUrl]);
 
   useEffect(() => {
@@ -86,7 +77,7 @@ export default function SideBar({
     return () => controller.abort();
   }, [auth?.Email]);
 
-  // ---------------- cores ----------------
+  // ---------- tema ----------
   const colors =
     theme?.colors?.menu ?? {
       bg: "#0F172A",
@@ -98,114 +89,108 @@ export default function SideBar({
       activeText: theme?.colors?.primary?.main || "#60A5FA",
     };
 
-  // ---------------- roles & grupos ----------------
-  const N = (v) => String(v ?? "").trim().toUpperCase();
-
-  const userRoles = useMemo(() => {
-    if (!role) return [];
-    if (Array.isArray(role)) return role.map(N).filter(Boolean);
-    if (typeof role === "string")
-      return role
-        .split(/[,\s]+/)
-        .map(N)
-        .filter(Boolean);
-    return [];
-  }, [role]);
-
-  const isAdmin = userRoles.includes("ADMINISTRATOR");
-
-  const normalizeRole = (rawRole) => {
-    let r = N(rawRole);
-    if (!r) r = "USER";
-    if (r.startsWith("ADMIN")) r = "ADMINISTRATOR";
-    if (r.startsWith("GROUP")) r = "GROUPADMINISTRATOR";
-    if (["GROUP-ADMIN", "GROUP_ADMIN"].includes(r)) r = "GROUPADMINISTRATOR";
-    return r;
-  };
-
-  const canSee = (rawRole) => {
-    if (isAdmin) return true;
-    const r = normalizeRole(rawRole);
-    return r === "USER" || userRoles.includes(r);
-  };
-
-  // label helper: se vier key tipo "common.dashboard", traduz
   const tr = (s) => {
-    try {
-      return s && s.includes(".") ? t(s) : s;
-    } catch {
-      return s;
+    try { return s && s.includes(".") ? t(s) : s; } catch { return s; }
+  };
+
+  // ---------- roles & agrupamento (SEM normalize) ----------
+  const userRoles = useMemo(
+    () => (Array.isArray(roles) ? roles : typeof roles === "string" ? roles.split(/[,\s]+/) : []),
+    [roles]
+  );
+
+  const hasAnyRole = (need) => {
+    const list = Array.isArray(need) ? need : [need];
+    // se não tiver role definido, tratamos como “USER” (vai para secção Users)
+    if (!list.length || list.includes("USER")) return true;
+    return list.some((r) => userRoles.includes(r));
+  };
+
+  // mapeia role -> nome da secção
+  const sectionOf = (allow) => {
+    const r = Array.isArray(allow) ? allow[0] : allow; // primeira indicada
+    switch (r) {
+      case "ADMINISTRATOR": return "ADMIN";
+      case "GROUPADMINISTRATOR": return "GROUPADMIN";
+      case "PREMIUM": return "PREMIUM";
+      case "GROUPMEMBER": return "GROUP";
+      case "USER":
+      default: return "USER";
     }
   };
 
+  // Agrupa — Users SEMPRE visível; outras só se o utilizador tiver o role
   const groups = useMemo(() => {
-    const g = { ADMIN: [], GROUPADMIN: [], USER: [] };
-    items.forEach((i) => {
+    const g = { ADMIN: [], GROUPADMIN: [], PREMIUM: [], GROUP: [], USER: [] };
+
+    (items || []).forEach((i) => {
       if (!i || i.visible === false) return;
-      if (!canSee(i.role)) return;
-      const r = normalizeRole(i.role);
-      if (r === "ADMINISTRATOR") g.ADMIN.push(i);
-      else if (r === "GROUPADMINISTRATOR") g.GROUPADMIN.push(i);
-      else g.USER.push(i);
+      const sec = sectionOf(i.role);
+      if (sec === "USER") {
+        g.USER.push(i);
+      } else if (hasAnyRole(i.role)) {
+        g[sec].push(i);
+      }
     });
+
     return g;
-  }, [items, userRoles, isAdmin]);
+  }, [items, userRoles]);
 
-  // ---------------- UI ----------------
-const Section = ({ title, list, first = false }) => {
-  if (!list?.length) return null;
-  return (
-    <div
-      className={first ? "" : "mt-3 pt-2 border-t"}
-      style={{ borderColor: colors.border }}
-    >
-      {!collapsed && (
-        <div
-          className="px-4 pb-2 text-base font-bold uppercase tracking-wide text-center"
-          style={{ color: colors.muted }}
-        >
-          {title}
-        </div>
-      )}
-
-      {list.map(({ to, icon: Icon, label }) => {
-        const active = loc.pathname.toLowerCase().startsWith(to.toLowerCase());
-        return (
-          <Link
-            key={to}
-            to={to}
-            className="relative mx-2 mb-1 flex items-center gap-3 px-3 py-2 rounded transition-colors"
-            style={{
-              backgroundColor: active ? colors.activeBg : "transparent",
-              color: active ? colors.activeText : colors.text,
-            }}
-            title={collapsed ? tr(label) : undefined}
+  // ---------- UI ----------
+  const Section = ({ title, list, first = false }) => {
+    if (!list?.length) return null;
+    return (
+      <div className={first ? "" : "mt-3 pt-2 border-t"} style={{ borderColor: colors.border }}>
+        {!collapsed && (
+          <div
+            className="px-4 pb-2 text-base font-bold uppercase tracking-wide text-center"
+            style={{ color: colors.muted }}
           >
-            {active && (
-              <span
-                className="absolute left-0 top-0 bottom-0 my-1 rounded-r"
-                style={{
-                  width: 4,
-                  background: theme?.colors?.primary?.main || "#60A5FA",
-                }}
-              />
-            )}
-            {Icon && (
-              <Icon
-                className="h-5 w-5 shrink-0"
-                style={{ color: active ? colors.activeText : colors.muted }}
-              />
-            )}
-            {!collapsed && <span className="text-sm truncate">{tr(label)}</span>}
-          </Link>
-        );
-      })}
-    </div>
-  );
-};
+            {title}
+          </div>
+        )}
 
+        {list.map(({ to, icon: Icon, label, onClick }) => {
+          const active = to ? loc.pathname.toLowerCase().startsWith(to.toLowerCase()) : false;
+          const content = (
+            <div
+              className="relative mx-2 mb-1 flex items-center gap-3 px-3 py-2 rounded transition-colors"
+              style={{
+                backgroundColor: active ? colors.activeBg : "transparent",
+                color: active ? colors.activeText : colors.text,
+              }}
+              title={collapsed ? tr(label) : undefined}
+            >
+              {active && (
+                <span
+                  className="absolute left-0 top-0 bottom-0 my-1 rounded-r"
+                  style={{ width: 4, background: theme?.colors?.primary?.main || "#60A5FA" }}
+                />
+              )}
+              {Icon && (
+                <Icon
+                  className="h-5 w-5 shrink-0"
+                  style={{ color: active ? colors.activeText : colors.muted }}
+                />
+              )}
+              {!collapsed && <span className="text-sm truncate">{tr(label)}</span>}
+            </div>
+          );
+
+          return to ? (
+            <Link key={to} to={to}>{content}</Link>
+          ) : (
+            <button key={label} type="button" className="w-full text-left" onClick={onClick} style={{ color: colors.text }}>
+              {content}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
 
   const avatarUrl = auth?.path || profile.avatarUrl;
+  const initials = useMemo(() => ((profile?.firstName?.[0] || "U") + (profile?.lastName?.[0] || "")).toUpperCase(), [profile]);
 
   return (
     <aside
@@ -227,20 +212,17 @@ const Section = ({ title, list, first = false }) => {
         </button>
       </div>
 
-      {/* navegação */}
+      {/* navegação por secções */}
       <nav className="flex-1 overflow-y-auto py-2">
         <Section title={t("common.admin") || "Admin"} list={groups.ADMIN} first />
         <Section title={t("common.adminGroup") || "Group Admin"} list={groups.GROUPADMIN} />
-        <Section title={t("common.user") || "User"} list={groups.USER} />
-        {!groups.ADMIN.length && !groups.GROUPADMIN.length && !groups.USER.length && !collapsed && (
-          <div className="px-4 py-2 text-sm" style={{ color: colors.muted }}>
-            {t("common.no_permissions") || "No items available."}
-          </div>
-        )}
+        <Section title={t("common.premium") || "Premium"} list={groups.PREMIUM} />
+        <Section title={t("common.groupMember") || "Group"} list={groups.GROUP} />
+        <Section title={t("common.user") || "Users"} list={groups.USER} />
       </nav>
 
-      {/* ações */}
-      <div className="px-2 py-3 border-t" style={{ borderColor: colors.border }}>
+      {/* ações fixas */}
+ <div className="px-2 py-3 border-t" style={{ borderColor: colors.border }}>
         <Link
           to="/Premium"
           className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors"
@@ -248,9 +230,10 @@ const Section = ({ title, list, first = false }) => {
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colors.hoverBg)}
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
         >
-          <DollarSign  className="h-4 w-4" style={{ color: colors.muted }} />
-          {!collapsed && <span className="text-sm">{t("common.premium") || "Settings"}</span>}
+          <DollarSign className="h-4 w-4" style={{ color: colors.muted }} />
+          {!collapsed && <span className="text-sm">Premium</span>}
         </Link>
+
         <Link
           to="/Settings"
           className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors"
@@ -259,7 +242,7 @@ const Section = ({ title, list, first = false }) => {
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
         >
           <Settings className="h-4 w-4" style={{ color: colors.muted }} />
-          {!collapsed && <span className="text-sm">{t("common.settings") || "Settings"}</span>}
+          {!collapsed && <span className="text-sm">Settings</span>}
         </Link>
 
         <button
@@ -276,7 +259,7 @@ const Section = ({ title, list, first = false }) => {
           }}
         >
           <LogOut className="h-4 w-4" />
-          {!collapsed && <span className="text-sm">{t("common.logout") || "Logout"}</span>}
+          {!collapsed && <span className="text-sm">Logout</span>}
         </button>
       </div>
 
@@ -302,8 +285,7 @@ const Section = ({ title, list, first = false }) => {
               className="w-9 h-9 rounded-full flex items-center justify-center font-semibold shadow ring-1"
               style={{ ringColor: colors.border, background: "rgba(255,255,255,0.85)", color: "#0B1020" }}
             >
-              {(profile?.firstName?.[0] || "U").toUpperCase()}
-              {(profile?.lastName?.[0] || "").toUpperCase()}
+              {initials}
             </div>
           )}
           {!collapsed && (

@@ -126,7 +126,7 @@ const darkTheme = {
         bg: "#334155",
         hover: "#475569",
         text: "#E2E8F0",
-      },
+      },  
     },
     premium: {
       gold: "#FFD700", // também dourado, fica bem no dark

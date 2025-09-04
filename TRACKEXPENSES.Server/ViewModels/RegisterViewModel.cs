@@ -23,7 +23,7 @@ namespace TRACKEXPENSES.Server.ViewModels
         [DefaultValue("****************")]
         public string? CodeInvite { get; set; }
 
-        [DefaultValue("14/06/2025")]
+        [DefaultValue("2025/08/31")]
         public DateTime? Birthday { get; set; }
 
         [DefaultValue("9111111111111111")]

@@ -80,6 +80,15 @@ const translations = {
       not_provided: "Not Provided",
       signingIn: "Signing in…",
       saving: "Saving…",
+      retry: "Retry",
+      try_again: "Try again",
+      loading: "Loading…",
+      click_to_change_photo: "Click to change photo",
+      photo_alt: "Profile photo",
+      remove_photo: "Remove photo",
+      roles: "Roles",
+      no_Provide: "No Provide",
+      groups: "Groups"
     },
     settings: {
       appearance: "Appearance",
@@ -126,11 +135,11 @@ const translations = {
       inviteCodePH: "Group Code",
       inviteHelp:"You can ask your financial administrator that is already registered to give you. <br /><b>Leave blank if you don't have a group code (you can add or change anytime)</b>",
       createAccount: "Create Account!",
-
-    addUser: {
+      addUser: {
       title: "Add user"
+      },
     },
-    profile: {
+  profile: {
       title: "Profile",
       edit_Profile: "Edit Profile",
       no_Group_Members: "No group members",
@@ -147,7 +156,18 @@ const translations = {
       no_group_members: "No group members",
       remove_member: "Remove member",
       password_leave_empty: "Leave empty to keep current password",
-    },
+      retry_loading_profile: "Retry loading profile",
+  enter_first_name: "Enter first name",
+  enter_family_name: "Enter family name",
+  email: "Email",
+  enter_phone_number: "Enter phone number",
+  hide_password: "Hide password",
+  show_password: "Show password",
+  image_invalid_format: "Invalid image format. Use JPG or PNG.",
+  image_too_large: "Image is too large (max 5 MB).",
+  image_upload_error: "We couldn't upload your image. Please try again.",
+  image_error_prefix: "Error:"
+  },
     placeholders: {
       email: "Enter your email...",
       password: "Enter your password...",
@@ -186,7 +206,9 @@ const translations = {
       passwordRequired: "Password is required.",
       confirmPasswordRequired: "Confirm password is required.",
       passwordsDontMatch: "Passwords do not match.",
-      registerFailed: "Error while registering user."
+      registerFailed: "Error while registering user.",
+      couldnt_load_profile: "We couldn't load your profile. Please try again.",
+      couldnt_save_changes: "We couldn't save your changes. Please try again.",
     },
     password: {
       length: "Length: ",
@@ -200,7 +222,6 @@ const translations = {
       needNumber: "need 0-9",
       symbol: "Symbol: ",
       needSymbol: "need a symbol"
-    },
     },
   premium: {
   title: "Premium",

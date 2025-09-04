@@ -18,7 +18,7 @@ import {
   PiggyBank,
   Wallet,
   Users as UsersIcon,
-  Calendar,
+  Calendar, BookUser,
 } from "lucide-react";
 
 // pages
@@ -41,11 +41,15 @@ import SettingsPage from "./Pages/Settings";
 import ProfilePage from "./Pages/User/Profile";
 import PremiumChoicePage from "./Pages/Premium/Prices";
 import AddUser from "./Pages/Administrador/AddUser";
+import RequireRoles from "./services/Authentication/RequireRoles";
+import GroupAdminPage from "./Pages/GroupAdmin/GroupAdminPage";
+import Groups from "./Pages/GroupAdmin/Groups";
+
 
 export default function App() {
   const { theme } = useTheme();
   const { t } = useLanguage();
-  const { role, isAuthenticated } = useContext(AuthContext);
+  const { roles, isAuthenticated } = useContext(AuthContext);
 
   // ---- estado local do utilizador para a sidebar/topbar  ----
   const [userState, setUser] = useState({
@@ -67,8 +71,9 @@ export default function App() {
   { to: "/Expenses",         icon: PiggyBank,       label: "common.expenses",  role: "USER" },
   { to: "/Earnings",         icon: Wallet,          label: "common.earnings",  role: "USER" },
   { to: "/CalendarExpenses", icon: Calendar,        label: "common.calendar",  role: "USER" },
+  { to: "/Groups",            icon: BookUser,        label: "common.groups",  role: "PREMIUM" },
     ],
-    [t, role]
+    [t, roles]
   );
 
   return (
@@ -90,6 +95,9 @@ export default function App() {
           <Route path="/ForgotPassword" element={<ForgotPassword />} />
           <Route path="/RecoverPassword" element={<RecoverPassword />} />
         </Route>
+        <Route element={<RequireRoles allow={["PREMIUM"]} />}>
+      <Route path="/Groups" element={<Groups />} />
+    </Route>
 
         <Route element={<RequireAuth />}>
           <Route path="/Dashboard" element={<Dashboard />} />

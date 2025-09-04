@@ -15,7 +15,7 @@ import Input from "../../components/Form/Input";
 import Button from "../../components/Buttons/Button";
 
 const Login = () => {
-  const { setAuth, setIsAuthenticated, setRole } = useContext(AuthContext);
+  const { setAuth, setIsAuthenticated, setRoles } = useContext(AuthContext);
   const { theme } = useTheme();
   const { t } = useLanguage();
 
@@ -43,14 +43,14 @@ const Login = () => {
     }
 
     const data = response.data;
-
+    data.Roles = data.Roles.$values
     // guarda payload e inicia timers
     setAuthFromApiPayload(data);
     AuthTimer_start(data);
 
     // contexto para UI
     setAuth(data);
-    setRole(data.Role || null);
+    setRoles(data.Roles || null);
     setIsAuthenticated(true);
 
     // dispara evento global

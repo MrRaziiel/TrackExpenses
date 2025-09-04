@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import apiCall from "../../services/ApiCallGeneric/apiCall";
 import AuthContext from "../../services/Authentication/AuthContext";
 import jsQR from "jsqr";
+import { QrCode } from "lucide-react";
 
 function AddExpense() {
   const { auth } = useContext(AuthContext);
@@ -135,6 +136,7 @@ function AddExpense() {
         if (code) {
           try {
             const parsed = JSON.parse(code.data);
+            console.log("QrCode INFO: ", parsed);
             setFormData((prev) => ({
               ...prev,
               ...parsed,

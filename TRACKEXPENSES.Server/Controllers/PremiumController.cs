@@ -16,9 +16,9 @@ namespace TRACKEXPENSES.Server.Controllers
         private readonly UserManager<User> _userManager = userManager;
         private readonly FinancasDbContext _context = context;
 
-        [HttpPost("ChangeUserToPremium")]
+        [HttpPost("Subscribe")]
         [Authorize]
-        public async Task<IActionResult> ChangeUserToPremium([FromBody] UserEmailRequest request)
+        public async Task<IActionResult> Subscribe([FromBody] UserEmailRequest request)
         {
             var userEmail = request.UserEmail;
 
@@ -42,9 +42,9 @@ namespace TRACKEXPENSES.Server.Controllers
 
         }
 
-        [HttpPost("RemovePremium")]
+        [HttpPost("Cancel")]
         
-        public async Task<IActionResult> RemovePremium([FromBody] UserEmailRequest request)
+        public async Task<IActionResult> Cancel([FromBody] UserEmailRequest request)
         {
             var userEmail = request.UserEmail;
 

@@ -45,9 +45,9 @@ function EditUserProfile() {
   const safeGet = async (url, cfg = {}) => {
     try {
       const res = await apiCall.get(url, { validateStatus: () => true, ...cfg });
-      return res; // sempre resolve: res.status pode ser 200.., 404, etc.
+      return res;
     } catch {
-      return { status: 0, data: null }; // só em erro de rede duro
+      return { status: 0, data: null };
     }
   };
 
@@ -55,7 +55,6 @@ function EditUserProfile() {
   const fetchProfile = async (signal) => {
     setLoading(true);
     try {
-      // Perfil base: obrigatório
       const base = await apiCall.get('/User/GetProfile', {
         params: { UserEmail: decodedEmail },
         signal,
@@ -71,13 +70,12 @@ function EditUserProfile() {
         birthday: data.Birthday ?? data.birthday,
         phoneNumber: data.PhoneNumber ?? data.phoneNumber,
         groupName: data.GroupName || '',
-        groupRole: data.GroupRole || data.Role || 'Member',
+        groupRoles: data.GroupRoles || data.Roles || 'Member',
         groupId: data.GroupId || '',
         profileImage: '',
         groupMembers: data.GroupMembers || []
       };
 
-      // Enriquecimento com nome/foto (opcional, nunca rejeita)
       const np = await safeGet(`/User/GetPhotoProfileAndName/${encodeURIComponent(decodedEmail)}`, { signal });
       if (np.status >= 200 && np.status < 300) {
         const fn = np?.data?.FirstName ?? np?.data?.firstName;
@@ -87,14 +85,6 @@ function EditUserProfile() {
         if (ln) mappedUser.familyName = ln;
         if (path && path !== 'NoPhoto') mappedUser.profileImage = path;
       }
-      // Fallback de foto (opcional)
-      // if (!mappedUser.profileImage) {
-      //   const fp = await safeGet(`/User/GetPhotoProfile/${encodeURIComponent(decodedEmail)}`, { signal });
-      //   if (fp.status >= 200 && fp.status < 300) {
-      //     const photoPath = fp?.data?.photoPath ?? fp?.data?.PhotoPath ?? fp?.data?.path;
-      //     if (photoPath && photoPath !== 'NoPhoto') mappedUser.profileImage = photoPath;
-      //   }
-      // }
 
       setUser(mappedUser);
       setFormData({ ...mappedUser, birthday: mappedUser.birthday || '' });
@@ -102,7 +92,7 @@ function EditUserProfile() {
       setLoadFailed(false);
       setErrorSubmit(null);
     } catch {
-      setLoadFailed(true); // só falha se o perfil base falhar
+      setLoadFailed(true);
     } finally {
       setLoading(false);
     }
@@ -190,7 +180,7 @@ function EditUserProfile() {
     setShowErrors(true);
 
     if (loadFailed || !user) {
-      setErrorSubmit("We couldn't load your profile. Please try again.");
+      setErrorSubmit(t('errors.couldnt_load_profile'));
       return;
     }
 
@@ -211,7 +201,7 @@ function EditUserProfile() {
       setFormData(prev => ({ ...prev, ...payload }));
       navigate('/users');
     } catch {
-      setErrorSubmit("We couldn't save your changes. Please try again.");
+      setErrorSubmit(t('errors.couldnt_save_changes'));
     }
   };
 
@@ -236,10 +226,10 @@ function EditUserProfile() {
               onClick={handleRetry}
               className="inline-flex items-center px-3 py-2 border rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
               style={{ borderColor: theme.colors.secondary.light }}
-              title="Retry loading profile"
+              title={t('profile.retry_loading_profile')}
             >
               <RotateCcw className="h-4 w-4 mr-2" />
-              Retry
+              {t('common.retry')}
             </button>
           )}
           <button
@@ -263,7 +253,7 @@ function EditUserProfile() {
       {showErrorBanner && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-800">
-            {errorSubmit || "We couldn't load your profile. Please try again."}
+            {errorSubmit || t('errors.couldnt_load_profile')}
           </p>
           <div className="mt-3 flex gap-2">
             <button
@@ -271,7 +261,7 @@ function EditUserProfile() {
               className="px-3 py-1 rounded-md text-white"
               style={{ backgroundColor: theme.colors.primary.main }}
             >
-              Try again
+              {t('common.try_again')}
             </button>
           </div>
         </div>
@@ -347,7 +337,7 @@ function EditUserProfile() {
               />
 
               {imageError && !loadFailed && (
-                <p className="text-xs mt-2 text-red-600">{imageError}</p>
+                <p className="text-xs mt-2 text-red-600">{t('profile.image_error_prefix')} {imageError}</p>
               )}
             </div>
 
@@ -364,7 +354,7 @@ function EditUserProfile() {
                   style={{ backgroundColor: theme.colors.primary.light + '30', color: theme.colors.primary.main }}
                 >
                   <Shield className="h-4 w-4 mr-1" />
-                  {user?.groupRole || t('common.member')}
+                  {user?.groupRoles || t('common.not_provided')}
                 </span>
               </div>
             </div>
@@ -547,7 +537,7 @@ function EditUserProfile() {
                     {t('profile.group_name')}
                   </h4>
                   <p className="text-base" style={{ color: theme.colors.text.primary }}>
-                    {user?.groupName || t('common.member')}
+                    {user?.groupName || t('common.not_provided')}
                   </p>
                 </div>
               </div>
@@ -575,7 +565,7 @@ function EditUserProfile() {
                     {t('profile.group_role')}
                   </h4>
                   <p className="text-base" style={{ color: theme.colors.text.primary }}>
-                    {user?.groupRole || t('common.member')}
+                    {user?.groupRole || t('common.not_provided')}
                   </p>
                 </div>
               </div>
@@ -627,7 +617,7 @@ function EditUserProfile() {
 
       {loading && !showErrors && (
         <p className="text-sm" style={{ color: theme.colors.text.secondary }}>
-          Loading…
+          {t('common.loading')}
         </p>
       )}
     </div>
