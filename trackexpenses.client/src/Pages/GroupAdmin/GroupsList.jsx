@@ -1,4 +1,3 @@
-// src/pages/Groups/GroupList.jsx
 import React from "react";
 import { Link } from "react-router-dom";
 import { Plus, Users } from "lucide-react";
@@ -10,8 +9,8 @@ export default function GroupList({
   groups = [],                // [{ id, name, membersCount, description }]
   loading = false,
   error = null,
-  // rota da criação:
-  createTo = "/CreateGroupList",
+  // rota da criação (sem argumentos):
+  createTo = "/CreateGroup",
   // como construir o link para um grupo:
   getLink = (g) => `/Groups/${g.id || g.name || ""}`,
 }) {
@@ -19,21 +18,14 @@ export default function GroupList({
   const { t } = useLanguage();
 
   const c = theme?.colors || {};
-  const bg = c.background?.default || "#0B1020";
   const paper = c.background?.paper || "#111827";
   const border = c.menu?.border || "rgba(255,255,255,0.12)";
   const text = c.text?.primary || "#E5E7EB";
   const muted = c.text?.secondary || "#94A3B8";
   const primary = c.primary?.main || "#2563EB";
-  const hover = c.menu?.hoverBg || "rgba(255,255,255,0.06)";
 
   const tr = (k, fallback) => {
-    try {
-      if (!k) return fallback;
-      return k.includes(".") ? t(k) : k;
-    } catch {
-      return fallback ?? k;
-    }
+    try { return k && k.includes(".") ? t(k) : k; } catch { return fallback ?? k; }
   };
 
   const EmptyCreateCard = () => (
@@ -57,8 +49,6 @@ export default function GroupList({
           {tr("groups.tap_to_create", "Tap to create your first group")}
         </div>
       </div>
-
-      {/* brilho suave no hover */}
       <span
         className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
         style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)" }}

@@ -1,7 +1,8 @@
 ﻿
-using TRACKEXPENSES.Server.Models;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
+using TRACKEXPENSES.Server.Models;
 
 
 namespace TRACKEXPENSES.Server.Data
@@ -14,7 +15,7 @@ namespace TRACKEXPENSES.Server.Data
 
         }
         public DbSet<Expense> Expenses { get; set; }
-        public DbSet<GroupOfUsers> GroupOfUsers { get; set; }
+        public DbSet<Models.Group> GroupOfUsers { get; set; }
         public DbSet<User> UsersList { get; set; }
 
         public DbSet<ImageDB> ImagesDB { get; set; }
@@ -31,26 +32,12 @@ namespace TRACKEXPENSES.Server.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
             modelBuilder.Entity<User>()
-            .HasOne(c => c.GroupOfUsers)
-            .WithMany(g => g.Users)
-            .HasForeignKey(c => c.GroupId);
-
-            base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<RefreshToken>(e =>
-            {
-                e.HasKey(x => x.Id);
-                e.Property(x => x.TokenHash).IsRequired();
-                e.HasIndex(x => x.TokenHash).IsUnique();
-                e.HasOne(x => x.User)
-                 .WithMany(u => u.RefreshTokens)
-                 .HasForeignKey(x => x.UserId)
-                 .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            // Call the base method to ensure any default behavior is applied
-            base.OnModelCreating(modelBuilder);
+                .HasMany(u => u.Groups)
+                .WithMany(g => g.Users)
+                .UsingEntity(j => j.ToTable("UserGroups")); // nome da tabela de junção
         }
 
     }

@@ -28,7 +28,6 @@ namespace TRACKEXPENSES.Server.Controllers
                 Date = model.Date,
                 Category = model.Category,
                 UserId = existUser.Id,
-                GroupId = existUser.GroupId,
                 Periodicity = model.Periodicity,
                 RepeatCount = model.RepeatCount,
                 IsActive = model.IsActive

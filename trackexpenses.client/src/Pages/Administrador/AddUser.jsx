@@ -197,7 +197,6 @@ export default function AddUser() {
             value={form.FirstName}
             onChange={onChange("FirstName")}
             error={fieldErrors.FirstName || undefined}
-            inputClassName="h-12"
           />
 
           <Input
@@ -206,7 +205,6 @@ export default function AddUser() {
             value={form.FamilyName}
             onChange={onChange("FamilyName")}
             error={fieldErrors.FamilyName || undefined}
-            inputClassName="h-12"
           />
 
           <Input
@@ -217,7 +215,6 @@ export default function AddUser() {
             onChange={onChange("Email")}
             onBlur={onEmailBlur}
             error={fieldErrors.Email || errorEmail || undefined}
-            inputClassName="h-12"
           />
 
           <Input
@@ -225,7 +222,6 @@ export default function AddUser() {
             type="date"
             value={form.Birthday}
             onChange={onChange("Birthday")}
-            inputClassName="h-12"
           />
 
           <Input
@@ -240,7 +236,6 @@ export default function AddUser() {
               const blocked = ["e", "E", "+", "-", ".", ","];
               if (blocked.includes(e.key)) e.preventDefault();
             }}
-            inputClassName="h-12"
           />
 
           <Input
@@ -251,7 +246,6 @@ export default function AddUser() {
             value={form.Password}
             onChange={onChange("Password")}
             error={fieldErrors.Password || undefined}
-            inputClassName="h-12"
           />
 
           <Input
@@ -262,7 +256,6 @@ export default function AddUser() {
             value={form.ConfirmPassword}
             onChange={onChange("ConfirmPassword")}
             error={fieldErrors.ConfirmPassword || undefined}
-            inputClassName="h-12"
           />
         </div>
 

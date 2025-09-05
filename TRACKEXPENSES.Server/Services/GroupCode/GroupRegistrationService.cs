@@ -30,7 +30,6 @@ public class GroupRegistrationService : IGroupRegistrationService
             .FirstOrDefaultAsync(x => x.CodeInvite == request.CodeInvite);
         if (group is null) return null;
 
-        user.GroupId = group.Id;
         await _context.SaveChangesAsync();
         return "GROUPMEMBER";
     }

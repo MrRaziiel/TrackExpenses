@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useContext, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useContext } from "react";
 import { Link } from "react-router-dom";
 import { Menu as MenuIcon, Wallet, Settings, LogOut, DollarSign } from "lucide-react";
 import { useTheme } from "../../styles/Theme/Theme";
@@ -11,7 +11,7 @@ export default function TopBar({ title = "TRACKEXPENSES", menuItems = [] }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme } = useTheme();
   const { t } = useLanguage();
-  const { roles: ctxRoles, isAuthenticated, auth } = useContext(AuthContext) || {};
+  const { auth, roles: ctxRoles, isAuthenticated } = useContext(AuthContext) || {};
   const logout = useLogout();
 
   const c = theme?.colors || {};
@@ -24,23 +24,20 @@ export default function TopBar({ title = "TRACKEXPENSES", menuItems = [] }) {
   const ddHover = c.menu?.hoverBg || "rgba(0,0,0,0.06)";
   const iconCol = c.primary?.main || "#2563EB";
 
-  // helper para tradução
-  const tr = (s) => {
-    try {
-      return s && s.includes(".") ? (t ? t(s) : s) : s;
-    } catch {
-      return s;
-    }
-  };
+  const topBorder = c.menu?.border || "rgba(255,255,255,0.08)";
+  const navShadow =
+    "0 1px 0 rgba(255,255,255,0.08) inset, " +
+    "0 4px 12px rgba(0,0,0,0.18), " +
+    "0 4px 16px rgba(255,255,255,0.25)";
 
-const topBorder = c.menu?.border || "rgba(255,255,255,0.08)";
-const navShadow =
-  "0 1px 0 rgba(255,255,255,0.08) inset, " +
-  "0 4px 12px rgba(0,0,0,0.18), " +
-  "0 4px 16px rgba(255,255,255,0.25)";
-  // ---- roles + grupos ----
+  // ---- roles ----
   const userRoles = useMemo(
-    () => (Array.isArray(ctxRoles) ? ctxRoles : typeof ctxRoles === "string" ? ctxRoles.split(/[,\s]+/) : []),
+    () =>
+      Array.isArray(ctxRoles)
+        ? ctxRoles
+        : typeof ctxRoles === "string"
+        ? ctxRoles.split(/[,\s]+/)
+        : [],
     [ctxRoles]
   );
 
@@ -75,6 +72,7 @@ const navShadow =
 
   // ---- perfil igual ao sidebar ----
   const [profile, setProfile] = useState({ firstName: "", lastName: "", email: "", avatarUrl: "" });
+
   useEffect(() => {
     const email = (auth?.Email || auth?.email || "").trim();
     if (!email) return;
@@ -122,24 +120,24 @@ const navShadow =
             onClick={() => setMobileOpen(false)}
           >
             {Icon && <Icon className="h-5 w-5" style={{ color: iconCol }} />}
-            <span className="truncate">{tr(label)}</span>
+            <span className="truncate">{t?.(label) || label}</span>
           </Link>
         ))}
       </div>
     );
 
   return (
-    <nav className="shadow-lg relative z-[200]"
-  style={{
-    backgroundColor: topBg,
-    color: topText,
-    borderBottom: `1px solid ${topBorder}`,
-    boxShadow: navShadow,
-  }}
->
-      {/* barra superior */}
+    <nav
+      className="shadow-lg relative z-[200]"
+      style={{
+        backgroundColor: topBg,
+        color: topText,
+        borderBottom: `1px solid ${topBorder}`,
+        boxShadow: navShadow,
+      }}
+    >
       <div className="w-full px-4 sm:px-6 lg:px-8 flex items-center h-16">
-        {/* menu mobile */}
+        {/* botão menu mobile */}
         <div className="flex items-center gap-3">
           <button
             className="md:hidden p-2 rounded-lg transition-colors"
@@ -162,8 +160,10 @@ const navShadow =
         </div>
       </div>
 
+      {/* menu mobile */}
       {mobileOpen && (
-        <div className="md:hidden absolute top-16 left-0 right-0 z-[210] shadow-2xl ring-1 text-center"
+        <div
+          className="md:hidden absolute top-16 left-0 right-0 z-[210] shadow-2xl ring-1 text-center"
           style={{ backgroundColor: ddBg, borderColor: ddBorder }}
         >
           <Section title={t?.("common.admin")} items={groups.ADMIN} />
@@ -227,7 +227,9 @@ const navShadow =
                 </div>
                 <div className="min-w-0 text-left">
                   <div className="text-sm font-semibold truncate">
-                    {(profile.firstName && profile.lastName) ? `${profile.firstName} ${profile.lastName}` : (auth?.preferred_username || profile.email || "Profile")}
+                    {(profile.firstName && profile.lastName)
+                      ? `${profile.firstName} ${profile.lastName}`
+                      : (auth?.preferred_username || profile.email || "Profile")}
                   </div>
                   <div className="text-xs truncate" style={{ color: ddMuted }}>
                     {profile.email}

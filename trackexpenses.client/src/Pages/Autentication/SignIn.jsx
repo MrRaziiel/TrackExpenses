@@ -138,7 +138,6 @@ export default function SignIn() {
                 onChange={handleChange}
                 leftIcon={field.icon}
                 error={errors[field.lower]}
-                inputClassName="h-12"
               />
             ))}
 
@@ -201,7 +200,6 @@ export default function SignIn() {
                   }}
                   leftIcon={field.icon}
                   error={errors[field.lower]}
-                  inputClassName="h-12"
                 />
               ) : (
                 <Input
@@ -214,7 +212,6 @@ export default function SignIn() {
                   onChange={handleChange}
                   leftIcon={field.icon}
                   error={errors[field.lower]}
-                  inputClassName="h-12"
                 />
               )
             )}

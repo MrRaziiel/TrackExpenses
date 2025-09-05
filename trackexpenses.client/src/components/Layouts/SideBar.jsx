@@ -95,8 +95,26 @@ export default function SideBar({
 
   // ---------- roles & agrupamento (SEM normalize) ----------
   const userRoles = useMemo(
-    () => (Array.isArray(roles) ? roles : typeof roles === "string" ? roles.split(/[,\s]+/) : []),
-    [roles]
+  () => (Array.isArray(roles) ? roles : typeof roles === "string" ? roles.split(/[,\s]+/) : []),
+  [roles]
+);
+const canSee = (item) => {
+  if (!item || item.visible === false) return false;
+  if (item.requiresPremium && !premiumOk) return false;
+
+  // sem role ou role "USER" -> todos
+  if (!item.role || item.role === "USER") return true;
+
+  // senão tem de ter esse role
+  return userRoles.includes(item.role);
+};
+const premiumOk =
+  userRoles.includes("PREMIUM") ||
+  !!(auth?.isPremium ?? auth?.IsPremium ?? auth?.premium ?? auth?.Premium) ||
+  ["PREMIUM", "PRO", "PLUS"].includes(
+    String(auth?.subscription?.plan ?? auth?.Subscription?.Plan ?? auth?.plan ?? auth?.Plan ?? "")
+      .trim()
+      .toUpperCase()
   );
 
   const hasAnyRole = (need) => {
@@ -105,45 +123,43 @@ export default function SideBar({
     return list.some((r) => userRoles.includes(r));
   };
 
-  const sectionOfRole = (role) => {
-    const r = Array.isArray(role) ? role[0] : role;
-    switch (r) {
-      case "ADMINISTRATOR": return tr("common.admin") || "Admin";
-      case "GROUPADMINISTRATOR": return tr("common.adminGroup") || "Group Admin";
-      case "PREMIUM": return tr("common.premium") || "Premium";
-      case "GROUPMEMBER": return tr("common.groupMember") || "Group";
-      case "USER":
-      default: return tr("common.user") || "Users";
-    }
-  };
+const sectionOfRole = (role) => {
+  const r = Array.isArray(role) ? role[0] : role;
+  switch (r) {
+    case "ADMINISTRATOR": return tr("common.admin") || "Admin";
+    case "GROUPADMINISTRATOR": return tr("common.adminGroup") || "Group Admin";
+    case "PREMIUM": return tr("common.premium") || "Premium";
+    case "GROUPMEMBER": return tr("common.groupMember") || "Group";
+    case "USER":
+    default: return tr("common.user") || "Users";
+  }
+};
 
   // Agrupa: se vier i.section usamos esse título; senão agrupa  por role
-  const sections = useMemo(() => {
-    const buckets = new Map();
+const sections = useMemo(() => {
+  const buckets = new Map();
+  const push = (title, item) => {
+    const key = typeof title === "string" && title.includes(".") ? tr(title) : title;
+    const secTitle = key || (tr("common.user") || "Users");
+    if (!buckets.has(secTitle)) buckets.set(secTitle, []);
+    buckets.get(secTitle).push(item);
+  };
 
-    const push = (title, item) => {
-      const key = typeof title === "string" && title.includes(".") ? tr(title) : title;
-      const secTitle = key || (tr("common.user") || "Users");
-      if (!buckets.has(secTitle)) buckets.set(secTitle, []);
-      buckets.get(secTitle).push(item);
-    };
+  (items || []).forEach((i) => {
+    if (!canSee(i)) return;
 
-    (items || []).forEach((i) => {
-      if (!i || i.visible === false) return;
+    if (i.section) {
+      // ex.: section: "Groups" ou "common.groups"
+      push(i.section, i);
+      return;
+    }
 
-      if (i.section) {
-        // Ex.: section: "Groups" (ou "common.groups")
-        push(i.section, i);
-        return;
-      }
+    const secTitle = sectionOfRole(i.role);
+    push(secTitle, i);
+  });
 
-      const secTitle = sectionOfRole(i.role);
-      if (i.role === "USER") push(secTitle, i);
-      else if (hasAnyRole(i.role)) push(secTitle, i);
-    });
-
-    return Array.from(buckets.entries()).map(([title, list]) => ({ title, list }));
-  }, [items, userRoles]);
+  return Array.from(buckets.entries()).map(([title, list]) => ({ title, list }));
+}, [items, userRoles, premiumOk, t]);
 
   // ---------- UI ----------
   const Section = ({ title, list, first = false }) => {

@@ -44,6 +44,7 @@ import AddUser from "./Pages/Administrador/AddUser";
 import RequireRoles from "./services/Authentication/RequireRoles";
 import GroupAdminPage from "./Pages/GroupAdmin/GroupAdminPage";
 import GroupsList from "./Pages/GroupAdmin/GroupsList";
+import CreateGroup from "./Pages/GroupAdmin/CreateGroup";
 
 
 export default function App() {
@@ -67,13 +68,13 @@ export default function App() {
   const items = useMemo(
     () => [
       { to: "/Users",            icon: UsersIcon,       label: "common.users",     role: "ADMINISTRATOR", section: "ADMIN" },
-  { to: "/GroupAdminPage",            icon: BookUser,        label: "common.group_admin",  role: "PREMIUM", section: "GROUPS" },
+  { to: "/GroupAdminPage",            icon: BookUser,        label: "common.group_admin",  role: "GROUPADMINISTRATOR", section: "GROUPS" },
   { to: "/GroupsList",            icon: BookUser,        label: "common.group_list",  role: "PREMIUM", section: "GROUPS" },
 
-  { to: "/Dashboard",        icon: LayoutDashboard, label: "common.dashboard", role: "USER", section: "Groups" },
-  { to: "/Expenses",         icon: PiggyBank,       label: "common.expenses",  role: "USER", section: "Groups" },
-  { to: "/Earnings",         icon: Wallet,          label: "common.earnings",  role: "USER", section: "Groups" },
-  { to: "/CalendarExpenses", icon: Calendar,        label: "common.calendar",  role: "USER", section: "Groups" },
+  { to: "/Dashboard",        icon: LayoutDashboard, label: "common.dashboard", role: "USER", section: "FINANCES" },
+  { to: "/Expenses",         icon: PiggyBank,       label: "common.expenses",  role: "USER", section: "FINANCES" },
+  { to: "/Earnings",         icon: Wallet,          label: "common.earnings",  role: "USER", section: "FINANCES" },
+  { to: "/CalendarExpenses", icon: Calendar,        label: "common.calendar",  role: "USER", section: "FINANCES" },
     ],
     [t, roles]
   );
@@ -103,7 +104,8 @@ export default function App() {
     </Route>
 
         <Route element={<RequireAuth />}>
-      <Route path="/GroupsList" element={<GroupsList />} />
+        <Route path="/GroupsList" element={<GroupsList />} />
+        <Route path="/CreateGroup" element={<CreateGroup />} />
 
           <Route path="/Dashboard" element={<Dashboard />} />
           <Route path="/Earnings" element={<EarningsList />} />

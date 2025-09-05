@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TRACKEXPENSES.Server.Data;
+using TRACKEXPENSES.Server.Extensions;
 using TRACKEXPENSES.Server.Models;
 
 namespace TRACKEXPENSES.Server.Controllers
@@ -20,13 +21,19 @@ namespace TRACKEXPENSES.Server.Controllers
         private readonly FinancasDbContext _context = context;
 
         [HttpGet("User/GetAllUsers")]
+        // usando EF Core
         public IActionResult ListClients()
         {
-            var allClients = _context.UsersList.Include(client => client.GroupOfUsers).ToList();
-            if (allClients == null) return BadRequest("Dados inválidos.");
+            var allClients = _context.Users
+    .Include(u => u.Groups)
+    .ToList();
 
-            return Ok(new { ListUsers = allClients});
+            if (allClients == null)
+                return BadRequest("Dados inválidos.");
+
+            return Ok(new { ListUsers = allClients });
         }
+
 
         [HttpPost("User/DeleteUser")]
         public async Task<IActionResult> DeleteUser([FromBody] string UserID)

@@ -9,21 +9,17 @@ namespace TRACKEXPENSES.Server.Models
 {
 
 
-    public class GroupOfUsers
+    public class Group
     {
-        [Key]
-        public string Id { get; set; } = Guid.NewGuid().ToString(); // Default unique ID generation
+        public string Id { get; set; } = Guid.NewGuid().ToString();
 
         [MaxLength(250)]
         [Required]
         public string Name { get; set; }
 
-        [MaxLength(50)]
-        [Required]
-        public string? CodeInvite { get; set; } // Unique constraint to be applied in DbContext configuration
+        public string? CodeInvite { get; set; }
 
-
-        // Navigation property for related users
+        // vários users
         public ICollection<User> Users { get; set; } = new List<User>();
 
     }
@@ -68,15 +64,26 @@ namespace TRACKEXPENSES.Server.Models
         [PasswordPropertyText]
         public required string Password { get; set; }
 
-        public string? GroupId { get; set; }
-
-        public GroupOfUsers? GroupOfUsers { get; set; }
+        public ICollection<Group> Groups { get; set; } = new List<Group>();
 
         public List<Expense> Expenses { get; set; } = new List<Expense>();
 
         public List<RefreshToken> RefreshTokens { get; set; } = new();
 
     }
+
+    public class UserGroup
+    {
+        public string UserId { get; set; }
+        public User User { get; set; }
+
+        public string GroupId { get; set; }
+        public Group Group { get; set; }
+
+        // opcional
+        public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
+    }
+
 
     public class CreateUserFromRegister : User
     {
