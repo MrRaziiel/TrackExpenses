@@ -76,6 +76,7 @@ const translations = {
       phone_number: "Phone number",
       save_Change: "Save Changes",
       new_Password: "New Password",
+      new_password: "New Password",
       member: "Member",
       not_provided: "Not Provided",
       signingIn: "Signing in…",
@@ -88,7 +89,9 @@ const translations = {
       remove_photo: "Remove photo",
       roles: "Roles",
       no_Provide: "No Provide",
-      groups: "Groups"
+      groups: "Groups",
+      group_list: "List",
+      group_admin: "Admin"
     },
     settings: {
       appearance: "Appearance",

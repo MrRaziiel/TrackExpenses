@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Settings, LogOut, PencilLine, DollarSign  } from "lucide-react";
+import { ChevronLeft, ChevronRight, Settings, LogOut, DollarSign } from "lucide-react";
 import { useTheme } from "../../styles/Theme/Theme";
 import useLogout from "../../services/Authentication/Logout";
 import apiCall from "../../services/ApiCallGeneric/apiCall";
@@ -101,39 +101,48 @@ export default function SideBar({
 
   const hasAnyRole = (need) => {
     const list = Array.isArray(need) ? need : [need];
-    // se não tiver role definido, tratamos como “USER” (vai para secção Users)
-    if (!list.length || list.includes("USER")) return true;
+    if (!list.length || list.includes("USER")) return true; // USER sempre visível
     return list.some((r) => userRoles.includes(r));
   };
 
-  // mapeia role -> nome da secção
-  const sectionOf = (allow) => {
-    const r = Array.isArray(allow) ? allow[0] : allow; // primeira indicada
+  const sectionOfRole = (role) => {
+    const r = Array.isArray(role) ? role[0] : role;
     switch (r) {
-      case "ADMINISTRATOR": return "ADMIN";
-      case "GROUPADMINISTRATOR": return "GROUPADMIN";
-      case "PREMIUM": return "PREMIUM";
-      case "GROUPMEMBER": return "GROUP";
+      case "ADMINISTRATOR": return tr("common.admin") || "Admin";
+      case "GROUPADMINISTRATOR": return tr("common.adminGroup") || "Group Admin";
+      case "PREMIUM": return tr("common.premium") || "Premium";
+      case "GROUPMEMBER": return tr("common.groupMember") || "Group";
       case "USER":
-      default: return "USER";
+      default: return tr("common.user") || "Users";
     }
   };
 
-  // Agrupa — Users SEMPRE visível; outras só se o utilizador tiver o role
-  const groups = useMemo(() => {
-    const g = { ADMIN: [], GROUPADMIN: [], PREMIUM: [], GROUP: [], USER: [] };
+  // Agrupa: se vier i.section usamos esse título; senão agrupa  por role
+  const sections = useMemo(() => {
+    const buckets = new Map();
+
+    const push = (title, item) => {
+      const key = typeof title === "string" && title.includes(".") ? tr(title) : title;
+      const secTitle = key || (tr("common.user") || "Users");
+      if (!buckets.has(secTitle)) buckets.set(secTitle, []);
+      buckets.get(secTitle).push(item);
+    };
 
     (items || []).forEach((i) => {
       if (!i || i.visible === false) return;
-      const sec = sectionOf(i.role);
-      if (sec === "USER") {
-        g.USER.push(i);
-      } else if (hasAnyRole(i.role)) {
-        g[sec].push(i);
+
+      if (i.section) {
+        // Ex.: section: "Groups" (ou "common.groups")
+        push(i.section, i);
+        return;
       }
+
+      const secTitle = sectionOfRole(i.role);
+      if (i.role === "USER") push(secTitle, i);
+      else if (hasAnyRole(i.role)) push(secTitle, i);
     });
 
-    return g;
+    return Array.from(buckets.entries()).map(([title, list]) => ({ title, list }));
   }, [items, userRoles]);
 
   // ---------- UI ----------
@@ -190,7 +199,10 @@ export default function SideBar({
   };
 
   const avatarUrl = auth?.path || profile.avatarUrl;
-  const initials = useMemo(() => ((profile?.firstName?.[0] || "U") + (profile?.lastName?.[0] || "")).toUpperCase(), [profile]);
+  const initials = useMemo(
+    () => ((profile?.firstName?.[0] || "U") + (profile?.lastName?.[0] || "")).toUpperCase(),
+    [profile]
+  );
 
   return (
     <aside
@@ -214,15 +226,13 @@ export default function SideBar({
 
       {/* navegação por secções */}
       <nav className="flex-1 overflow-y-auto py-2">
-        <Section title={t("common.admin") || "Admin"} list={groups.ADMIN} first />
-        <Section title={t("common.adminGroup") || "Group Admin"} list={groups.GROUPADMIN} />
-        <Section title={t("common.premium") || "Premium"} list={groups.PREMIUM} />
-        <Section title={t("common.groupMember") || "Group"} list={groups.GROUP} />
-        <Section title={t("common.user") || "Users"} list={groups.USER} />
+        {sections.map((s, idx) => (
+          <Section key={s.title} title={s.title} list={s.list} first={idx === 0} />
+        ))}
       </nav>
 
       {/* ações fixas */}
- <div className="px-2 py-3 border-t" style={{ borderColor: colors.border }}>
+      <div className="px-2 py-3 border-t" style={{ borderColor: colors.border }}>
         <Link
           to="/Premium"
           className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors"

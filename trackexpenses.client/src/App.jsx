@@ -43,7 +43,7 @@ import PremiumChoicePage from "./Pages/Premium/Prices";
 import AddUser from "./Pages/Administrador/AddUser";
 import RequireRoles from "./services/Authentication/RequireRoles";
 import GroupAdminPage from "./Pages/GroupAdmin/GroupAdminPage";
-import Groups from "./Pages/GroupAdmin/Groups";
+import GroupsList from "./Pages/GroupAdmin/GroupsList";
 
 
 export default function App() {
@@ -66,12 +66,14 @@ export default function App() {
   // Menu com traduções e visibilidade por role
   const items = useMemo(
     () => [
-      { to: "/Users",            icon: UsersIcon,       label: "common.users",     role: "ADMINISTRATOR" },
-  { to: "/Dashboard",        icon: LayoutDashboard, label: "common.dashboard", role: "USER" },
-  { to: "/Expenses",         icon: PiggyBank,       label: "common.expenses",  role: "USER" },
-  { to: "/Earnings",         icon: Wallet,          label: "common.earnings",  role: "USER" },
-  { to: "/CalendarExpenses", icon: Calendar,        label: "common.calendar",  role: "USER" },
-  { to: "/Groups",            icon: BookUser,        label: "common.groups",  role: "PREMIUM" },
+      { to: "/Users",            icon: UsersIcon,       label: "common.users",     role: "ADMINISTRATOR", section: "ADMIN" },
+  { to: "/GroupAdminPage",            icon: BookUser,        label: "common.group_admin",  role: "PREMIUM", section: "GROUPS" },
+  { to: "/GroupsList",            icon: BookUser,        label: "common.group_list",  role: "PREMIUM", section: "GROUPS" },
+
+  { to: "/Dashboard",        icon: LayoutDashboard, label: "common.dashboard", role: "USER", section: "Groups" },
+  { to: "/Expenses",         icon: PiggyBank,       label: "common.expenses",  role: "USER", section: "Groups" },
+  { to: "/Earnings",         icon: Wallet,          label: "common.earnings",  role: "USER", section: "Groups" },
+  { to: "/CalendarExpenses", icon: Calendar,        label: "common.calendar",  role: "USER", section: "Groups" },
     ],
     [t, roles]
   );
@@ -95,11 +97,14 @@ export default function App() {
           <Route path="/ForgotPassword" element={<ForgotPassword />} />
           <Route path="/RecoverPassword" element={<RecoverPassword />} />
         </Route>
-        <Route element={<RequireRoles allow={["PREMIUM"]} />}>
-      <Route path="/Groups" element={<Groups />} />
+        <Route element={<RequireRoles allow={["PREMIUM", "GROUPADMINISTRATOR"]} />}>
+      <Route path="/GroupAdminPage" element={<GroupAdminPage />} />
+
     </Route>
 
         <Route element={<RequireAuth />}>
+      <Route path="/GroupsList" element={<GroupsList />} />
+
           <Route path="/Dashboard" element={<Dashboard />} />
           <Route path="/Earnings" element={<EarningsList />} />
           <Route path="/Earnings/add" element={<AddEditEarning />} />
