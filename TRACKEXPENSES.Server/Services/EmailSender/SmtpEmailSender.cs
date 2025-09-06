@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using System.Net;
 using System.Net.Mail;
-
 namespace TRACKEXPENSES.Server.Services
 {
     public class SmtpEmailSender : IEmailSender

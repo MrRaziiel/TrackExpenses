@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "../../utilis/Translate/LanguageContext";
 import AuthContext from "../../services/Authentication/AuthContext";
+import Button from "../../components/Buttons/Button";
 
 /* helpers p/ paths e URL absoluto da foto */
 const normPath = (p) => (p || "").toString().replace(/\\/g, "/").replace(/^\/+/, "");
@@ -38,7 +39,7 @@ function EditUserProfile() {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const { t } = useLanguage();
-  const { auth, setAuth } = useContext(AuthContext) || {};
+  const { auth, setAuth, roles } = useContext(AuthContext) || {};
 
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({});
@@ -81,6 +82,8 @@ function EditUserProfile() {
     const pair = `${fn.charAt(0)}${ln.charAt(0)}`.trim();
     return (pair || (user?.email?.[0] ?? "?")).toUpperCase();
   }, [formData.firstName, formData.familyName, user?.firstName, user?.familyName, user?.email]);
+
+  const isPremium = Array.isArray(roles) && roles.some(r => String(r).toUpperCase() === "PREMIUM");
 
   // --- util GET que nunca rejeita
   const safeGet = async (url, cfg = {}) => {
@@ -291,31 +294,44 @@ function EditUserProfile() {
       <div className="flex items-center">
         <div className="ml-auto flex space-x-3">
           {loadFailed && (
-            <button
+            <Button
+              variant="secondary"
+              size="md"
+              fullWidth={false}
               onClick={handleRetry}
-              className="inline-flex items-center px-3 py-2 border rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
-              style={{ borderColor: theme.colors.secondary.light }}
+              className="shrink-0"
               title={t("profile.retry_loading_profile")}
             >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              {t("common.retry")}
-            </button>
+              <span className="inline-flex items-center gap-2">
+                <RotateCcw className="h-4 w-4" />
+                {t("common.retry")}
+              </span>
+            </Button>
           )}
-          <button
+          <Button
+            variant="secondary"
+            size="md"
+            fullWidth={false}
             onClick={handleCancel}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
+            className="shrink-0"
           >
-            <X className="h-5 w-5 mr-2" />
-            {t("common.cancel")}
-          </button>
-          <button
+            <span className="inline-flex items-center gap-2">
+              <X className="h-5 w-5" />
+              {t("common.cancel")}
+            </span>
+          </Button>
+          <Button
+            variant="primary"
+            size="md"
+            fullWidth={false}
             onClick={handleSave}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-white font-medium hover:opacity-90 transition-colors duration-200"
-            style={{ backgroundColor: theme.colors.success.main }}
+            className="shrink-0"
           >
-            <Save className="h-5 w-5 mr-2" />
-            {t("common.save_Changes")}
-          </button>
+            <span className="inline-flex items-center gap-2">
+              <Save className="h-5 w-5" />
+              {t("common.save_Changes")}
+            </span>
+          </Button>
         </div>
       </div>
 
@@ -325,13 +341,14 @@ function EditUserProfile() {
             {errorSubmit || t("errors.couldnt_load_profile")}
           </p>
           <div className="mt-3 flex gap-2">
-            <button
+            <Button
+              variant="primary"
+              size="md"
+              fullWidth={false}
               onClick={handleRetry}
-              className="px-3 py-1 rounded-md text-white"
-              style={{ backgroundColor: theme.colors.primary.main }}
             >
               {t("common.try_again")}
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -367,14 +384,17 @@ function EditUserProfile() {
               </div>
 
               {(currentImageUrl || imagePreview) && !loadFailed && (
-                <button
+                <Button
+                  variant="danger"
+                  size="sm"
+                  fullWidth={false}
                   onClick={removeImage}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                  className="absolute -top-2 -right-2 !p-1 !w-7 !h-7 grid place-items-center rounded-full"
                   title={t("common.remove_photo")}
                   aria-label={t("common.remove_photo")}
                 >
                   <X className="h-4 w-4" />
-                </button>
+                </Button>
               )}
 
               <input
@@ -398,15 +418,18 @@ function EditUserProfile() {
               <p className="text-lg" style={{ color: theme.colors.text.secondary }}>
                 {user?.email || t("common.not_provided")}
               </p>
-              <div className="mt-2">
-                <span
-                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
-                  style={{ backgroundColor: theme.colors.primary.light + "30", color: theme.colors.primary.main }}
-                >
-                  <Shield className="h-4 w-4 mr-1" />
-                  {user?.groupRole || t("common.not_provided")}
-                </span>
-              </div>
+<div className="mt-2">
+  <span
+    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+    style={{
+      backgroundColor: theme.colors.primary.light + "30",
+      color: isPremium ? "gold" : theme.colors.primary.main,
+    }}
+  >
+    <Shield className="h-4 w-4 mr-1" />
+    {isPremium ? "PREMIUM" : "MEMBER"}
+  </span>
+</div>
             </div>
           </div>
         </div>
@@ -641,20 +664,22 @@ function EditUserProfile() {
                 ) : (
                   currentGroupMembers.map((member, index) => (
                     <div key={index} className="flex items-center space-x-2">
-                      <button
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        fullWidth={false}
                         onClick={() => {
                           const updated = [...currentGroupMembers];
                           updated.splice(index, 1);
                           setCurrentGroupMembers(updated);
                         }}
-                        className="px-2 py-1 text-sm rounded-md text-white"
-                        style={{ backgroundColor: theme.colors.error.main }}
+                        className="!w-10 !h-10 !p-0 grid place-items-center"
                         title={t("profile.remove_member")}
                         aria-label={t("profile.remove_member")}
                         disabled={loadFailed}
                       >
                         <X className="h-4 w-4" />
-                      </button>
+                      </Button>
                       <span style={{ color: theme.colors.text.primary }}>{member}</span>
                     </div>
                   ))

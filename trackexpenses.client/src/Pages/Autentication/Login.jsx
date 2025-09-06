@@ -33,30 +33,39 @@ const Login = () => {
       password: formData.password || "",
     };
 
-    const response = await apiCall.post("/User/Login", payload);
+    try {
+      const response = await apiCall.post("/User/Login", payload, {
+        validateStatus: () => true,
+      });
 
-    if (!response.ok) {
+      // o wrapper não expõe "ok"; usamos o status tal como no resto da app
+      if (!(response?.status >= 200 && response?.status < 300)) {
+        setSubmitting(false);
+        return setErrorSubmit(
+          response?.data?.message || "Unable to login"
+        );
+      }
+
+      const data = response.data || {};
+      // normalizar roles quando vem como $values
+      if (data?.Roles?.$values) data.Roles = data.Roles.$values;
+
+      // guarda payload e inicia timers
+      setAuthFromApiPayload(data);
+      AuthTimer_start(data);
+
+      // contexto para UI
+      setAuth(data);
+      setRoles(data.Roles || null);
+      setIsAuthenticated(true);
+
+      // dispara evento global
+      window.dispatchEvent(new Event("token-refreshed"));
+    } catch (err) {
+      setErrorSubmit("Não foi possível iniciar sessão.");
+    } finally {
       setSubmitting(false);
-      return setErrorSubmit(
-        response?.error?.message || "Não foi possível iniciar sessão."
-      );
     }
-
-    const data = response.data;
-    data.Roles = data.Roles.$values
-    // guarda payload e inicia timers
-    setAuthFromApiPayload(data);
-    AuthTimer_start(data);
-
-    // contexto para UI
-    setAuth(data);
-    setRoles(data.Roles || null);
-    setIsAuthenticated(true);
-
-    // dispara evento global
-    window.dispatchEvent(new Event("token-refreshed"));
-
-    setSubmitting(false);
   };
 
   return (
@@ -116,15 +125,19 @@ const Login = () => {
           </div>
 
           {/* Botão Login */}
-          <Button
-            type="submit"
-            size="md"
-            fullWidth
-            disabled={submitting}
-            className="mt-4"
-          >
-            {submitting ? t("common.signingIn") || "A entrar..." : t("common.login")}
-          </Button>
+<Button
+  type="submit"
+  size="md"
+  variant="primary"
+  fullWidth
+  disabled={submitting}
+  className="mt-4 !h-11 !px-6 !rounded-xl leading-none"
+  aria-busy={submitting}
+>
+  {submitting
+    ? t("common.signingIn") || "A entrar..."
+    : t("common.login") || "Login"}
+</Button>
 
           {/* Erros */}
           {errorSubmit && (

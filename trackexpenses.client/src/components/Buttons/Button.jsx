@@ -9,15 +9,16 @@ const Button = ({
   disabled,
   size = "md", // sm, md, lg
   variant = "primary", // primary, secondary, danger
-  fullWidth = true, // controla se ocupa toda a largura
+  fullWidth = false, // se true ocupa 100%, senão usa tamanho fixo
   className = "",
 }) => {
   const { theme } = useTheme();
 
+  // largura e altura fixas -> não dependem do texto
   const sizes = {
-    sm: "h-10 text-sm px-4",
-    md: "h-12 text-base px-6", // altura consistente com Login
-    lg: "h-14 text-lg px-8",
+    sm: "h-10 w-28 text-sm",   // ~112px
+    md: "h-12 w-36 text-base", // ~144px
+    lg: "h-14 w-44 text-lg",   // ~176px
   };
 
   const variants = {
@@ -47,11 +48,11 @@ const Button = ({
       onClick={onClick}
       disabled={disabled}
       className={`
-        ${fullWidth ? "w-full" : "inline-flex"} 
-        rounded-xl 
-        ${sizes[size]} 
-        ${variants[variant]} 
-        ${className} 
+        inline-flex items-center justify-center
+        rounded-xl
+        ${fullWidth ? "w-full" : sizes[size]}
+        ${variants[variant]}
+        ${className}
         disabled:opacity-70
       `}
       style={backgroundStyle}

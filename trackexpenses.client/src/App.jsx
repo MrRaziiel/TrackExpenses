@@ -45,6 +45,8 @@ import RequireRoles from "./services/Authentication/RequireRoles";
 import GroupAdminPage from "./Pages/GroupAdmin/GroupAdminPage";
 import GroupsList from "./Pages/GroupAdmin/GroupsList";
 import CreateGroup from "./Pages/GroupAdmin/CreateGroup";
+import ActivationAccount  from "./services/Authentication/ActivateAccount";
+import DeleteAccount from "./services/Authentication/DeleteAccount";
 
 
 export default function App() {
@@ -97,6 +99,8 @@ export default function App() {
           <Route path="/Register" element={<SignIn />} />
           <Route path="/ForgotPassword" element={<ForgotPassword />} />
           <Route path="/RecoverPassword" element={<RecoverPassword />} />
+          <Route path="/ActivationAccount" element={<ActivationAccount />} />
+          <Route path="/DeleteAccount" element={<DeleteAccount />} />
         </Route>
         <Route element={<RequireRoles allow={["PREMIUM", "GROUPADMINISTRATOR"]} />}>
       <Route path="/GroupAdminPage" element={<GroupAdminPage />} />

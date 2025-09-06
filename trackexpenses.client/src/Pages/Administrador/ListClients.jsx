@@ -152,14 +152,18 @@ export default function UsersTable() {
       {/* header com título + botão */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <Title text={t("common.users")} />
-        <Button
-          variant="primary"
-          leftIcon={<Plus className="h-4 w-4" />}
-          onClick={() => navigate("/users/new")}
-          className="!w-auto !h-11 !px-4 !rounded-lg !text-sm md:!text-base shrink-0"
-        >
-          {t("common.add_user") || "User"}
-        </Button>
+<Button
+  variant="primary"
+  size="md"           
+  fullWidth={false}    
+  onClick={() => navigate("/users/new")}
+  className="shrink-0"
+>
+  <span className="inline-flex items-center gap-2">
+    <Plus className="h-4 w-4" />
+    {t("common.add_user") || "User"}
+  </span>
+</Button>
       </div>
 
       <GenericFilter

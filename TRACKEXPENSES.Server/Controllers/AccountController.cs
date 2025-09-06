@@ -3,9 +3,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.VisualBasic;
 using System.Web;
-using System.Xml.Serialization;
-using TRACKEXPENSES.Server.Controllers;
 using TRACKEXPENSES.Server.Data;
 using TRACKEXPENSES.Server.Models;
 using TRACKEXPENSES.Server.Requests.Group;
@@ -64,6 +63,71 @@ namespace TRACKEXPENSES.Server.Controllers
             await _context.UsersList.AddAsync(user);
             await _userManager.AddToRoleAsync(user, role);
             await _context.SaveChangesAsync();
+            var baseURL = _configuration["EmailConfiguration:URL"];
+            var endpoint_Activation_Account = _configuration["EmailConfiguration:Endpoint_Activation_Account"];
+            var endpoint_Endpoint_delete_Account = _configuration["EmailConfiguration:Endpoint_delete_Account"];
+
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            
+
+            var url_Activation = $"{baseURL}{endpoint_Activation_Account}?email={HttpUtility.UrlEncode(user.Email)}&token={HttpUtility.UrlEncode(token)}";
+            var url_Delete = $"{baseURL}{endpoint_Endpoint_delete_Account}?email={HttpUtility.UrlEncode(user.Email)}&token={HttpUtility.UrlEncode(token)}";
+            var html = $@"
+<!DOCTYPE html>
+<html lang='en'>
+<body style='margin:0; padding:0; font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif; background-color:#f9fafb; color:#111827;'>
+
+  <table width='100%' cellpadding='0' cellspacing='0' style='background-color:#f9fafb; padding:40px 0;'>
+    <tr>
+      <td align='center'>
+        <table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.1);'>
+          <!-- Header -->
+          <tr>
+            <td style='background:linear-gradient(90deg, #2563EB, #1E40AF); padding:20px; text-align:center;'>
+              <h1 style='margin:0; font-size:24px; color:#ffffff;'>Welcome to TRACKEXPENSES 🎉</h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style='padding:30px;'>
+              <p style='font-size:16px; color:#374151;'>
+                Hello and welcome! Your account has been created successfully. To start using all features of TRACKEXPENSES, please confirm your email address.
+              </p>
+
+              <div style='text-align:center; margin:30px 0;'>
+                <a href='{url_Activation}' target='_blank' style='background:#2563EB; color:#ffffff; text-decoration:none; padding:12px 24px; border-radius:8px; font-size:16px; font-weight:600; display:inline-block;'>
+                  Activate My Account
+                </a>
+              </div>
+
+              <p style='font-size:14px; color:#6B7280;'>
+                If you did not create this account, you can delete it safely by clicking the link below:
+              </p>
+
+              <p style='text-align:center; margin-top:10px;'>
+                <a href='{url_Delete}' target='_blank' style='color:#DC2626; font-weight:600; text-decoration:none;'>
+                  Delete Account
+                </a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style='background:#f3f4f6; padding:20px; text-align:center; font-size:12px; color:#6B7280;'>
+              © {DateTime.Now.Year} myTeamSpeak. All rights reserved.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>";
+
+            await _emailSender.SendAsync(user.Email!, "Activation", html);
             return Created();
         }
 
@@ -118,7 +182,7 @@ namespace TRACKEXPENSES.Server.Controllers
             if (string.IsNullOrWhiteSpace(id))
                 return BadRequest("Invalid user ID.");
 
-          
+
 
             var user = await _context.Users
                 .SingleOrDefaultAsync(u => u.Id == id);
@@ -134,7 +198,7 @@ namespace TRACKEXPENSES.Server.Controllers
             {
 
             }
-                var extension = Path.GetExtension(photo.FileName);
+            var extension = Path.GetExtension(photo.FileName);
             if (string.IsNullOrWhiteSpace(extension))
                 return BadRequest("File must have an extension.");
 
@@ -232,7 +296,7 @@ namespace TRACKEXPENSES.Server.Controllers
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
 
             var baseURL = _configuration["EmailConfiguration:URL"];
-            var endpoint = _configuration["EmailConfiguration:Endpoint"];
+            var endpoint = _configuration["EmailConfiguration:Endpoint_Recover"];
 
             var url = $"{baseURL}{endpoint}?email={HttpUtility.UrlEncode(user.Email)}&token={HttpUtility.UrlEncode(token)}";
 
@@ -272,7 +336,10 @@ namespace TRACKEXPENSES.Server.Controllers
         [HttpPost("Test-email")]
         public async Task<IActionResult> TestEmail(string to)
         {
-            await _emailSender.SendAsync(to, "Teste", "<p>Funciona!</p>");
+
+            var html = $@"aaaaaaaaa";
+
+            await _emailSender.SendAsync(to, "Teste", html);
             return Ok(new { message = "Email enviado" });
         }
 
@@ -321,6 +388,34 @@ namespace TRACKEXPENSES.Server.Controllers
             var res = await _jwtService.Authenticate(model, HttpContext);
             if (res is null) return Unauthorized();
             return Ok(res); // contém AccessToken, RefreshToken, etc
+        }
+
+        [HttpPost("ActivationAccount")]
+        public async Task<IActionResult> ActivationAccount([FromBody] UserEmailRequest request)
+        {
+            if (request is null) return BadRequest("Email not found!");
+            var user = await _userManager.FindByEmailAsync(request.UserEmail);
+            if (user is null) return BadRequest("User not found!");
+
+            var confirm = await _userManager.ConfirmEmailAsync(user, request.Token);
+            if (!confirm.Succeeded) return BadRequest("Activation error");
+
+            return Ok("Activated!");
+        }
+
+        [HttpPost("DeleteAccount")]
+        public async Task<IActionResult> DeleteAccount([FromBody] UserEmailRequest request)
+        {
+            if (request is null) return BadRequest("Email not found!");
+            var user = await _userManager.FindByEmailAsync(request.UserEmail);
+            if (user is null) return BadRequest("User not found!");
+            
+            var confirm = await _userManager.DeleteAsync(user);
+
+            if (confirm is null) return BadRequest("Delete user error");
+
+            return Ok("Delete!");
+
         }
 
     }

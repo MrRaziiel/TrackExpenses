@@ -2,12 +2,13 @@ import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import AuthContext from "../../services/Authentication/AuthContext";
 import { useTheme } from "../../styles/Theme/Theme";
 import apiCall from "../../services/ApiCallGeneric/apiCall";
+import { Shield, Camera, Save, X, Pencil } from "lucide-react";
 
 import ProfileAvatar from "../../components/Profile/ProfileAvatar";
 import ProfileInfoSection from "../../components/Profile/ProfileInfoSection";
 import ProfileGroupSection from "../../components/Profile/ProfileGroupSection";
-import ProfileHeader from "../../components/Profile/ProfileHeader";
 import Title from "../../components/Titles/TitlePage";
+import Button from "../../components/Buttons/Button";
 
 /* helpers */
 const normPath = (p) =>
@@ -23,23 +24,22 @@ const buildFileUrl = (filesBase, partialOrAbsolute) => {
 };
 
 function ProfilePage() {
-  const { auth, setAuth } = useContext(AuthContext);
+  const { auth, setAuth, roles } = useContext(AuthContext);
   const { theme } = useTheme();
 
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({});
-  const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [errorSubmit, setErrorSubmit] = useState(null);
 
+  // edição / imagem
+  const [isEditing, setIsEditing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [imageError, setImageError] = useState(null);
   const fileInputRef = useRef(null);
 
-  const API_BASE =
-    import.meta.env.VITE_API_BASE_URL || "https://localhost:5001/api";
   const FILES_BASE =
     import.meta.env.VITE_FILES_BASE_URL || "https://localhost:5001";
 
@@ -50,8 +50,22 @@ function ProfilePage() {
     return null;
   }, [imagePreview, user?.profileImage, auth?.path, FILES_BASE]);
 
-  const firstName = user?.firstName ?? "";
-  const familyName = user?.familyName ?? "";
+  const displayName = useMemo(() => {
+    const fn = (user?.firstName || "").trim();
+    const ln = (user?.familyName || "").trim();
+    return `${fn} ${ln}`.trim() || user?.email || "User";
+  }, [user]);
+
+  const initials = useMemo(() => {
+    const fn = (user?.firstName || "").trim();
+    const ln = (user?.familyName || "").trim();
+    const pair = `${fn.charAt(0)}${ln.charAt(0)}`.trim();
+    return (pair || (user?.email?.[0] ?? "?")).toUpperCase();
+  }, [user]);
+
+  const isPremium =
+    Array.isArray(roles) &&
+    roles.some((r) => String(r).toUpperCase() === "PREMIUM");
 
   useEffect(() => {
     let cancelled = false;
@@ -112,8 +126,8 @@ function ProfilePage() {
         );
         if (!cancelled && res2?.status !== 404) {
           const data = res2?.data || {};
-          const photoPath = data.PhotoPath ?? data.photoPath ?? "";
-          const fName = data.FirstName ?? data.firstName ?? "";
+          const photoPath = data?.PhotoPath ?? data?.photoPath ?? "";
+          const fName = data?.FirstName ?? data?.firstName ?? "";
 
           if (photoPath && photoPath !== "NoPhoto") {
             const relative = normPath(photoPath);
@@ -125,7 +139,7 @@ function ProfilePage() {
           if (fName) {
             setAuth?.((prev) => ({
               ...prev,
-              firstName: prev.firstName || fName,
+              firstName: prev?.firstName || fName,
             }));
           }
         }
@@ -138,7 +152,7 @@ function ProfilePage() {
 
     const email = auth?.Email;
     if (!email) {
-      setUser({
+      const empty = {
         email: "",
         firstName: "",
         familyName: "",
@@ -149,19 +163,9 @@ function ProfilePage() {
         groupId: "",
         profileImage: "",
         groupMembers: [],
-      });
-      setFormData({
-        email: "",
-        firstName: "",
-        familyName: "",
-        birthday: "",
-        phoneNumber: "",
-        groupName: "",
-        groupRole: "Member",
-        groupId: "",
-        profileImage: "",
-        groupMembers: [],
-      });
+      };
+      setUser(empty);
+      setFormData(empty);
       setLoading(false);
       return;
     }
@@ -171,6 +175,9 @@ function ProfilePage() {
       cancelled = true;
     };
   }, [auth?.Email, setAuth, FILES_BASE]);
+
+  // ------- edição / imagem --------
+  const handleFileClick = () => fileInputRef.current?.click();
 
   const handleImageSelect = (e) => {
     const file = e.target.files?.[0];
@@ -186,6 +193,7 @@ function ProfilePage() {
       setImageError("Image size must be less than 5MB");
       return;
     }
+
     setSelectedImage(file);
     const url = URL.createObjectURL(file);
     setImagePreview(url);
@@ -219,12 +227,10 @@ function ProfilePage() {
     }
   };
 
-  const handleSave = async (e) => {
-    e.preventDefault();
+  const handleSave = async () => {
     if (submitting) return;
-    setErrorSubmit(null);
-    setImageError(null);
     setSubmitting(true);
+    setErrorSubmit(null);
 
     let imageUrl = formData.profileImage || user?.profileImage || "";
     if (selectedImage) {
@@ -262,17 +268,12 @@ function ProfilePage() {
         setSelectedImage(null);
         setImagePreview(null);
 
-        // URL absoluto (sem /api) + cache-buster
         const absolute = buildFileUrl(FILES_BASE, imageUrl);
-
-        // 1) propaga no contexto
         setAuth?.((prev) => ({
           ...prev,
-          firstName: updatedUser.firstName ?? prev.firstName,
-          path: absolute || prev.path,
+          firstName: updatedUser.firstName ?? prev?.firstName,
+          path: absolute || prev?.path,
         }));
-
-        // 2) dispara evento global para listeners (SideBar/TopBar)
         window.dispatchEvent(
           new CustomEvent("avatar-updated", { detail: { url: absolute } })
         );
@@ -291,6 +292,7 @@ function ProfilePage() {
     setSelectedImage(null);
     setImagePreview(null);
     setImageError(null);
+    setErrorSubmit(null);
   };
 
   if (loading) {
@@ -306,14 +308,52 @@ function ProfilePage() {
 
   return (
     <div className="">
-      <ProfileHeader
-        isEditing={isEditing}
-        onEdit={() => setIsEditing(true)}
-        onCancel={handleCancel}
-        onSave={handleSave}
-        submitting={submitting}
-        theme={theme}
-      />
+      {/* Header + Ações */}
+      <div className="flex items-center">
+        <Title text="Profile" />
+        <div className="ml-auto flex space-x-3">
+          {isEditing ? (
+            <>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={handleCancel}
+                className="!h-11 !px-4 !rounded-lg leading-none"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <X className="h-5 w-5" />
+                  Cancel
+                </span>
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handleSave}
+                disabled={submitting}
+                className="!h-11 !px-4 !rounded-lg leading-none"
+                aria-busy={submitting}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <Save className="h-5 w-5" />
+                  Save Changes
+                </span>
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => setIsEditing(true)}
+              className="!h-11 !px-4 !rounded-lg leading-none"
+            >
+              <span className="inline-flex items-center gap-2">
+                <Pencil className="h-5 w-5" />
+                Edit Profile
+              </span>
+            </Button>
+          )}
+        </div>
+      </div>
 
       {errorSubmit && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 my-4">
@@ -323,24 +363,87 @@ function ProfilePage() {
 
       <div
         className="bg-white rounded-xl shadow-md overflow-hidden mt-6"
-        style={{ backgroundColor: theme.colors.background.paper }}
+        style={{ backgroundColor: theme.colors?.background?.paper }}
       >
-        <ProfileAvatar
-          currentImageUrl={currentImageUrl}
-          firstName={firstName}
-          familyName={familyName}
-          isEditing={isEditing}
-          fileInputRef={fileInputRef}
-          onFileSelect={handleImageSelect}
-          onRemoveImage={() => {
-            setSelectedImage(null);
-            setImagePreview(null);
-            setFormData((prev) => ({ ...prev, profileImage: "" }));
-          }}
-          imageError={imageError}
-          theme={theme}
-        />
+        {/* Banner/Topo como no EditUserProfile */}
+        <div
+          className="px-6 py-8 border-b"
+          style={{ borderColor: theme.colors.secondary.light }}
+        >
+          <div className="flex items-center space-x-6">
+            <div className="relative">
+              <div
+                className={`h-24 w-24 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-lg overflow-hidden ${
+                  isEditing ? "cursor-pointer" : ""
+                }`}
+                style={{ backgroundColor: theme.colors.primary.main }}
+                onClick={isEditing ? handleFileClick : undefined}
+                title={displayName}
+                aria-label={displayName}
+              >
+                {currentImageUrl ? (
+                  <img
+                    src={currentImageUrl}
+                    alt="Profile photo"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  initials
+                )}
 
+                {isEditing && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 rounded-full">
+                    <Camera className="h-6 w-6 text-white" />
+                  </div>
+                )}
+              </div>
+
+              {/* input de ficheiro escondido */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif"
+                onChange={handleImageSelect}
+                className="hidden"
+                disabled={!isEditing}
+              />
+              {imageError && isEditing && (
+                <p className="text-xs mt-2 text-red-600">{imageError}</p>
+              )}
+            </div>
+
+            <div className="flex-1">
+              <h2
+                className="text-2xl font-bold mb-2"
+                style={{ color: theme.colors.text.primary }}
+              >
+                {displayName}
+              </h2>
+              <p
+                className="text-lg"
+                style={{ color: theme.colors.text.secondary }}
+              >
+                {user?.email || "Not provided"}
+              </p>
+
+              {/* badge role */}
+              <div className="mt-2">
+                <span
+                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                  style={{
+                    backgroundColor: theme.colors.primary.light + "30",
+                    color: isPremium ? "gold" : theme.colors.primary.main,
+                  }}
+                >
+                  <Shield className="h-4 w-4 mr-1" />
+                  {isPremium ? "PREMIUM" : "MEMBER"}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Secções */}
         <ProfileInfoSection
           isEditing={isEditing}
           formData={formData}

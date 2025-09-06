@@ -139,10 +139,23 @@ const translations = {
       inviteHelp:"You can ask your financial administrator that is already registered to give you. <br /><b>Leave blank if you don't have a group code (you can add or change anytime)</b>",
       createAccount: "Create Account!",
       addUser: {
-      title: "Add user"
+      title: "Add user",
+      unable_to_login: "Unable to login",
       },
     },
-  profile: {
+    groups:{
+      enter_email: "Enter a email...",
+      enter_name: "Enter a name for the group...",
+      members: "Members",
+      create: "Create Group",
+      errors_user_not_found: "Sorry, user not found!",
+      errors_invalid_email: "Invalid Email!",
+      errors_name_required: "Name is required",
+      errors_lookup_bad_response: "User lookup returned an unexpected response.",
+      errors_lookup_failed: "Could not verify the user.",
+      error_equal_email: "No need to add yourself."
+    },
+  profile: { 
       title: "Profile",
       edit_Profile: "Edit Profile",
       no_Group_Members: "No group members",

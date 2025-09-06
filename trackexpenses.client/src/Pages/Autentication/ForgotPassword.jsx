@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Mail, ArrowLeft } from "lucide-react";
+import { Mail } from "lucide-react";
 import { useTheme } from "../../styles/Theme/Theme";
 import { useLanguage } from "../../utilis/Translate/LanguageContext";
 import Button from "../../components/Buttons/Button";
@@ -78,12 +78,15 @@ const ForgotPassword = () => {
             icon={<Mail className="h-5 w-5" />}
             required
           />
+
           <Button
             type="submit"
             size="md"
             variant="primary"
+            fullWidth
             disabled={submitting}
-            className="w-full"
+            className="!h-11 !px-6 !rounded-xl leading-none"
+            aria-busy={submitting}
           >
             {submitting
               ? t("auth.sending") || "A enviar..."

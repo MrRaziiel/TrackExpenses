@@ -224,18 +224,40 @@ export default function SignIn() {
 
           <div className="pt-2">
             {step === 1 ? (
-              <Button type="submit" size="md" fullWidth>
-                {t("auth.next") || "Seguinte"}
-              </Button>
+<Button
+  type="submit"
+  size="md"
+  variant="primary"
+  fullWidth
+  className="!h-11 !px-6 !rounded-xl leading-none"
+>
+  {t("auth.next") || "Seguinte"}
+</Button>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
-                <Button variant="secondary" onClick={() => setStep(1)} fullWidth>
-                  {t("common.back") || "Voltar"}
-                </Button>
-                <Button type="submit" disabled={submitting} fullWidth>
-                  {submitting ? t("common.saving") || "A guardar..." : t("auth.createAccount") || "Criar Conta"}
-                </Button>
-              </div>
+<div className="grid grid-cols-2 gap-3">
+  <Button
+    variant="secondary"
+    size="md"
+    onClick={() => setStep(1)}
+    fullWidth
+    className="!h-11 !px-6 !rounded-xl leading-none"
+  >
+    {t("common.back") || "Voltar"}
+  </Button>
+
+  <Button
+    type="submit"
+    size="md"
+    disabled={submitting}
+    fullWidth
+    className="!h-11 !px-6 !rounded-xl leading-none"
+    aria-busy={submitting}
+  >
+    {submitting
+      ? t("common.saving") || "A guardar..."
+      : t("auth.createAccount") || "Criar Conta"}
+  </Button>
+</div>
             )}
           </div>
 

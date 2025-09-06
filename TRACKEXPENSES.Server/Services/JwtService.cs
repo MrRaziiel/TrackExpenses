@@ -91,6 +91,8 @@ namespace TRACKEXPENSES.Server.Services
             if (user is null || !PasswordHashHandler.VerifyPassword(request.Password, user.Password!))
                 return null;
 
+            if (!user.EmailConfirmed) return null;
+
             var roles = (await _userManager.GetRolesAsync(user)) is { Count: > 0 } r
             ? new List<string>(r)
             : new List<string> { "User" };

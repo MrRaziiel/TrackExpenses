@@ -10,5 +10,8 @@ namespace TRACKEXPENSES.Server.Requests.User
             [EmailAddress]
         [DefaultValue("utilizador@gmail.com")]
         public string UserEmail { get; set; }
-        }
+
+        [DefaultValue("*****************")]
+        public string? Token { get; set; }
+    }
 }
