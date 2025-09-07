@@ -2,22 +2,30 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel;
 using System.Data;
 using TRACKEXPENSES.Server.Data;
+using TRACKEXPENSES.Server.Extensions;
 using TRACKEXPENSES.Server.Models;
 using TRACKEXPENSES.Server.Requests.Group;
+using TRACKEXPENSES.Server.Requests.User;
 using TRACKEXPENSES.Server.Services;
 using static TRACKEXPENSES.Server.Controllers.GroupController;
+
 
 namespace TRACKEXPENSES.Server.Controllers
 {
     [ApiController]
     [Route("api/Group")]
-    public class GroupController(IGroupRegistrationService groupService, ICodeGroupService codeService) : ControllerBase
+    public class GroupController(IGroupRegistrationService groupService, ICodeGroupService codeService,
+        FinancasDbContext context, GroupQueryExtensions groupQuerry) : ControllerBase
     {
         private readonly IGroupRegistrationService _groupService = groupService;
         private readonly ICodeGroupService _codeService = codeService;
+        private readonly FinancasDbContext _context = context;
+        private readonly GroupQueryExtensions _groupQuerry = groupQuerry;
+
 
         [HttpPost("Registe")]
         [Authorize]
@@ -57,6 +65,15 @@ namespace TRACKEXPENSES.Server.Controllers
             return exists;
 
         }
+
+        [HttpPost("GetGroupsByUserEmail")]
+
+        public async Task<IActionResult> GetGroupsByUserEmail([FromBody] UserEmailRequest request)
+        {
+            var grupos = await _groupQuerry.GetGroupsByUserEmailAsync(request.UserEmail);
+            return Ok(grupos);
+        }
+
 
         private static readonly Random random = new();
         private string GenerateCodeGroup()

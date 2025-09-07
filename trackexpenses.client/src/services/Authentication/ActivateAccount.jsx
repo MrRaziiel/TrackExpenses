@@ -1,3 +1,4 @@
+// src/Pages/Authentication/ActivationAccount.jsx
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { MailCheck, AlertCircle } from "lucide-react";
@@ -13,7 +14,7 @@ export default function ActivationAccount() {
 
   const [status, setStatus] = useState("loading"); // loading | success | error
   const [message, setMessage] = useState("");
-  const hasPostedRef = useRef(false); // prevents double request in React StrictMode
+  const hasPostedRef = useRef(false); // prevents double request in StrictMode
 
   useEffect(() => {
     if (hasPostedRef.current) return;
@@ -30,15 +31,17 @@ export default function ActivationAccount() {
     }
 
     const payload = {
-      UserEmail: email,   // URLSearchParams already decodes
+      UserEmail: email, // URLSearchParams already decodes
       Token: token,
     };
 
     (async () => {
       try {
+        console.log('payload', payload);
         const res = await apiCall.post("/User/ActivationAccount", payload, {
           validateStatus: () => true,
         });
+        console.log('res', res);
 
         if (res?.status >= 200 && res?.status < 300) {
           setStatus("success");
@@ -59,7 +62,7 @@ export default function ActivationAccount() {
   }, [location.search]);
 
   return (
-    <div className="flex items-center justify-center px-4 sm:px-6 lg:px-8 min-h-screen">
+    <div className="flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <Card
         className="max-w-md w-full p-8 rounded-2xl shadow-2xl text-center"
         style={{
@@ -98,7 +101,11 @@ export default function ActivationAccount() {
             </p>
 
             <Link to="/login" className="block">
-              <Button size="md" fullWidth>
+              <Button
+                size="md"
+                fullWidth
+                className="!h-12 !py-0 text-base font-semibold"
+              >
                 Go to login
               </Button>
             </Link>
@@ -130,7 +137,12 @@ export default function ActivationAccount() {
             </p>
 
             <Link to="/login" className="block">
-              <Button variant="secondary" size="lg" fullWidth>
+              <Button
+                variant="secondary"
+                size="md"
+                fullWidth
+                className="!h-12 !py-0 text-base font-semibold"
+              >
                 Back to login
               </Button>
             </Link>

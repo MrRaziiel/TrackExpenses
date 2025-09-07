@@ -9,7 +9,7 @@ namespace TRACKEXPENSES.Server.Requests.Group
         [Required]
         [EmailAddress]
         [DefaultValue("utilizador@gmail.com")]
-        public string UserEmail { get; set; }
+        public string AdminId { get; set; }
 
         [DefaultValue("****************")]
         public string CodeInvite { get; set; }
@@ -17,10 +17,8 @@ namespace TRACKEXPENSES.Server.Requests.Group
         [DefaultValue("Filipino")]
 
         public string GroupName { get; set; }
-
-        [Required]
-        [DefaultValue(false)]
-        public bool IsAdmin { get; set; } 
+        
+        
 
     }
 }

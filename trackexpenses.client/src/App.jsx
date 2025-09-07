@@ -71,7 +71,7 @@ export default function App() {
     () => [
       { to: "/Users",            icon: UsersIcon,       label: "common.users",     role: "ADMINISTRATOR", section: "ADMIN" },
   { to: "/GroupAdminPage",            icon: BookUser,        label: "common.group_admin",  role: "GROUPADMINISTRATOR", section: "GROUPS" },
-  { to: "/GroupsList",            icon: BookUser,        label: "common.group_list",  role: "PREMIUM", section: "GROUPS" },
+  { to: "/GroupsList",            icon: BookUser,        label: "common.group_list",  role: "USER", section: "GROUPS" },
 
   { to: "/Dashboard",        icon: LayoutDashboard, label: "common.dashboard", role: "USER", section: "FINANCES" },
   { to: "/Expenses",         icon: PiggyBank,       label: "common.expenses",  role: "USER", section: "FINANCES" },

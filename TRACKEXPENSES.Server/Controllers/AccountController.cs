@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +23,7 @@ namespace TRACKEXPENSES.Server.Controllers
 
     public class AccountController(RoleManager<IdentityRole> roleManager, UserManager<User> userManager,
         FinancasDbContext context, IConfiguration configuration,
-        JwtService jwtService, Services.IEmailSender emailSender, IGroupRegistrationService _groupService) : Controller
+        JwtService jwtService, Services.IEmailSender emailSender, IGroupRegistrationService _groupService, ICodeGroupService codeService) : Controller
     {
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
         private readonly UserManager<User> _userManager = userManager;
@@ -31,6 +32,7 @@ namespace TRACKEXPENSES.Server.Controllers
         private readonly JwtService _jwtService = jwtService;
         private readonly Services.IEmailSender _emailSender = emailSender;
         private readonly IGroupRegistrationService IGroupRegistrationService = _groupService;
+        private readonly ICodeGroupService _codeService = codeService;
 
         public sealed record RefreshRequest(string RefreshToken);
 
@@ -40,18 +42,22 @@ namespace TRACKEXPENSES.Server.Controllers
         [HttpPost("Register")]
         public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
         {
+
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var request = new GroupRegisterRequest
+            var value = await _codeService.CheckGroupCodeAsync(new CheckGroupCodeRequest() { Code = model.CodeInvite });
+            var response = "USER"; 
+            if (value != null)
             {
-                CodeInvite = model.CodeInvite,
-                GroupName = model.FamilyName,
-                UserEmail = model.Email,
-            };
+                var request = new GroupRegisterRequest
+                {
+                    CodeInvite = model.CodeInvite,
+                    GroupName = model.FamilyName,
+                };
 
-            var response = await IGroupRegistrationService.RegisterGroupAsync(request);
-
-            if (response.ToString().IsNullOrEmpty()) return BadRequest("Code Invite is wrong");
+                response = await IGroupRegistrationService.RegisterGroupAsync(request);
+                if (response.ToString().IsNullOrEmpty()) return BadRequest("Code Invite is wrong");
+            }
 
             var user = CreateUserFromRegister.fromRegister(model);
 
@@ -116,7 +122,7 @@ namespace TRACKEXPENSES.Server.Controllers
           <!-- Footer -->
           <tr>
             <td style='background:#f3f4f6; padding:20px; text-align:center; font-size:12px; color:#6B7280;'>
-              © {DateTime.Now.Year} myTeamSpeak. All rights reserved.
+              © {DateTime.Now.Year} TRACKEXPENSES. All rights reserved.
             </td>
           </tr>
         </table>
@@ -300,11 +306,60 @@ namespace TRACKEXPENSES.Server.Controllers
 
             var url = $"{baseURL}{endpoint}?email={HttpUtility.UrlEncode(user.Email)}&token={HttpUtility.UrlEncode(token)}";
 
-            var html = $@"<p>Olá,</p>
-<p>Recebemos um pedido para alterar a sua palavra-passe.</p>
-<p>Clique no link abaixo para definir uma nova:</p>
-<p><a href='{url}' target='_blank'>Recuperar palavra-passe</a></p>
-<p>Se não foi você, ignore este e-mail.</p>";
+            var html = $@"
+<!DOCTYPE html>
+<html lang='en'>
+<body style='margin:0; padding:0; font-family:Segoe UI, Roboto, Helvetica, Arial, sans-serif; background-color:#f9fafb; color:#111827;'>
+
+  <table width='100%' cellpadding='0' cellspacing='0' style='background-color:#f9fafb; padding:40px 0;'>
+    <tr>
+      <td align='center'>
+        <table width='600' cellpadding='0' cellspacing='0' style='background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.1);'>
+          
+          <!-- Header -->
+          <tr>
+            <td style='background:linear-gradient(90deg, #2563EB, #1E40AF); padding:20px; text-align:center;'>
+              <h1 style='margin:0; font-size:24px; color:#ffffff;'>Reset your password 🔒</h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style='padding:30px;'>
+              <p style='font-size:16px; color:#374151;'>
+                Hello,
+              </p>
+
+              <p style='font-size:16px; color:#374151;'>
+                We received a request to reset your password. Click the button below to set a new one:
+              </p>
+
+              <div style='text-align:center; margin:30px 0;'>
+                <a href='{url}' target='_blank' style='background:#2563EB; color:#ffffff; text-decoration:none; padding:12px 24px; border-radius:8px; font-size:16px; font-weight:600; display:inline-block;'>
+                  Reset Password
+                </a>
+              </div>
+
+              <p style='font-size:14px; color:#6B7280;'>
+                If you did not request this, you can safely ignore this email.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style='background:#f3f4f6; padding:20px; text-align:center; font-size:12px; color:#6B7280;'>
+              © {DateTime.Now.Year} TRACKEXPENSES. All rights reserved.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>";
+
 
             await _emailSender.SendAsync(user.Email!, "Recuperar palavra-passe", html);
             return Ok(new { message = "Se o e-mail existir e estiver confirmado, enviaremos instruções." });

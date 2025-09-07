@@ -6,6 +6,17 @@ import { useLanguage } from "../../utilis/Translate/LanguageContext";
 import Button from "../../components/Buttons/Button";
 import Input from "../../components/Form/Input";
 import Card from "../../components/UI/Card";
+import apiCall from "../../services/ApiCallGeneric/apiCall";
+
+function tr(t, key, fallback) {
+  const v = t?.(key);
+  return !v || v === key ? fallback : v;
+}
+
+const isValidEmail = (v) => /\S+@\S+\.\S+/.test(v);
+
+// 👉 alterna aqui se o backend quiser raw string (true) ou objeto { email } (false)
+const USE_RAW_STRING = true;
 
 const ForgotPassword = () => {
   const { theme } = useTheme();
@@ -14,22 +25,59 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState(null);
+  const [isError, setIsError] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!isValidEmail(email)) {
+      setMessage(tr(t, "auth.invalidEmail", "E-mail inválido."));
+      setIsError(true);
+      return;
+    }
+
     setSubmitting(true);
     setMessage(null);
+    setIsError(false);
 
     try {
-      // chamada API aqui
-      await new Promise((res) => setTimeout(res, 1000)); // simulação
-      setMessage(t("auth.resetSent") || "Reset link sent to your email.");
+      const payload = USE_RAW_STRING ? JSON.stringify(email.trim()) : { email: email.trim() };
+
+      const res = await apiCall.post("/User/Forgot-password", payload, {
+        // não deixamos o axios rejeitar automaticamente, nós é que validamos:
+        validateStatus: () => true,
+        headers: USE_RAW_STRING
+          ? { "Content-Type": "application/json" }
+          : { "Content-Type": "application/json" },
+        // se o teu apiCall tiver transformRequest padrão que re-serializa,
+        // isto garante que passa a raw string sem mexer:
+        ...(USE_RAW_STRING ? { transformRequest: [(d) => d] } : {}),
+      });
+
+      // ✅ só consideramos sucesso para 2xx
+      if (res?.status < 200 || res?.status >= 300) {
+        const apiMsg =
+          res?.data?.message ||
+          tr(t, "auth.resetError", "Não foi possível enviar o link. Verifique o e-mail e tente novamente.");
+        throw new Error(apiMsg);
+      }
+
+      const successMsg =
+        res?.data?.message ||
+        tr(t, "auth.resetSent", "Enviámos o link de reposição para o seu e-mail.");
+      setMessage(successMsg);
+      setIsError(false);
     } catch (err) {
-      setMessage(t("auth.resetError") || "Something went wrong.");
+      const msg =
+        err?.message ||
+        tr(t, "auth.resetError", "Não foi possível enviar o link. Verifique o e-mail e tente novamente.");
+      setMessage(msg);
+      setIsError(true);
     } finally {
       setSubmitting(false);
     }
   };
+
+  const canSubmit = isValidEmail(email);
 
   return (
     <div className="flex items-center justify-center px-4 sm:px-6 lg:px-8">
@@ -55,7 +103,7 @@ const ForgotPassword = () => {
           className="text-2xl font-bold mb-2"
           style={{ color: theme?.colors?.text?.primary }}
         >
-          {t("auth.forgotTitle") || "Forgot your password?"}
+          {tr(t, "auth.forgotTitle", "Esqueceu-se da palavra-passe?")}
         </h2>
 
         {/* Subtítulo */}
@@ -63,19 +111,22 @@ const ForgotPassword = () => {
           className="text-sm mb-6"
           style={{ color: theme?.colors?.text?.secondary }}
         >
-          {t("auth.forgotSubtitle") ||
-            "No worries! Enter your email and we’ll send you a reset link."}
+          {tr(
+            t,
+            "auth.forgotSubtitle",
+            "Sem stress! Introduza o seu e-mail e enviaremos um link de reposição."
+          )}
         </p>
 
         {/* Form */}
-        <form className="space-y-3" onSubmit={handleSubmit}>
+        <form className="space-y-3" onSubmit={handleSubmit} noValidate>
           <Input
             type="email"
             name="email"
-            placeholder={t("placeholders.email") || "Enter your email address"}
+            placeholder={tr(t, "placeholders.email", "Introduza o seu e-mail")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            icon={<Mail className="h-5 w-5" />}
+            leftIcon={<Mail className="h-5 w-5 text-gray-400" />}
             required
           />
 
@@ -84,20 +135,26 @@ const ForgotPassword = () => {
             size="md"
             variant="primary"
             fullWidth
-            disabled={submitting}
+            disabled={submitting || !canSubmit}
             className="!h-11 !px-6 !rounded-xl leading-none"
             aria-busy={submitting}
           >
             {submitting
-              ? t("auth.sending") || "A enviar..."
-              : t("auth.sendEmail") || "Send reset link"}
+              ? tr(t, "auth.sending", "A enviar…")
+              : tr(t, "auth.sendEmail", "Enviar link de reposição")}
           </Button>
         </form>
 
         {message && (
           <p
             className="mt-4 text-sm"
-            style={{ color: theme?.colors?.success?.main }}
+            role="status"
+            aria-live="polite"
+            style={{
+              color: isError
+                ? theme?.colors?.error?.main
+                : theme?.colors?.success?.main,
+            }}
           >
             {message}
           </p>
@@ -106,14 +163,14 @@ const ForgotPassword = () => {
         {/* Link de volta */}
         <div className="mt-6 text-sm flex flex-col items-center">
           <span style={{ color: theme?.colors?.text?.secondary }}>
-            {t("auth.rememberPassword") || "Remember your password?"}
+            {tr(t, "auth.rememberPassword", "Lembrou-se da palavra-passe?")}
           </span>
           <Link
             to="/login"
             className="font-medium hover:underline mt-1"
             style={{ color: theme?.colors?.primary?.main }}
           >
-            {t("auth.backToSignIn") || "Back to sign in"}
+            {tr(t, "auth.backToSignIn", "Voltar a iniciar sessão")}
           </Link>
         </div>
       </Card>

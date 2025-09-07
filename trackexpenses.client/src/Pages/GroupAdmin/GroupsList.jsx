@@ -1,21 +1,24 @@
-import React from "react";
+import React, { useContext, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Users } from "lucide-react";
 import { useTheme } from "../../styles/Theme/Theme";
 import { useLanguage } from "../../utilis/Translate/LanguageContext";
+import AuthContext from "../../services/Authentication/AuthContext";
 import Title from "../../components/Titles/TitlePage";
 
 export default function GroupList({
-  groups = [],                // [{ id, name, membersCount, description }]
+  groups = [],                // [{ id, name, description, membersCount?, users? }]
   loading = false,
   error = null,
-  // rota da criação (sem argumentos):
   createTo = "/CreateGroup",
-  // como construir o link para um grupo:
   getLink = (g) => `/Groups/${g.id || g.name || ""}`,
 }) {
   const { theme } = useTheme();
   const { t } = useLanguage();
+  const { roles } = useContext(AuthContext) || {};
+
+  const isPremium =
+    Array.isArray(roles) && roles.some((r) => String(r).toUpperCase() === "PREMIUM");
 
   const c = theme?.colors || {};
   const paper = c.background?.paper || "#111827";
@@ -28,10 +31,37 @@ export default function GroupList({
     try { return k && k.includes(".") ? t(k) : k; } catch { return fallback ?? k; }
   };
 
+  // ——— normalização leve, para lidar com variações de propriedades  ———
+  const pick = (obj, keys) => {
+    for (const k of keys) {
+      if (obj && obj[k] != null) return obj[k];
+      const found = Object.keys(obj || {}).find(kk => kk.toLowerCase() === String(k).toLowerCase());
+      if (found && obj[found] != null) return obj[found];
+    }
+    return undefined;
+  };
+
+  const normalizedGroups = useMemo(() => {
+    return (groups || []).map((g, idx) => {
+      const id = String(pick(g, ["id", "groupId", "Id", "GroupId"]) ?? idx);
+      const name = String(
+        pick(g, ["name", "Name", "title", "Title"]) ?? `Group ${id}`
+      );
+      const description = pick(g, ["description", "Description", "desc", "Desc"]) ?? null;
+      // se já vier membersCount, usa; senão conta users se existir
+      const usersArr = pick(g, ["users", "Users"]);
+      const derivedCount = Array.isArray(usersArr) ? usersArr.length : undefined;
+      const membersCount = pick(g, ["membersCount", "MembersCount"]) ?? derivedCount ?? null;
+
+      return { id, name, description, membersCount };
+    });
+  }, [groups]);
+
+  // ——— UI helpers ———
   const EmptyCreateCard = () => (
     <Link
       to={createTo}
-      className="group relative w-full rounded-2xl border-2 border-dashed flex items-center justify-center p-10"
+      className="group relative w-full rounded-2xl border-2 border-dashed flex items-center justify-center p-10 min-h-[220px]"
       style={{ borderColor: border, backgroundColor: paper, color: text }}
       title={tr("common.createGroup", "Create group")}
     >
@@ -59,18 +89,35 @@ export default function GroupList({
   const CreateTile = () => (
     <Link
       to={createTo}
-      className="rounded-2xl border-2 border-dashed p-6 flex items-center justify-center transition-colors hover:shadow"
-      style={{ borderColor: border, backgroundColor: paper, color: primary }}
+      className="group relative w-full rounded-2xl border-2 border-dashed flex items-center justify-center p-10 min-h-[220px]"
+      style={{ borderColor: border, backgroundColor: paper, color: text }}
       title={tr("common.createGroup", "Create group")}
     >
-      <Plus className="h-6 w-6" />
+      <div className="flex flex-col items-center gap-3">
+        <div
+          className="h-14 w-14 rounded-full flex items-center justify-center transition-transform group-hover:scale-110"
+          style={{ backgroundColor: `${primary}22`, color: primary }}
+        >
+          <Plus className="h-7 w-7" />
+        </div>
+        <div className="text-lg font-semibold">
+          {tr("common.createGroup", "Create group")}
+        </div>
+        <div className="text-sm" style={{ color: muted }}>
+          {tr("groups.tap_to_create", "Tap to create a new group")}
+        </div>
+      </div>
+      <span
+        className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"
+        style={{ boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)" }}
+      />
     </Link>
   );
 
   const GroupTile = ({ g }) => (
     <Link
       to={getLink(g)}
-      className="rounded-2xl p-5 transition-colors hover:shadow"
+      className="rounded-2xl p-5 transition-colors hover:shadow min-h-[220px]"
       style={{ backgroundColor: paper, color: text, border: `1px solid ${border}` }}
       title={g?.name || "Group"}
     >
@@ -82,7 +129,9 @@ export default function GroupList({
           <Users className="h-5 w-5" />
         </div>
         <div className="min-w-0">
-          <div className="font-semibold truncate">{g?.name || tr("common.group", "Group")}</div>
+          <div className="font-semibold truncate">
+            {g?.name || tr("common.group", "Group")}
+          </div>
           <div className="text-sm truncate" style={{ color: muted }}>
             {g?.description || tr("groups.no_description", "No description")}
           </div>
@@ -124,15 +173,22 @@ export default function GroupList({
       {/* conteúdo */}
       {!loading && !error && (
         <>
-          {(!groups || groups.length === 0) ? (
-            <EmptyCreateCard />
+          {(normalizedGroups.length === 0) ? (
+            isPremium ? (
+              <EmptyCreateCard />
+            ) : (
+              <div
+                className="rounded-xl p-6 text-sm text-center"
+                style={{ backgroundColor: paper, color: muted, border: `1px solid ${border}` }}
+              >
+                {tr("groups.no_groups", "No groups available.")}
+              </div>
+            )
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {/* tile de criar */}
-              <CreateTile />
-              {/* grupos */}
-              {groups.map((g, idx) => (
-                <GroupTile key={g?.id ?? g?.name ?? idx} g={g} />
+              {isPremium && <CreateTile />}
+              {normalizedGroups.map((g) => (
+                <GroupTile key={g.id} g={g} />
               ))}
             </div>
           )}

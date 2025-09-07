@@ -141,6 +141,8 @@ const translations = {
       addUser: {
       title: "Add user",
       unable_to_login: "Unable to login",
+      resetSent: "Reset link sent to your email.",
+      resetError: "Something went wrong.",
       },
     },
     groups:{
@@ -153,7 +155,10 @@ const translations = {
       errors_name_required: "Name is required",
       errors_lookup_bad_response: "User lookup returned an unexpected response.",
       errors_lookup_failed: "Could not verify the user.",
-      error_equal_email: "No need to add yourself."
+      error_equal_email: "No need to add yourself.",
+      no_groups: "No groups found",   
+      list_title: "Groups list",
+      create_title: "Create Group"
     },
   profile: { 
       title: "Profile",

@@ -17,13 +17,14 @@ public class GroupRegistrationService : IGroupRegistrationService
         _context = context;
     }
 
+
     public async Task<string?> RegisterGroupAsync(GroupRegisterRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.CodeInvite))
             return "USER";
 
         var user = await _context.Users
-            .FirstOrDefaultAsync(x => x.Email == request.UserEmail);
+            .FirstOrDefaultAsync(x => x.Id == request.AdminId);
         if (user is null) return null;
 
         var group = await _context.GroupOfUsers

@@ -117,7 +117,7 @@ function RecoverPassword() {
 
               <div className="mt-8 space-y-4">
                 <Link
-                  to="/signin"
+                  to="/login"
                   className="w-full flex justify-center items-center py-3 px-4 border rounded-lg font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200"
                   style={{
                     borderColor: theme?.colors?.secondary?.light,
@@ -125,7 +125,7 @@ function RecoverPassword() {
                   }}
                 >
                   <ArrowLeft className="mr-2 h-5 w-5" />
-                  Back to sign in
+                  Back to login
                 </Link>
               </div>
             </>

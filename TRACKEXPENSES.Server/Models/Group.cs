@@ -74,7 +74,7 @@ namespace TRACKEXPENSES.Server.Models
 
     public class UserGroup
     {
-        public string UserId { get; set; }
+        public string AdminId { get; set; }
         public User User { get; set; }
 
         public string GroupId { get; set; }

@@ -58,7 +58,6 @@ export default function CreateGroup({
 
     setMemberBusy(true);
     try {
-      console.log("auth:", auth.Email, " email:" , email);
       if (auth.Email == email)
         {
           setErr(tr("groups.error_equal_email", "No need to add yourself."));
