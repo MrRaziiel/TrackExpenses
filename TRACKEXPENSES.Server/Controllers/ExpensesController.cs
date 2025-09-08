@@ -1,14 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.Drawing;
-using System.Text.Json;
 using TRACKEXPENSES.Server.Data;
 using TRACKEXPENSES.Server.Models;
 using TRACKEXPENSES.Server.ViewModels;
-using IronBarCode;
-
+using Microsoft.AspNetCore.Http;
 
 namespace TRACKEXPENSES.Server.Controllers
 {
@@ -16,19 +11,17 @@ namespace TRACKEXPENSES.Server.Controllers
     [Route("api/Expenses")]
     public class ExpensesController(FinancasDbContext context) : ControllerBase
     {
-
         private readonly FinancasDbContext _context = context;
 
         [HttpPost("CreateExpensesWithImage")]
-        public async Task<IActionResult> CreateExpensesWithImage(
-    [FromForm] ExpenseCreateRequestViewModel request,
-    IFormFile? image,
-    [FromForm] string? uploadType)
+        [Consumes("multipart/form-data")]
+
+        public async Task<IActionResult> CreateExpensesWithImage([FromForm] ExpenseCreateRequestViewModel request)
         {
             if (request == null || string.IsNullOrEmpty(request.UserEmail))
                 return BadRequest("Missing expense data or user email.");
 
-            var user = await context.Users.FirstOrDefaultAsync(u => u.Email == request.UserEmail);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.UserEmail);
             if (user == null) return NotFound("User not found.");
 
             var expenseId = Guid.NewGuid().ToString();
@@ -94,9 +87,9 @@ namespace TRACKEXPENSES.Server.Controllers
             }
 
             // ===== IMAGEM =====
-            if (image != null && !string.IsNullOrEmpty(uploadType))
+            if (request.Image != null && !string.IsNullOrEmpty(request.UploadType))
             {
-                var extension = Path.GetExtension(image.FileName);
+                var extension = Path.GetExtension(request.Image.FileName);
                 if (string.IsNullOrWhiteSpace(extension))
                     return BadRequest("File must have an extension.");
 
@@ -109,9 +102,9 @@ namespace TRACKEXPENSES.Server.Controllers
                 var fullPath = Path.Combine(rootPath, fileName);
                 var relativePath = Path.Combine(folderPath, fileName).Replace("\\", "/");
 
-                using (var stream = new FileStream(fullPath, FileMode.Create))
+                await using (var stream = new FileStream(fullPath, FileMode.Create))
                 {
-                    await image.CopyToAsync(stream);
+                    await request.Image.CopyToAsync(stream);
                 }
 
                 var imageDb = new ImageDB
@@ -121,13 +114,13 @@ namespace TRACKEXPENSES.Server.Controllers
                     Extension = extension
                 };
 
-                await context.ImagesDB.AddAsync(imageDb);
+                await _context.ImagesDB.AddAsync(imageDb);
                 expense.ImageId = imageDb.Id;
             }
 
-            await context.Expenses.AddAsync(expense);
-            await context.ExpenseInstances.AddRangeAsync(instances);
-            await context.SaveChangesAsync();
+            await _context.Expenses.AddAsync(expense);
+            await _context.ExpenseInstances.AddRangeAsync(instances);
+            await _context.SaveChangesAsync();
 
             return Ok(new { ExpenseId = expense.Id, Instances = instances.Count });
         }
@@ -138,10 +131,10 @@ namespace TRACKEXPENSES.Server.Controllers
         {
             try
             {
-                var user = await context.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == userEmail);
                 if (user == null) return NotFound("User not found.");
 
-                var expenses = await context.Expenses
+                var expenses = await _context.Expenses
                     .Where(e => e.UserId == user.Id)
                     .Include(e => e.Instances)
                     .ToListAsync();
@@ -152,34 +145,33 @@ namespace TRACKEXPENSES.Server.Controllers
             {
                 return StatusCode(500, "Failed to read QR: " + ex.Message);
             }
-
         }
 
         [HttpPost("DeleteExpense")]
         public async Task<IActionResult> DeleteExpense([FromBody] DeleteExpenseRequest request)
         {
             if (request.Id == null) return NotFound();
-            var expense = await context.Expenses
+
+            var expense = await _context.Expenses
                 .Include(e => e.Instances)
                 .FirstOrDefaultAsync(e => e.Id == request.Id);
 
             if (expense == null) return NotFound();
 
-            context.ExpenseInstances.RemoveRange(expense.Instances);
-            context.Expenses.Remove(expense);
+            _context.ExpenseInstances.RemoveRange(expense.Instances);
+            _context.Expenses.Remove(expense);
 
-            await context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
             return Ok();
         }
-
 
         [HttpGet("GetFutureExpenseDates")]
         public async Task<IActionResult> GetFutureExpenseDates([FromQuery] string email)
         {
-            var user = await context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
             if (user == null) return NotFound();
 
-            var futureInstances = await context.ExpenseInstances
+            var futureInstances = await _context.ExpenseInstances
                 .Include(i => i.Expense)
                 .Where(i => i.Expense.UserId == user.Id && i.DueDate >= DateTime.Today)
                 .Select(i => new
@@ -206,7 +198,7 @@ namespace TRACKEXPENSES.Server.Controllers
             if (updated == null || string.IsNullOrEmpty(updated.Id))
                 return BadRequest("Dados inválidos.");
 
-            var existingExpense = await context.Expenses
+            var existingExpense = await _context.Expenses
                 .Include(e => e.Instances)
                 .FirstOrDefaultAsync(e => e.Id == updated.Id);
 
@@ -226,50 +218,42 @@ namespace TRACKEXPENSES.Server.Controllers
             existingExpense.Category = updated.Category;
             existingExpense.GroupId = updated.GroupId;
 
-
-
+            // Recalcular valores das instâncias (mantendo as datas existentes)
             if (existingExpense.Instances.Any())
             {
-                // Gerar novas instâncias com base nos dados
-                decimal instanceValue = 0;
-
-            if (updated.Periodicity != "Endless" && updated.Periodicity != "OneTime")
+                decimal instanceValue;
+                if (updated.Periodicity != "Endless" && updated.Periodicity != "OneTime")
                 {
-                  int count = (int)updated.RepeatCount;
-                  instanceValue = Math.Round((decimal)((updated.Value - existingExpense.PayAmount) / count), 2);
+                    var count = Math.Max(1, (int)(updated.RepeatCount ?? existingExpense.Instances.Count));
+                    var alreadyPaid = existingExpense.PayAmount ?? 0m;
+                    instanceValue = Math.Round((updated.Value - alreadyPaid) / count, 2);
+                }
+                else
+                {
+                    instanceValue = updated.Value;
+                }
 
-            }
-            else
-            {
-                instanceValue = updated.Value;
-            }
-
-            foreach (var updateInstance in existingExpense.Instances.OrderBy(i => i.DueDate))
-
-            {
-                    updateInstance.Value = instanceValue;
-                 context.ExpenseInstances.Update(updateInstance);
+                foreach (var inst in existingExpense.Instances.OrderBy(i => i.DueDate))
+                {
+                    inst.Value = instanceValue;
+                    _context.ExpenseInstances.Update(inst);
                 }
             }
 
-            context.Expenses.Update(existingExpense);
-            await context.SaveChangesAsync();
+            _context.Expenses.Update(existingExpense);
+            await _context.SaveChangesAsync();
             return Ok();
         }
-
-
-
-
 
         [HttpPatch("MarkAsPaid/{instanceId}")]
         public async Task<IActionResult> MarkAsPaid(string instanceId)
         {
-            var instance = await context.ExpenseInstances.FindAsync(instanceId);
+            var instance = await _context.ExpenseInstances.FindAsync(instanceId);
             if (instance == null)
                 return NotFound("Instance not found.");
 
             instance.IsPaid = true;
-            await context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
             return Ok("Marked as paid.");
         }
@@ -277,7 +261,7 @@ namespace TRACKEXPENSES.Server.Controllers
         [HttpGet("GetExpenseWithInstances")]
         public async Task<IActionResult> GetExpenseWithInstances(string id)
         {
-            var expense = await context.Expenses
+            var expense = await _context.Expenses
                 .Include(e => e.Instances)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -287,12 +271,11 @@ namespace TRACKEXPENSES.Server.Controllers
             return Ok(expense);
         }
 
-
         [HttpGet("GetExpenseInstanceById")]
         public async Task<IActionResult> GetExpenseInstanceById(string id)
         {
-            var instance = await context.ExpenseInstances
-                .Include(e => e.Image) // opcional
+            var instance = await _context.ExpenseInstances
+                .Include(e => e.Image) // se tiver FK para ImageDB
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             if (instance == null)
@@ -300,67 +283,70 @@ namespace TRACKEXPENSES.Server.Controllers
 
             return Ok(instance);
         }
-        
-        [HttpPost("UpdateExpenseInstance")]
-        public async Task<IActionResult> UpdateExpenseInstance([FromBody] ExpenseInstance updatedInstance)
+
+        // DTO para update da instância (limpo)
+        public sealed class UpdateExpenseInstanceRequest
         {
-            var instance = await context.ExpenseInstances.FindAsync(updatedInstance.Id);
+            public string Id { get; set; } = default!;
+            public DateTime DueDate { get; set; }
+            public bool IsPaid { get; set; }
+            public decimal? Value { get; set; } // opcional
+        }
+
+        [HttpPost("UpdateExpenseInstance")]
+        public async Task<IActionResult> UpdateExpenseInstance([FromBody] UpdateExpenseInstanceRequest updated)
+        {
+            if (updated == null || string.IsNullOrWhiteSpace(updated.Id))
+                return BadRequest("Invalid payload.");
+
+            var instance = await _context.ExpenseInstances.FindAsync(updated.Id);
             if (instance == null)
-                return NotFound();
+                return NotFound("Instance not found.");
 
-            instance.DueDate = updatedInstance.DueDate;
-            instance.IsPaid = updatedInstance.IsPaid;
+            instance.DueDate = updated.DueDate;
+            instance.IsPaid = updated.IsPaid;
+            if (updated.Value.HasValue)
+                instance.Value = updated.Value.Value;
 
-            // Se quiser permitir atualização de valor (caso esse campo exista na instância)
-            if (updatedInstance.GetType().GetProperty("Value") != null)
-            {
-                var value = updatedInstance.GetType().GetProperty("Value")?.GetValue(updatedInstance);
-                instance.GetType().GetProperty("Value")?.SetValue(instance, value);
-            }
-
-            await context.SaveChangesAsync();
-
+            await _context.SaveChangesAsync();
             return Ok(instance);
         }
 
         public class DeleteExpenseRequest
         {
-            public string Id { get; set; }
+            public string Id { get; set; } = default!;
         }
-        
+
         [HttpGet("GetExpenseImage/{expenseId}")]
         public async Task<IActionResult> GetExpenseImage(string expenseId)
         {
             if (string.IsNullOrEmpty(expenseId))
                 return BadRequest("Invalid expense ID");
 
-            var expense = await context.Expenses
-                .SingleOrDefaultAsync(e => e.Id == expenseId);
-
+            var expense = await _context.Expenses.SingleOrDefaultAsync(e => e.Id == expenseId);
             if (expense == null)
                 return NotFound("Expense not found");
 
             if (expense.ImageId == null || expense.ImageId == "No_image.jpg")
                 return Ok(new { imagePath = "NoPhoto" });
 
-            var image = await context.ImagesDB
-                .SingleOrDefaultAsync(img => img.Id.ToString() == expense.ImageId);
-
+            var image = await _context.ImagesDB.SingleOrDefaultAsync(img => img.Id == expense.ImageId);
             if (image == null)
                 return Ok(new { imagePath = "NoPhoto" });
 
             return Ok(new { imagePath = image.Name });
         }
+
         [HttpPost("UploadImage/{expenseId}")]
         public async Task<IActionResult> UploadImage(string expenseId, IFormFile Image)
         {
             if (string.IsNullOrEmpty(expenseId) || Image == null)
                 return BadRequest("Invalid input");
 
-            var expense = await context.Expenses.FirstOrDefaultAsync(e => e.Id == expenseId);
+            var expense = await _context.Expenses.FirstOrDefaultAsync(e => e.Id == expenseId);
             if (expense == null) return NotFound("Expense not found");
 
-            var user = await context.Users.FirstOrDefaultAsync(u => u.Id == expense.UserId);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == expense.UserId);
             if (user == null) return NotFound("User not found");
 
             var extension = Path.GetExtension(Image.FileName);
@@ -372,14 +358,11 @@ namespace TRACKEXPENSES.Server.Controllers
             Directory.CreateDirectory(rootPath);
 
             string imageId;
-            string fileName;
-            string fullPath;
-            string relativePath;
 
             // Se já existe uma imagem, remove a antiga
             if (!string.IsNullOrEmpty(expense.ImageId))
             {
-                var existing = await context.ImagesDB.FirstOrDefaultAsync(i => i.Id == expense.ImageId);
+                var existing = await _context.ImagesDB.FirstOrDefaultAsync(i => i.Id == expense.ImageId);
                 if (existing != null)
                 {
                     var existingPath = Path.Combine("wwwroot", existing.Name.Replace("/", Path.DirectorySeparatorChar.ToString()));
@@ -387,7 +370,7 @@ namespace TRACKEXPENSES.Server.Controllers
                     {
                         System.IO.File.Delete(existingPath);
                     }
-                    context.ImagesDB.Remove(existing);
+                    _context.ImagesDB.Remove(existing);
                 }
 
                 imageId = expense.ImageId;
@@ -397,11 +380,11 @@ namespace TRACKEXPENSES.Server.Controllers
                 imageId = Guid.NewGuid().ToString();
             }
 
-            fileName = imageId + extension;
-            fullPath = Path.Combine(rootPath, fileName);
-            relativePath = Path.Combine(folderPath, fileName).Replace("\\", "/");
+            var fileName = imageId + extension;
+            var fullPath = Path.Combine(rootPath, fileName);
+            var relativePath = Path.Combine(folderPath, fileName).Replace("\\", "/");
 
-            using (var stream = new FileStream(fullPath, FileMode.Create))
+            await using (var stream = new FileStream(fullPath, FileMode.Create))
             {
                 await Image.CopyToAsync(stream);
             }
@@ -413,10 +396,10 @@ namespace TRACKEXPENSES.Server.Controllers
                 Extension = extension
             };
 
-            context.ImagesDB.Add(imageDb);
+            _context.ImagesDB.Add(imageDb);
             expense.ImageId = imageDb.Id;
 
-            await context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
             return Ok(new { imagePath = imageDb.Name });
         }
@@ -424,7 +407,7 @@ namespace TRACKEXPENSES.Server.Controllers
         [HttpGet("GetExpenseById/{id}")]
         public async Task<IActionResult> GetExpenseById(string id)
         {
-            var expense = await context.Expenses
+            var expense = await _context.Expenses
                 .Include(e => e.Instances)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -433,9 +416,5 @@ namespace TRACKEXPENSES.Server.Controllers
 
             return Ok(expense);
         }
-
-
-        
-
     }
 }

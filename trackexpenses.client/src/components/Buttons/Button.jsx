@@ -8,17 +8,17 @@ const Button = ({
   onClick,
   disabled,
   size = "md", // sm, md, lg
-  variant = "primary", // primary, secondary, danger
-  fullWidth = false, // se true ocupa 100%, senão usa tamanho fixo
+  variant = "primary", // primary, secondary, danger, success
+  fullWidth = false,
   className = "",
 }) => {
   const { theme } = useTheme();
+  const c = theme?.colors || {};
 
-  // largura e altura fixas -> não dependem do texto
   const sizes = {
-    sm: "h-10 w-28 text-sm",   // ~112px
-    md: "h-12 w-36 text-base", // ~144px
-    lg: "h-14 w-44 text-lg",   // ~176px
+    sm: "h-10 w-28 text-sm",
+    md: "h-12 w-36 text-base",
+    lg: "h-14 w-44 text-lg",
   };
 
   const variants = {
@@ -32,13 +32,21 @@ const Button = ({
     danger: `
       bg-red-600 text-white hover:bg-red-700
     `,
+    success: `
+      text-white font-medium shadow-lg hover:shadow-xl
+      transform hover:-translate-y-0.5 transition-all duration-200
+    `,
   };
 
-  // gradiente azul (como no Login)
+  // backgrounds customizados
   const backgroundStyle =
     variant === "primary"
       ? {
-          background: `linear-gradient(135deg, ${theme?.colors?.primary?.main}, ${theme?.colors?.primary?.dark})`,
+          background: `linear-gradient(135deg, ${c.primary?.main}, ${c.primary?.dark})`,
+        }
+      : variant === "success"
+      ? {
+          background: `linear-gradient(135deg, ${c.success?.main}, ${c.success?.light})`,
         }
       : {};
 
@@ -68,7 +76,7 @@ Button.propTypes = {
   onClick: PropTypes.func,
   disabled: PropTypes.bool,
   size: PropTypes.oneOf(["sm", "md", "lg"]),
-  variant: PropTypes.oneOf(["primary", "secondary", "danger"]),
+  variant: PropTypes.oneOf(["primary", "secondary", "danger", "success"]),
   fullWidth: PropTypes.bool,
   className: PropTypes.string,
 };

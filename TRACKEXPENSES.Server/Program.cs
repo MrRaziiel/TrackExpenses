@@ -6,6 +6,8 @@ using System.Text;
 using TRACKEXPENSES.Server.Data;
 using TRACKEXPENSES.Server.Extensions;
 using TRACKEXPENSES.Server.Services;
+using TRACKEXPENSES.Server.Services.Expenses;
+using TRACKEXPENSES.Server.Services.Subscription;
 
 
 
@@ -43,15 +45,19 @@ builder.Services.AddControllers()
     });
 
 builder.Services.Configure<SmtpOptions>(
-    builder.Configuration.GetSection("Smtp")); 
+    builder.Configuration.GetSection("Smtp"));
+builder.Services.Configure<PremiumOptions>(builder.Configuration.GetSection("Premium"));
 builder.Services.AddScoped<TRACKEXPENSES.Server.Services.IEmailSender, SmtpEmailSender>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<JwtService>();
-builder.Services.AddScoped<IGroupRegistrationService, GroupRegistrationService>();
 builder.Services.AddScoped<ICodeGroupService, CodeGroupService>();
+builder.Services.AddScoped<GroupQueryExtensions>();
+builder.Services.AddScoped<ISubscriptionProvider, ClaimsSubscriptionProvider>();
+
+builder.Services.AddScoped<IPremiumService, PremiumService>();
 
 var app = builder.Build();
 app.UseDefaultFiles();

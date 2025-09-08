@@ -37,11 +37,9 @@ export default function ActivationAccount() {
 
     (async () => {
       try {
-        console.log('payload', payload);
         const res = await apiCall.post("/User/ActivationAccount", payload, {
           validateStatus: () => true,
         });
-        console.log('res', res);
 
         if (res?.status >= 200 && res?.status < 300) {
           setStatus("success");

@@ -4,67 +4,88 @@ using Microsoft.AspNetCore.Mvc;
 using TRACKEXPENSES.Server.Data;
 using TRACKEXPENSES.Server.Models;
 using TRACKEXPENSES.Server.Requests.User;
+using TRACKEXPENSES.Server.Services.Expenses;
+using Microsoft.EntityFrameworkCore;
 
-namespace TRACKEXPENSES.Server.Controllers
+[ApiController]
+[Route("api/Premium")]
+public class PremiumController : ControllerBase
 {
+    private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly UserManager<User> _userManager;
+    private readonly FinancasDbContext _db;
+    private readonly IPremiumService _premium;
 
-    [ApiController]
-    [Route("api/Premium")]
-    public class PremiumController(RoleManager<IdentityRole> roleManager, UserManager<User> userManager, FinancasDbContext context) : ControllerBase
+    public PremiumController(
+        RoleManager<IdentityRole> roleManager,
+        UserManager<User> userManager,
+        FinancasDbContext context,
+        IPremiumService premium)
     {
-        private readonly RoleManager<IdentityRole> _roleManager = roleManager;
-        private readonly UserManager<User> _userManager = userManager;
-        private readonly FinancasDbContext _context = context;
+        _roleManager = roleManager;
+        _userManager = userManager;
+        _db = context;
+        _premium = premium;
+    }
 
-        [HttpPost("Subscribe")]
-        [Authorize]
-        public async Task<IActionResult> Subscribe([FromBody] UserEmailRequest request)
+    [HttpPost("Subscribe")]
+    [Authorize]
+    public async Task<IActionResult> Subscribe([FromBody] UserEmailRequest request, CancellationToken ct)
+    {
+        var user = await _db.Users.SingleOrDefaultAsync(c => c.Email == request.UserEmail, ct);
+        if (user == null) return NotFound("No user found");
+
+        if (!await _roleManager.RoleExistsAsync("PREMIUM"))
+            await _roleManager.CreateAsync(new IdentityRole("PREMIUM"));
+
+        var roles = await _userManager.GetRolesAsync(user);
+        if (!roles.Contains("PREMIUM"))
         {
-            var userEmail = request.UserEmail;
-
-            if (userEmail == null) return NotFound("No user found");
-
-            var existUser = context.Users.SingleOrDefault(c => c.Email.Contains(userEmail));
-            if (existUser == null) return NotFound("No user found");
-
-            var listRoles = await userManager.GetRolesAsync(existUser);
-            var role = listRoles.FirstOrDefault(c => c == "PREMIUM");
-
-            if (role != null) return UnprocessableEntity("User is already PREMIUM");
-
-            var addRoleToUserResponse = await userManager.AddToRoleAsync(existUser, "PREMIUM");
-
-            if (!addRoleToUserResponse.Succeeded) return NotFound("Error to change to premium");
-
-            var isSave = _context.SaveChangesAsync();
-            
-            return Created();
-
+            var addRoleRes = await _userManager.AddToRoleAsync(user, "PREMIUM");
+            if (!addRoleRes.Succeeded) return UnprocessableEntity("Error to change to premium");
         }
 
-        [HttpPost("Cancel")]
-        
-        public async Task<IActionResult> Cancel([FromBody] UserEmailRequest request)
+        await UnarchiveAllUserWalletsAsync(user.Id, ct);
+        await _db.SaveChangesAsync(ct);
+
+        return Created(string.Empty, null);
+    }
+
+    [HttpPost("Cancel")]
+    [Authorize]
+    public async Task<IActionResult> Cancel([FromBody] UserEmailRequest request, CancellationToken ct)
+    {
+        var user = await _db.Users.SingleOrDefaultAsync(c => c.Email == request.UserEmail, ct);
+        if (user == null) return NotFound("No user found");
+
+        var roles = await _userManager.GetRolesAsync(user);
+        if (!roles.Contains("PREMIUM"))
+            return UnprocessableEntity("User is already not PREMIUM");
+
+        var removeRes = await _userManager.RemoveFromRoleAsync(user, "PREMIUM");
+        if (!removeRes.Succeeded) return UnprocessableEntity("Error to change to free");
+
+        await _premium.EnsureWalletsComplianceAsync(user.Id, ct);
+        await _db.SaveChangesAsync(ct);
+
+        return Created(string.Empty, null);
+    }
+
+    private async Task UnarchiveAllUserWalletsAsync(string userId, CancellationToken ct)
+    {
+        var wallets = await _db.Wallets
+            .Where(w => w.UserId == userId && w.DeletedAt == null)
+            .ToListAsync(ct);
+
+        if (wallets.Count == 0) return;
+
+        if (!wallets.Any(w => w.IsPrimary))
         {
-            var userEmail = request.UserEmail;
-
-            if (userEmail == null) return NotFound("No user found");
-
-            var existUser = context.Users.SingleOrDefault(c => c.Email.Contains(userEmail));
-            if (existUser == null) return NotFound("No user found");
-
-            var listRoles = await userManager.GetRolesAsync(existUser);
-            var role = listRoles.Where(c => c == "PREMIUM");
-            if (role == null) return UnprocessableEntity("User is already not PREMIUM");
-
-            var addRoleToUserResponse = await userManager.RemoveFromRolesAsync(existUser, role);
-
-            if (!addRoleToUserResponse.Succeeded) return NotFound("Error to change to premium");
-
-            return Created();
-
+            var first = wallets.OrderBy(w => w.Id).First();
+            foreach (var w in wallets) w.IsPrimary = (w.Id == first.Id);
         }
 
-
+        foreach (var w in wallets)
+            w.IsArchived = false;
     }
 }

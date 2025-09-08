@@ -9,19 +9,13 @@ import { useLanguage } from "../../utilis/Translate/LanguageContext";
 import apiCall from "../../services/ApiCallGeneric/apiCall";
 import AuthContext from "../../services/Authentication/AuthContext";
 
-
 const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || "").trim());
 
-export default function CreateGroup({
-  createEndpoint = "/Group/Create",
-  userLookupEndpoint = "/User/EmailCheckInDb",
-  onSuccess,
-}) {
+export default function CreateGroup({ onSuccess }) {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const { t } = useLanguage();
-  const { auth} = useContext(AuthContext) || {};
- 
+  const { auth } = useContext(AuthContext) || {};
 
   const c = theme?.colors || {};
   const paper = c.background?.paper || "#111827";
@@ -31,7 +25,10 @@ export default function CreateGroup({
   const errorCol = c.error?.main || "#EF4444";
   const hover = c.menu?.hoverBg || "rgba(255,255,255,0.06)";
 
-  const tr = (k, fallback) => { try { return k?.includes(".") ? t(k) : (k ?? fallback); } catch { return fallback ?? k; } };
+  const tr = (k, fallback) => {
+    try { return k?.includes(".") ? t(k) : (k ?? fallback); }
+    catch { return fallback ?? k; }
+  };
 
   // ---- state
   const [name, setName] = useState("");
@@ -40,9 +37,9 @@ export default function CreateGroup({
   const [busy, setBusy] = useState(false);
   const [memberBusy, setMemberBusy] = useState(false);
   const [err, setErr] = useState("");
-  const [submitted, setSubmitted] = useState(false); // <- novo
+  const [submitted, setSubmitted] = useState(false);
 
-  // ---- validações (name só mostra erro se submitted === true)
+  // ---- validações
   const errors = useMemo(() => {
     const e = {};
     if (submitted && !name.trim()) e.name = tr("groups.errors_name_required", "Name is required");
@@ -50,39 +47,54 @@ export default function CreateGroup({
     return e;
   }, [name, memberInput, submitted]);
 
+  // ---- lookup + add (GET /User/GetProfile?UserEmail=...)
   const lookupAndAddMember = async () => {
     setErr("");
     const email = memberInput.trim();
     if (!email || !isEmail(email)) return;
-    if (members.some((m) => m.email.toLowerCase() === email.toLowerCase())) { setMemberInput(""); return; }
+
+    // evita duplicados
+    if (members.some((m) => m.email.toLowerCase() === email.toLowerCase())) {
+      setMemberInput("");
+      return;
+    }
+
+    // evita adicionar a si próprio
+    if ((auth?.Email || "").toLowerCase() === email.toLowerCase()) {
+      setErr(tr("groups.error_equal_email", "No need to add yourself."));
+      return;
+    }
 
     setMemberBusy(true);
     try {
-      if (auth.Email == email)
-        {
-          setErr(tr("groups.error_equal_email", "No need to add yourself."));
-          return
-        } 
-      let res = await apiCall.get(userLookupEndpoint, { params: { email }, validateStatus: () => true });
-      if (!res || (res.status >= 400 && res.status !== 404)) {
-        res = await apiCall.post(userLookupEndpoint, { email }, { validateStatus: () => true });
-      }
+      const res = await apiCall.get("/User/GetProfile", {
+        params: { UserEmail: email },
+        validateStatus: (s) => (s >= 200 && s < 300) || s === 404 || s === 400,
+      });
+
       if (res?.status >= 200 && res?.status < 300 && res?.data) {
-        const user = res.data;
-        const userId = user.id ?? user.userId ?? user.guid ?? user._id;
-        const displayName = user.name ?? user.displayName ?? user.fullName ?? email;
+        const u = res.data;
+
+        const userId = u.Id ?? u.id ?? u.userId ?? u.guid ?? u._id;
+        const first = u.firstName ?? u.FirstName ?? u.givenName ?? u?.user?.firstName;
+        const last  = u.lastName  ?? u.FamilyName ?? u.surname   ?? u?.user?.lastName;
+        const displayName =
+          (first || last) ? `${first ?? ""} ${last ?? ""}`.trim()
+          : u.name ?? u.displayName ?? u.fullName ?? email;
+
         if (!userId) {
           setErr(tr("groups.errors_lookup_bad_response", "User lookup returned an unexpected response."));
         } else {
           setMembers((m) => [...m, { id: String(userId), email, name: displayName }]);
           setMemberInput("");
         }
-      } else if (res?.status === 404) {
+      } else if (res?.status === 404 || res?.status === 400) {
         setErr(tr("groups.errors_user_not_found", "User does not exist"));
       } else {
         setErr(res?.data?.message || tr("groups.errors_lookup_failed", "Could not verify the user."));
       }
-    } catch {
+    } catch (e) {
+      console.error("[User/GetProfile] error:", e);
       setErr(tr("groups.errors_lookup_failed", "Could not verify the user."));
     } finally {
       setMemberBusy(false);
@@ -91,27 +103,42 @@ export default function CreateGroup({
 
   const removeMember = (email) => setMembers((m) => m.filter((x) => x.email !== email));
 
+  // ---- submit -> DTO { AdminEmail, GroupName, UsersId }
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true); // <- marca que tentou submeter
+    setSubmitted(true);
     setErr("");
 
-    // revalida depois de submitted=true
     if (!name.trim()) return;
 
-    const payload = { name: name.trim(), users: members.map((m) => m.id) };
+    const adminEmail = (auth?.Email || "").trim();
+    if (!adminEmail) {
+      setErr(tr("groups.errors_no_admin", "You must be logged in to create a group."));
+      return;
+    }
+
+    const payload = {
+      AdminEmail: adminEmail,
+      GroupName: name.trim(),
+      UsersId: members.map((m) => m.id),
+    };
 
     setBusy(true);
     try {
-      const res = await apiCall.post(createEndpoint, payload, { validateStatus: () => true });
+      const res = await apiCall.post("/Group/Register", payload, {
+        validateStatus: () => true,
+      });
+
       if (res?.status >= 200 && res?.status < 300) {
-        const created = res?.data || { id: undefined, ...payload };
+        const created = res?.data || { ...payload };
         onSuccess ? onSuccess(created) : navigate("/Groups");
       } else {
-        setErr(res?.data?.message || tr("groups.errors.create_failed", "Could not create the group."));
+        console.error("[Group/Register] Failed:", res);
+        setErr(res?.data?.message || tr("groups.errors_create_failed", "Could not create the group."));
       }
-    } catch {
-      setErr(tr("groups.errors.create_failed", "Could not create the group."));
+    } catch (e2) {
+      console.error("[Group/Register] Exception:", e2);
+      setErr(tr("groups.errors_create_failed", "Could not create the group."));
     } finally {
       setBusy(false);
     }
@@ -127,8 +154,10 @@ export default function CreateGroup({
       </div>
 
       {err && (
-        <div className="mb-4 rounded-lg p-3 text-sm"
-             style={{ backgroundColor: `${errorCol}1a`, color: errorCol, border: `1px solid ${errorCol}55` }}>
+        <div
+          className="mb-4 rounded-lg p-3 text-sm"
+          style={{ backgroundColor: `${errorCol}1a`, color: errorCol, border: `1px solid ${errorCol}55` }}
+        >
           {err}
         </div>
       )}
@@ -136,50 +165,51 @@ export default function CreateGroup({
       <Card className="rounded-2xl p-6" style={{ backgroundColor: paper, border: `1px solid ${border}` }}>
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Name */}
-          <div>
-            <Input
-              label={tr("common.name", "Name")}
-              placeholder={tr("groups.enter_name", "e.g., Family")}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              error={errors.name} // só aparece depois de tentar submeter
-            />
-          </div>
+          <Input
+            label={tr("common.name", "Name")}
+            placeholder={tr("groups.enter_name", "e.g., Family")}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            error={errors.name}
+          />
 
           {/* Members */}
           <div>
             <label className="block text-sm font-medium mb-2" style={{ color: text }}>
               {tr("groups.members", "Members (emails)")}
             </label>
-<div className="flex gap-2 items-center">
-  <input
-    type="email"
-    className="flex-1 min-w-0 px-3 py-2 rounded-md border outline-none"
-    placeholder={tr("groups.enter_email", "user@mail.com")}
-    value={memberInput}
-    onChange={(e) => setMemberInput(e.target.value)}
-    onKeyDown={(e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        lookupAndAddMember();
-      }
-    }}
-    style={{
-      backgroundColor: paper,
-      color: text,
-      borderColor: errors.memberInput ? errorCol : border,
-    }}
-  />
 
-  <Button
-    type="button"
-    onClick={lookupAndAddMember}
-    disabled={!memberInput || !isEmail(memberInput) || memberBusy}
-    className="flex-none shrink-0 w-auto px-3 py-2 text-sm"
-  >
-    {memberBusy ? tr("common.checking", "Checking…") : tr("common.add", "Add")}
-  </Button>
-</div>
+            <div className="flex gap-2 items-center">
+              <input
+                type="email"
+                className="flex-1 min-w-0 px-3 py-2 rounded-md border outline-none"
+                placeholder={tr("groups.enter_email", "user@mail.com")}
+                value={memberInput}
+                onChange={(e) => setMemberInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    lookupAndAddMember();
+                  }
+                }}
+                style={{
+                  backgroundColor: paper,
+                  color: text,
+                  borderColor: errors.memberInput ? errorCol : border,
+                }}
+              />
+
+              {/* Botão "Add" com o mesmo tamanho (md) */}
+              <Button
+                type="button"
+                size="md"
+                onClick={lookupAndAddMember}
+                disabled={!memberInput || !isEmail(memberInput) || memberBusy}
+                className="flex-none"
+              >
+                {memberBusy ? tr("common.checking", "Checking…") : tr("common.add", "Add")}
+              </Button>
+            </div>
 
             {errors.memberInput && (
               <p className="text-xs mt-1" style={{ color: errorCol }}>

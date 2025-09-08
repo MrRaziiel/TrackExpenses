@@ -55,7 +55,6 @@ export default function UsersTable() {
           if (!email) return { ...u, Roles: [] };
           try {
             const res = await apiCall.post("RolesController/UserRoles",  {UserEmail: email} );
-            console.log(res);
             // aceitar vários formatos de retorno
             const raw = res?.data?.Roles;
             const rolesArr = Array.isArray(raw)

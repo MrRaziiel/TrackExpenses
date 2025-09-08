@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using TRACKEXPENSES.Server.Data;
 using TRACKEXPENSES.Server.Models;
 using TRACKEXPENSES.Server.Requests.User;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace TRACKEXPENSES.Server.Controllers
 {
@@ -25,7 +27,7 @@ namespace TRACKEXPENSES.Server.Controllers
 
             var existUser = context.Users.SingleOrDefault(c => c.Email == userEmail);
             if (existUser == null) return NotFound("No user found");
-            var addRoleToUserResponse = await userManager.GetRolesAsync(existUser);
+            var addRoleToUserResponse = await _userManager.GetRolesAsync(existUser);
 
             if (addRoleToUserResponse == null) return NotFound("Roles not found");
 

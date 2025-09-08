@@ -1,11 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using TRACKEXPENSES.Server.Data;
-using TRACKEXPENSES.Server.Extensions;
 using TRACKEXPENSES.Server.Models;
 
 namespace TRACKEXPENSES.Server.Controllers
@@ -21,7 +18,6 @@ namespace TRACKEXPENSES.Server.Controllers
         private readonly FinancasDbContext _context = context;
 
         [HttpGet("User/GetAllUsers")]
-        // usando EF Core
         public IActionResult ListClients()
         {
             var allClients = _context.Users

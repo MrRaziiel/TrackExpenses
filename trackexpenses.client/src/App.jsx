@@ -47,6 +47,7 @@ import GroupsList from "./Pages/GroupAdmin/GroupsList";
 import CreateGroup from "./Pages/GroupAdmin/CreateGroup";
 import ActivationAccount  from "./services/Authentication/ActivateAccount";
 import DeleteAccount from "./services/Authentication/DeleteAccount";
+import GroupsEdit from "./Pages/GroupAdmin/GroupEdit";
 
 
 export default function App() {
@@ -103,6 +104,7 @@ export default function App() {
           <Route path="/DeleteAccount" element={<DeleteAccount />} />
         </Route>
         <Route element={<RequireRoles allow={["PREMIUM", "GROUPADMINISTRATOR"]} />}>
+      <Route path="/Groups/Edit/:id" element={<GroupsEdit />} />
       <Route path="/GroupAdminPage" element={<GroupAdminPage />} />
 
     </Route>

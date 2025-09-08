@@ -91,7 +91,8 @@ const translations = {
       no_Provide: "No Provide",
       groups: "Groups",
       group_list: "List",
-      group_admin: "Admin"
+      group_admin: "Admin",
+      checking: "Checking..."
     },
     settings: {
       appearance: "Appearance",
@@ -146,7 +147,7 @@ const translations = {
       },
     },
     groups:{
-      enter_email: "Enter a email...",
+      enter_email: "Enter an email...",
       enter_name: "Enter a name for the group...",
       members: "Members",
       create: "Create Group",
@@ -158,7 +159,15 @@ const translations = {
       error_equal_email: "No need to add yourself.",
       no_groups: "No groups found",   
       list_title: "Groups list",
-      create_title: "Create Group"
+      create_title: "Create Group",
+      errors_create_failed: "Could not create the group.",
+      errors_no_admin: "Admin group is not found.",
+      admin: "Group Administrator",
+      confirm_leave: "Are you sure you want to leave the group?",
+      not_found: "Group not found.",
+      saved: "Group saved",
+      delete_failed: "Delete group faill",
+      confirm_delete: "Are you sure that you want to delete the group?"
     },
   profile: { 
       title: "Profile",

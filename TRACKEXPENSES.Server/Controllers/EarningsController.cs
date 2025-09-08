@@ -12,12 +12,12 @@ namespace TRACKEXPENSES.Server.Controllers
     public class EarningsController(FinancasDbContext context, UserManager<User> userManager) : ControllerBase
     {
         private readonly FinancasDbContext _context = context;
-        private readonly UserManager<User> _userManager;
+        private readonly UserManager<User> _userManager = userManager;
 
         [HttpPost("Create")]
         public async Task<IActionResult> Create(AddEarningsViewModel model)
         {
-            var existUser = await context.Users
+            var existUser = await _context.Users
                 .SingleOrDefaultAsync(c => c.Email == model.UserEmail);
             if (existUser == null) return NotFound("User not found");
 

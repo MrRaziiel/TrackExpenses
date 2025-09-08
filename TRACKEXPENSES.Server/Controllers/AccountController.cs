@@ -1,10 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.VisualBasic;
 using System.Web;
 using TRACKEXPENSES.Server.Data;
 using TRACKEXPENSES.Server.Models;
@@ -23,7 +20,7 @@ namespace TRACKEXPENSES.Server.Controllers
 
     public class AccountController(RoleManager<IdentityRole> roleManager, UserManager<User> userManager,
         FinancasDbContext context, IConfiguration configuration,
-        JwtService jwtService, Services.IEmailSender emailSender, IGroupRegistrationService _groupService, ICodeGroupService codeService) : Controller
+        JwtService jwtService, Services.IEmailSender emailSender, ICodeGroupService codeService) : Controller
     {
         private readonly RoleManager<IdentityRole> _roleManager = roleManager;
         private readonly UserManager<User> _userManager = userManager;
@@ -31,7 +28,6 @@ namespace TRACKEXPENSES.Server.Controllers
         private readonly IConfiguration _configuration = configuration;
         private readonly JwtService _jwtService = jwtService;
         private readonly Services.IEmailSender _emailSender = emailSender;
-        private readonly IGroupRegistrationService IGroupRegistrationService = _groupService;
         private readonly ICodeGroupService _codeService = codeService;
 
         public sealed record RefreshRequest(string RefreshToken);
@@ -47,17 +43,17 @@ namespace TRACKEXPENSES.Server.Controllers
 
             var value = await _codeService.CheckGroupCodeAsync(new CheckGroupCodeRequest() { Code = model.CodeInvite });
             var response = "USER"; 
-            if (value != null)
-            {
-                var request = new GroupRegisterRequest
-                {
-                    CodeInvite = model.CodeInvite,
-                    GroupName = model.FamilyName,
-                };
+            //if (value != null)
+            //{
+            //    var request = new GroupRegisterRequest
+            //    {
+            //        CodeInvite = model.CodeInvite,
+            //        GroupName = model.FamilyName,
+            //    };
 
-                response = await IGroupRegistrationService.RegisterGroupAsync(request);
-                if (response.ToString().IsNullOrEmpty()) return BadRequest("Code Invite is wrong");
-            }
+            //    response = await IGroupRegistrationService.RegisterGroupAsync(request);
+            //    if (response.ToString().IsNullOrEmpty()) return BadRequest("Code Invite is wrong");
+            //}
 
             var user = CreateUserFromRegister.fromRegister(model);
 
@@ -198,7 +194,7 @@ namespace TRACKEXPENSES.Server.Controllers
 
             if (photo == null || photo.Length == 0)
             {
-                DeleteProfileImage(id);
+                await DeleteProfileImage(id);
             }
             else
             {

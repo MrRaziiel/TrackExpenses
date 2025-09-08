@@ -28,7 +28,6 @@ export default function ProfileAvatar({
   useEffect(() => {
     setShowImg(!!currentImageUrl);
   }, [currentImageUrl]);
-  console.log(showImg);
   return (
     <div
       className="px-6 py-8 border-b"
