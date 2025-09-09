@@ -48,6 +48,9 @@ import CreateGroup from "./Pages/GroupAdmin/CreateGroup";
 import ActivationAccount  from "./services/Authentication/ActivateAccount";
 import DeleteAccount from "./services/Authentication/DeleteAccount";
 import GroupsEdit from "./Pages/GroupAdmin/GroupEdit";
+import ListWallets from "./Pages/Wallet/ListWallets";
+import EditWallet from "./Pages/Wallet/EditWallet";
+import CreateWallet from "./Pages/Wallet/CreateWallet";
 
 
 export default function App() {
@@ -77,6 +80,7 @@ export default function App() {
   { to: "/Dashboard",        icon: LayoutDashboard, label: "common.dashboard", role: "USER", section: "FINANCES" },
   { to: "/Expenses",         icon: PiggyBank,       label: "common.expenses",  role: "USER", section: "FINANCES" },
   { to: "/Earnings",         icon: Wallet,          label: "common.earnings",  role: "USER", section: "FINANCES" },
+  { to: "/ListWallets",         icon: Wallet,          label: "common.listWallets",  role: "USER", section: "FINANCES" },
   { to: "/CalendarExpenses", icon: Calendar,        label: "common.calendar",  role: "USER", section: "FINANCES" },
     ],
     [t, roles]
@@ -106,20 +110,27 @@ export default function App() {
         <Route element={<RequireRoles allow={["PREMIUM", "GROUPADMINISTRATOR"]} />}>
       <Route path="/Groups/Edit/:id" element={<GroupsEdit />} />
       <Route path="/GroupAdminPage" element={<GroupAdminPage />} />
+      <Route path="/GroupsList" element={<GroupsList />} />
+      <Route path="/CreateGroup" element={<CreateGroup />} />
+
 
     </Route>
 
         <Route element={<RequireAuth />}>
-        <Route path="/GroupsList" element={<GroupsList />} />
-        <Route path="/CreateGroup" element={<CreateGroup />} />
+      <Route path="/EditWallet/:id" element={<EditWallet />} />
+          <Route path="/ListWallets" element={<ListWallets />} />
 
           <Route path="/Dashboard" element={<Dashboard />} />
+          <Route path="/CreateWallet" element={<CreateWallet />} />
+
           <Route path="/Earnings" element={<EarningsList />} />
           <Route path="/Earnings/add" element={<AddEditEarning />} />
+
           <Route path="/Expenses" element={<ListExpenses />} />
           <Route path="/expenses/add" element={<AddExpense />} />
           <Route path="/Expenses/Edit/:id" element={<EditExpense />} />
           <Route path="/CalendarExpenses" element={<CalendarExpenses />} />
+
           <Route path="/Users" element={<UsersList />} />
           <Route path="/Users/edit/:id" element={<EditUser />} />
           <Route path="/users/edit/:id/:email" element={<EditUserProfile />} />

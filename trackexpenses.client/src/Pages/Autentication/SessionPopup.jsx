@@ -142,7 +142,7 @@ export default function SessionPopup() {
               backgroundColor: theme?.colors?.background?.default,
             }}
           >
-          {t("session.logout")}:{" "}
+          {t("session.logout")}
           </button>
           <button
             onClick={renew}
@@ -151,7 +151,7 @@ export default function SessionPopup() {
               background: `linear-gradient(135deg, ${theme?.colors?.primary?.main}, ${theme?.colors?.primary?.dark})`,
             }}
           >
-          {t("session.renew")}:{" "}
+          {t("session.renew")}
 
           </button>
         </div>

@@ -27,6 +27,9 @@ namespace TRACKEXPENSES.Server.Models
         public string? BirthdayString { get; set; }
         public string? ProfileImageId { get; set; }
 
+        [PasswordPropertyText]
+        public required string Password { get; set; }
+
 
         public ICollection<Group> Groups { get; } = new List<Group>();
 

@@ -92,7 +92,19 @@ const translations = {
       groups: "Groups",
       group_list: "List",
       group_admin: "Admin",
-      checking: "Checking..."
+      checking: "Checking...",
+      active: "Active",
+      archived: "Archived",
+    confirmDelete: "Are you sure you want to delete?",
+    noResults: "No results",
+    currency: "Currency",
+      primary: "Primary",
+
+  },
+  wallets: {
+      list: "Wallets",
+      new: "New Wallet",
+      searchPlaceholder: "Search wallets...",
     },
     settings: {
       appearance: "Appearance",

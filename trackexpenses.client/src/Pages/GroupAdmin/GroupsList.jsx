@@ -1,4 +1,3 @@
-// src/pages/Groups/GroupsList.jsx
 import React, { useEffect, useMemo, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import Title from "../../components/Titles/TitlePage";
@@ -111,7 +110,7 @@ export default function GroupsList() {
     if (!confirm(tr("groups.confirm_delete", "Are you sure you want to delete this group?"))) return;
 
     try {
-      const res = await apiCall.delete("/Group/Delete", { params: { id }, validateStatus: () => true });
+      const res = await apiCall.delete("/Group/Delete", { params: { id }, validateStatus: () => true });  
       if (res?.status >= 200 && res?.status < 300) {
         await load();
       } else {

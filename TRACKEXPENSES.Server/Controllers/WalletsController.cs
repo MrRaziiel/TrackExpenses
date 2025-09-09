@@ -16,16 +16,25 @@ namespace TRACKEXPENSES.Server.Controllers
     [Route("api/wallets")]
     public sealed class WalletsController : ControllerBase
     {
-        private readonly FinancasDbContext _db;
+        private readonly FinancasDbContext _context;
         private readonly UserManager<User> _userManager;
         private readonly IPremiumService _premium;
 
+        private async Task<bool> CurrentUserIsPremiumAsync()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return false;
+
+            var roles = await _userManager.GetRolesAsync(user);
+            return roles.Any(r => r.Equals("PREMIUM", StringComparison.OrdinalIgnoreCase));
+        }
+
         public WalletsController(
-            FinancasDbContext db,
+            FinancasDbContext context,
             UserManager<User> userManager,
             IPremiumService premium)
         {
-            _db = db;
+            _context = context;
             _userManager = userManager;
             _premium = premium;
         }
@@ -34,157 +43,220 @@ namespace TRACKEXPENSES.Server.Controllers
 
         // GET /api/wallets?includeArchived=false
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<WalletRequest>>> List([FromQuery] bool includeArchived = false, CancellationToken ct = default)
+        public async Task<IActionResult> List([FromQuery] bool includeArchived = false)
         {
-            var uid = CurrentUserId();
-            if (string.IsNullOrEmpty(uid)) return Unauthorized();
+            var userId = CurrentUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var q = _db.Wallets.Where(w => w.UserId == uid && w.DeletedAt == null);
-            if (!includeArchived) q = q.Where(w => !w.IsArchived);
+            var q = _context.Wallets
+                .AsNoTracking()
+                .Where(w => w.UserId == userId);
 
-            var res = await q
-                .OrderByDescending(w => w.IsPrimary).ThenBy(w => w.Name)
-                .Select(w => new WalletRequest(w.Id, w.Name, w.Currency, w.IsPrimary, w.IsArchived))
-                .ToListAsync(ct);
+            if (!includeArchived)
+                q = q.Where(w => !w.IsArchived);
 
-            return Ok(res);
+            var wallets = await q
+                .OrderByDescending(w => w.IsPrimary)
+                .ThenBy(w => w.Name)
+                .Select(w => new
+                {
+                    id = w.Id,
+                    name = w.Name,
+                    currency = w.Currency,
+                    isPrimary = w.IsPrimary,
+                    isArchived = w.IsArchived
+                })
+                .ToListAsync();
+
+            return Ok(wallets);
         }
 
-        // GET /api/wallets/{id}
-        [HttpGet("{id}")]
-        public async Task<ActionResult<WalletRequest>> Get(string id, CancellationToken ct = default)
-        {
-            var uid = CurrentUserId();
-            if (string.IsNullOrEmpty(uid)) return Unauthorized();
-
-            var w = await _db.Wallets.FirstOrDefaultAsync(x => x.Id == id && x.UserId == uid && x.DeletedAt == null, ct);
-            if (w == null) return NotFound();
-
-            return new WalletRequest(w.Id, w.Name, w.Currency, w.IsPrimary, w.IsArchived);
-        }
 
         // POST /api/wallets
         [HttpPost]
-        public async Task<ActionResult<WalletRequest>> Create([FromBody] WalletCreateRequest dto, CancellationToken ct = default)
+        public async Task<IActionResult> Create([FromBody] CreateWalletRequest req)
         {
-            var uid = CurrentUserId();
-            if (string.IsNullOrEmpty(uid)) return Unauthorized();
+            var userId = CurrentUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            if (req == null || string.IsNullOrWhiteSpace(req.Name))
+                return BadRequest(new { message = "Nome é obrigatório." });
 
-            var canCreate = await _premium.CanCreateWalletAsync(uid, ct);
-            if (!canCreate)
-                return Forbid("Conta free permite apenas 1 carteira ativa.");
+            var isPremium = await CurrentUserIsPremiumAsync();
 
-            var countActive = await _db.Wallets.CountAsync(w => w.UserId == uid && !w.IsArchived && w.DeletedAt == null, ct);
+            var activeCount = await _context.Wallets
+                .Where(w => w.UserId == userId && !w.IsArchived)
+                .CountAsync();
+
+            if (!isPremium && activeCount >= 1)
+            {
+                return UnprocessableEntity(new
+                {
+                    message = "A tua conta só permite 1 carteira ativa. Torna-te PREMIUM para criar mais."
+                });
+            }
+
+            // primeira ativa torna-se primária
+            var isFirstActive = activeCount == 0;
 
             var wallet = new Wallet
             {
-                UserId = uid,
-                Name = dto.Name?.Trim() ?? "Minha Wallet",
-                Currency = string.IsNullOrWhiteSpace(dto.Currency) ? "EUR" : dto.Currency.Trim().ToUpperInvariant(),
-                IsPrimary = countActive == 0,
-                IsArchived = false
+                Id = Guid.NewGuid().ToString(),
+                UserId = userId,
+                Name = req.Name.Trim(),
+                Currency = string.IsNullOrWhiteSpace(req.Currency) ? "EUR" : req.Currency,
+                IsArchived = false,
+                IsPrimary = isFirstActive
             };
 
-            _db.Wallets.Add(wallet);
-            await _db.SaveChangesAsync(ct);
+            _context.Wallets.Add(wallet);
+            await _context.SaveChangesAsync();
 
-            var result = new WalletRequest(wallet.Id, wallet.Name, wallet.Currency, wallet.IsPrimary, wallet.IsArchived);
-            return CreatedAtAction(nameof(Get), new { id = wallet.Id }, result);
+            return CreatedAtAction(nameof(GetById), new { id = wallet.Id }, new
+            {
+                id = wallet.Id,
+                name = wallet.Name,
+                currency = wallet.Currency,
+                isPrimary = wallet.IsPrimary,
+                isArchived = wallet.IsArchived
+            });
         }
+
 
         // PUT /api/wallets/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(string id, [FromBody] WalletUpdateRequest dto, CancellationToken ct = default)
+        public async Task<IActionResult> Update(string id, [FromBody] UpdateWalletRequest req)
         {
-            var uid = CurrentUserId();
-            if (string.IsNullOrEmpty(uid)) return Unauthorized();
+            var userId = CurrentUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var w = await _db.Wallets.FirstOrDefaultAsync(x => x.Id == id && x.UserId == uid && x.DeletedAt == null, ct);
+            var w = await _context.Wallets.FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId);
             if (w == null) return NotFound();
 
-            if (w.IsArchived) return Forbid("Wallet arquivada (read-only).");
+            if (!string.IsNullOrWhiteSpace(req.Name))
+                w.Name = req.Name.Trim();
 
-            w.Name = dto.Name?.Trim() ?? w.Name;
-            w.Currency = string.IsNullOrWhiteSpace(dto.Currency) ? w.Currency : dto.Currency.Trim().ToUpperInvariant();
+            if (!string.IsNullOrWhiteSpace(req.Currency))
+                w.Currency = req.Currency.Trim().ToUpperInvariant();
 
-            await _db.SaveChangesAsync(ct);
-            return NoContent();
+            if (req.IsArchived.HasValue)
+                w.IsArchived = req.IsArchived.Value;
+
+            await _context.SaveChangesAsync();
+            return Ok(new
+            {
+                id = w.Id,
+                name = w.Name,
+                currency = w.Currency,
+                isPrimary = w.IsPrimary,
+                isArchived = w.IsArchived
+            });
         }
 
         // DELETE /api/wallets/{id} (soft delete)
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(string id, CancellationToken ct = default)
+        public async Task<IActionResult> Delete(string id)
         {
-            var uid = CurrentUserId();
-            if (string.IsNullOrEmpty(uid)) return Unauthorized();
+            var userId = CurrentUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var w = await _db.Wallets.FirstOrDefaultAsync(x => x.Id == id && x.UserId == uid && x.DeletedAt == null, ct);
+            var w = await _context.Wallets.FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId);
             if (w == null) return NotFound();
 
             if (w.IsPrimary)
-            {
-                var hasOthers = await _db.Wallets.AnyAsync(x => x.UserId == uid && x.Id != w.Id && x.DeletedAt == null, ct);
-                if (hasOthers) return UnprocessableEntity("Não podes apagar a carteira primária enquanto existirem outras. Define outra como primária primeiro.");
-            }
+                return UnprocessableEntity(new { message = "Não podes apagar a carteira primária." });
 
-            w.DeletedAt = DateTime.UtcNow;
-            await _db.SaveChangesAsync(ct);
-            return NoContent();
+            _context.Wallets.Remove(w);
+            await _context.SaveChangesAsync();
+            return Ok();
         }
 
         // POST /api/wallets/{id}/set-primary
         [HttpPost("{id}/set-primary")]
-        public async Task<IActionResult> SetPrimary(string id, CancellationToken ct = default)
+        public async Task<IActionResult> SetPrimary(string id)
         {
-            var uid = CurrentUserId();
-            if (string.IsNullOrEmpty(uid)) return Unauthorized();
+            var userId = CurrentUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var target = await _db.Wallets.FirstOrDefaultAsync(x => x.Id == id && x.UserId == uid && x.DeletedAt == null, ct);
-            if (target == null) return NotFound();
-            if (target.IsArchived) return UnprocessableEntity("Não podes tornar primária uma wallet arquivada.");
+            var w = await _context.Wallets.FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId);
+            if (w == null) return NotFound();
+            if (w.IsArchived) return UnprocessableEntity(new { message = "Não podes tornar primária uma carteira arquivada." });
 
-            var wallets = await _db.Wallets.Where(x => x.UserId == uid && x.DeletedAt == null).ToListAsync(ct);
-            foreach (var w in wallets) w.IsPrimary = (w.Id == id);
+            // desmarca todas as outras
+            var others = _context.Wallets.Where(x => x.UserId == userId && x.Id != id && x.IsPrimary);
+            await others.ForEachAsync(x => x.IsPrimary = false);
 
-            await _db.SaveChangesAsync(ct);
-            return NoContent();
+            w.IsPrimary = true;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { id = w.Id, isPrimary = true });
         }
 
         // POST /api/wallets/{id}/archive
         [HttpPost("{id}/archive")]
-        public async Task<IActionResult> Archive(string id, CancellationToken ct = default)
+        public async Task<IActionResult> Archive(string id)
         {
-            var uid = CurrentUserId();
-            if (string.IsNullOrEmpty(uid)) return Unauthorized();
+            var userId = CurrentUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var w = await _db.Wallets.FirstOrDefaultAsync(x => x.Id == id && x.UserId == uid && x.DeletedAt == null, ct);
+            var w = await _context.Wallets.FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId);
             if (w == null) return NotFound();
 
-            if (w.IsPrimary) return UnprocessableEntity("Não podes arquivar a carteira primária.");
+            if (w.IsArchived) return Ok(); // já está arquivada
 
             w.IsArchived = true;
-            await _db.SaveChangesAsync(ct);
-            return NoContent();
+
+            // se era primária, tenta promover outra ativa
+            if (w.IsPrimary)
+            {
+                w.IsPrimary = false;
+                var candidate = await _context.Wallets
+                    .Where(x => x.UserId == userId && !x.IsArchived && x.Id != w.Id)
+                    .OrderBy(x => x.Name) // qualquer critério estável
+                    .FirstOrDefaultAsync();
+
+                if (candidate != null)
+                    candidate.IsPrimary = true;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { id = w.Id, isArchived = true });
         }
 
         // POST /api/wallets/{id}/unarchive
         [HttpPost("{id}/unarchive")]
-        public async Task<IActionResult> Unarchive(string id, CancellationToken ct = default)
+        public async Task<IActionResult> Unarchive(string id)
         {
-            var uid = CurrentUserId();
-            if (string.IsNullOrEmpty(uid)) return Unauthorized();
+            var userId = CurrentUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-            var w = await _db.Wallets.FirstOrDefaultAsync(x => x.Id == id && x.UserId == uid && x.DeletedAt == null, ct);
+            var w = await _context.Wallets.FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId);
             if (w == null) return NotFound();
 
-            // Verifica política (free não pode ter 2+ ativas)
-            var canCreateOrUnarchive = await _premium.CanCreateWalletAsync(uid, ct);
-            if (!canCreateOrUnarchive)
-                return Forbid("Conta free permite apenas 1 carteira ativa.");
+            if (!w.IsArchived) return Ok();
+
+            // regra de FREE: não permitir mais que 1 ativa
+            var isPremium = await CurrentUserIsPremiumAsync();
+            if (!isPremium)
+            {
+                var activeCount = await _context.Wallets.CountAsync(x => x.UserId == userId && !x.IsArchived);
+                if (activeCount >= 1)
+                {
+                    return UnprocessableEntity(new
+                    {
+                        message = "A tua conta só permite 1 carteira ativa. Torna-te PREMIUM para teres mais."
+                    });
+                }
+            }
 
             w.IsArchived = false;
-            await _db.SaveChangesAsync(ct);
-            return NoContent();
+
+            // se não existe primária, esta passa a ser primária
+            var existsPrimary = await _context.Wallets.AnyAsync(x => x.UserId == userId && x.IsPrimary && !x.IsArchived);
+            if (!existsPrimary)
+                w.IsPrimary = true;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { id = w.Id, isArchived = false, isPrimary = w.IsPrimary });
         }
 
         // POST /api/wallets/downgrade  -> aplica regra de free (só primary ativa)
@@ -195,8 +267,29 @@ namespace TRACKEXPENSES.Server.Controllers
             if (string.IsNullOrEmpty(uid)) return Unauthorized();
 
             await _premium.EnsureWalletsComplianceAsync(uid, ct);
-            await _db.SaveChangesAsync(ct);
+            await _context.SaveChangesAsync(ct);
             return NoContent();
+        }
+        [HttpGet("{id:guid}")]
+        public async Task<IActionResult> GetById(string id, CancellationToken ct = default)
+        {
+            var userId = CurrentUserId();
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var w = await _context.Wallets
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == id && x.UserId == userId && x.DeletedAt == null, ct);
+
+            if (w == null) return NotFound();
+
+            return Ok(new
+            {
+                id = w.Id,
+                name = w.Name,
+                currency = w.Currency,
+                isPrimary = w.IsPrimary,
+                isArchived = w.IsArchived
+            });
         }
     }
 }
