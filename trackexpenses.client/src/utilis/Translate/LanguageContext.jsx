@@ -99,7 +99,22 @@ const translations = {
     noResults: "No results",
     currency: "Currency",
       primary: "Primary",
-
+      clear: "Clear",
+      search: "Search...",
+      limpar: "Clear",
+      allCategories: "All Categories",
+      paid: "Paid"
+      
+  },
+  tooltip: {
+    info: "Information"
+  },
+  statCard: {
+    trendUp: "Up",
+    trendDown: "Down"
+  },
+  card: {
+    defaultTitle: "Card"
   },
   wallets: {
       list: "Wallets",
@@ -291,7 +306,72 @@ const translations = {
     enableFail: "Failed to enable premium.",
     cancelFail: "Failed to cancel premium."
   },
-}
+},
+  expenses: {
+    new: "New expense",
+    total: "Total",
+    paid: "Already paid",
+    remaining: "Remaining",
+    list: "List Expenses",
+    searchPlaceholder: "Search name, description or category...",
+    
+    method: {
+      one: "One-off",
+      installments: "Installments (credit)",
+      recurring: "Recurring",
+    },
+    installments: {
+      count: "Number of installments",
+      each: "Each installment ≈",
+      note: "(uses “Paid already” as the down payment)",
+    },
+    recurring: {
+      periodicity: "Periodicity",
+      repeatCount: "Repetitions (optional)",
+    },
+    form: {
+      defaultName: "Expense",
+      name: "Name",
+      wallet: "Wallet",
+      total: "Total amount",
+      paidAlready: "Paid already (optional)",
+      startDate: "Start date",
+      endDate: "End date (optional)",
+      category: "Category",
+      notify: "Notify",
+      description: "Description",
+    },
+  },
+  periodicity: {
+    daily: "Daily",
+    weekly: "Weekly",
+    monthly: "Monthly",
+    yearly: "Yearly",
+    endless: "Endless",
+  },
+
+  qr: {
+    title: "Read invoice QR (Portugal)",
+    subtitle: "Upload a clear photo of the QR. I'll auto-fill date, value and description.",
+    readFromPhoto: "Read QR from photo",
+  },
+
+  receipt: {
+    label: "Receipt / expense photo",
+    add: "Add photo",
+    change: "Change photo",
+    remove: "Remove",
+    note: "This is stored on the expense (not the QR reading).",
+    noPreview: "No preview",
+    clickToEnlarge: "Click to enlarge",
+    previewAlt: "Receipt preview",
+    modalAlt: "Receipt (enlarged)",
+  },
+
+  wallets: {
+    select: "Select wallet",
+  },
+  
   },
 };
 

@@ -27,8 +27,8 @@ import Dashboard from "./Pages/Administrador/Dashboard";
 import UsersList from "./Pages/Administrador/ListClients";
 import EditUser from "./Pages/Administrador/EditUser";
 import EditUserProfile from "./Pages/Administrador/EditUser";
-import ListExpenses from "./Pages/Expenses/AllExpenses";
-import AddExpense from "./Pages/Expenses/AddExpenses";
+import ListExpenses from "./Pages/Expenses/ListExpenses";
+import CreateExpense from "./Pages/Expenses/CreateExpense";
 import EditExpense from "./Pages/Expenses/EditExpense";
 import CalendarExpenses from "./Pages/Expenses/CalendarExpenses";
 import EarningsList from "./Pages/Earnings/EarningList";
@@ -127,7 +127,7 @@ export default function App() {
           <Route path="/Earnings/add" element={<AddEditEarning />} />
 
           <Route path="/Expenses" element={<ListExpenses />} />
-          <Route path="/expenses/add" element={<AddExpense />} />
+          <Route path="/CreateExpense" element={<CreateExpense />} />
           <Route path="/Expenses/Edit/:id" element={<EditExpense />} />
           <Route path="/CalendarExpenses" element={<CalendarExpenses />} />
 

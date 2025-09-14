@@ -1,353 +1,263 @@
-// EditExpense.jsx
-import React, { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import Title from "../../components/Titles/TitlePage";
+import Card from "../../components/UI/Card";
+import Input from "../../components/Form/Input";
+import TextArea from "../../components/Form/TextArea";
+import Select from "../../components/Form/Select";
+import Button from "../../components/Buttons/Button";
+import GenericTable from "../../components/Tables/GenericTable";
 import apiCall from "../../services/ApiCallGeneric/apiCall";
-import EditInstanceCard from "./EditInstanceCard";
-import { Eye, Download, Camera, X, Save } from "lucide-react";
 
-function EditExpense() {
+/** Endpoints (sem /api) */
+const EP_GET     = (id) => `Expenses/GetExpenseById/${id}`;   // GET
+const EP_UPDATE  = "Expenses/UpdateExpense";                   // PUT
+const EP_MARK    = (iid) => `Expenses/MarkAsPaid/${iid}`;      // PATCH
+const EP_UPD_INS = "Expenses/UpdateExpenseInstance";           // POST
+const EP_IMG     = (id) => `Expenses/GetExpenseImage/${id}`;   // GET
+const EP_UPL     = (id) => `Expenses/UploadImage/${id}`;       // POST
+
+const unwrap = (v) => (Array.isArray(v) ? v : (v?.$values ?? []));
+
+export default function EditExpense() {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const [expense, setExpense] = useState(null);
-  const [imageUrl, setImageUrl] = useState(null);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [showPreview, setShowPreview] = useState(false);
-  const fileInputRef = useRef();
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState(null);
+  const [item, setItem] = useState(null);
+  const [imgPath, setImgPath] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5285";
+  const [form, setForm] = useState({
+    Id: "", Name: "", Description: "",
+    Value: "", PayAmount: "",
+    StartDate: "", EndDate: "",
+    RepeatCount: "", ShouldNotify: false,
+    Periodicity: "OneTime", Category: "", GroupId: "",
+  });
+  const set = (k,v) => setForm((f)=>({ ...f, [k]: v }));
 
+  /** Load expense + image */
   useEffect(() => {
-    const fetchExpense = async () => {
+    let alive = true;
+    (async () => {
       try {
-        if (!id) return;
-        const res = await apiCall.get(`/expenses/GetExpenseById/${id}`);
-        const data = res.data;
+        setLoading(true); setErr(null);
 
-        const transformed = {
-          id: data.Id,
-          name: data.Name,
-          category: data.Category,
-          description: data.Description,
-          value: Number(data.Value),
-          payAmount: data.PayAmount !== null ? Number(data.PayAmount) : null,
-          startDate: data.StartDate,
-          endDate: data.EndDate,
-          periodicity: data.Periodicity,
-          repeatCount: data.RepeatCount,
-          shouldNotify: data.ShouldNotify,
-          groupId: data.GroupId,
-          imageId: data.ImageId,
-          userId: data.UserId,
-          instances:
-            data.Instances?.$values?.map((inst) => ({
-              id: inst.Id,
-              dueDate: inst.DueDate,
-              isPaid: inst.IsPaid,
-              value: Number(inst.Value),
-              paidAmount: Number(inst.PaidAmount),
-              imageId: inst.ImageId,
-            })) || [],
-        };
-
-        setExpense(transformed);
-
-        const imgRes = await apiCall.get(`/expenses/GetExpenseImage/${id}`);
-        const path = imgRes?.data?.imagePath;
-        if (path && path !== "NoPhoto") {
-          setImageUrl(`${API_BASE}/${path}`);
+        const res = await apiCall.get(EP_GET(id));
+        if (res?.ok) {
+          const e = res.data;
+          if (alive) {
+            setItem(e);
+            setForm({
+              Id: e?.Id,
+              Name: e?.Name || "",
+              Description: e?.Description || "",
+              Value: String(e?.Value ?? ""),
+              PayAmount: String(e?.PayAmount ?? ""),
+              StartDate: e?.StartDate ? new Date(e.StartDate).toISOString().slice(0,10) : "",
+              EndDate: e?.EndDate ? new Date(e.EndDate).toISOString().slice(0,10) : "",
+              RepeatCount: String(e?.RepeatCount ?? ""),
+              ShouldNotify: !!e?.ShouldNotify,
+              Periodicity: e?.Periodicity || "OneTime",
+              Category: e?.Category || "",
+              GroupId: e?.GroupId || "",
+            });
+          }
+        } else if (alive) {
+          setErr(res?.error?.message || "Não foi possível carregar a despesa.");
         }
-      } catch (err) {
-        console.error("Erro ao carregar a despesa:", err);
-      }
-    };
 
-    fetchExpense();
+        const img = await apiCall.get(EP_IMG(id));
+        if (alive) {
+          const rel = img?.data?.imagePath;
+          setImgPath(rel && rel !== "NoPhoto" ? rel : null);
+        }
+      } catch {
+        if (alive) setErr("Erro de rede.");
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => { alive = false; };
   }, [id]);
 
-  const recalculateInstances = (newValue, newPayAmount, count) => {
-    const instanceValue = Math.round(newValue / count);
-    let remainingPay = newPayAmount ?? 0;
-
-    return expense.instances.map((inst) => {
-      const paidAmount = Math.min(remainingPay, instanceValue);
-      const isPaid = paidAmount >= instanceValue;
-      remainingPay -= paidAmount;
-      return {
-        ...inst,
-        value: instanceValue,
-        paidAmount,
-        isPaid,
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true); setErr(null);
+    try {
+      const payload = {
+        ...form,
+        Value: Number(form.Value || 0),
+        PayAmount: Number(form.PayAmount || 0),
       };
-    });
+      const res = await apiCall.put(EP_UPDATE, payload);
+      if (res?.ok) {
+        window.location.assign("/Expenses");
+        return;
+      }
+      setErr(res?.error?.message || "Não foi possível atualizar a despesa.");
+    } catch {
+      setErr("Erro de rede ao atualizar a despesa.");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleInstanceChange = (updatedInstance) => {
-    setExpense((prev) => ({
-      ...prev,
-      instances: prev.instances.map((inst) =>
-        inst.id === updatedInstance.id ? updatedInstance : inst
-      ),
-    }));
-  };
-
-  const handleImageSelect = (e) => {
-    const file = e.target.files[0];
+  // upload/substituir imagem
+  const handleUpload = async (file) => {
     if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => setImageUrl(reader.result);
-    reader.readAsDataURL(file);
-
-    setSelectedImage(file);
-  };
-
-  const handleUpload = async () => {
-    if (!selectedImage) return;
-    const formData = new FormData();
-    formData.append("Image", selectedImage);
-    try {
-      await apiCall.post(`/expenses/UploadImage/${id}`, formData);
-    } catch (err) {
-      console.error("Erro ao carregar imagem:", err);
+    const fd = new FormData();
+    fd.append("Image", file);
+    const res = await apiCall.post(EP_UPL(id), fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    if (res?.ok) {
+      setImgPath(res?.data?.imagePath || null);
+    } else {
+      alert(res?.error?.message || "Não foi possível carregar a imagem.");
     }
   };
 
-  const handleSave = async () => {
-    try {
-      if (selectedImage) await handleUpload();
+  // instâncias (ordenadas por data)
+  const instances = unwrap(item?.Instances).sort((a,b)=> new Date(a.DueDate) - new Date(b.DueDate));
 
-      const updatedExpense = {
-        id: expense.id,
-        name: expense.name,
-        category: expense.category,
-        description: expense.description,
-        value: Number(expense.value),
-        payAmount:
-          expense.payAmount !== null ? Number(expense.payAmount) : null,
-        startDate: expense.startDate,
-        endDate: expense.endDate,
-        periodicity: expense.periodicity,
-        repeatCount: expense.repeatCount ?? null,
-        shouldNotify: expense.shouldNotify,
-        groupId: expense.groupId,
-        imageId: expense.imageId,
-        userId: expense.userId,
-        instances: { $values: expense.instances },
-      };
+  const columns = [
+    { key: "due", headerKey: "date", accessor: (i) => i?.DueDate ? new Date(i.DueDate).toLocaleDateString() : "-" },
+    { key: "value", headerKey: "amount", accessor: (i) => Number(i?.Value || 0).toLocaleString(undefined,{style:"currency",currency:"EUR"}) },
+    { key: "isPaid", headerKey: "paid", accessor: (i) => i?.IsPaid ? "Yes" : "No" },
+  ];
 
-      await apiCall.put(`/expenses/UpdateExpense`, updatedExpense);
-      navigate("/expenses");
-    } catch (err) {
-      console.error("Erro ao guardar alterações:", err);
-    }
-  };
+  if (loading) return (
+    <div className="space-y-6">
+      <Title text="Edit Expense" />
+      <div>Loading…</div>
+    </div>
+  );
 
-  if (!expense) return <p>Carregando...</p>;
+  if (!item) return (
+    <div className="space-y-6">
+      <Title text="Edit Expense" />
+      <div className="text-red-600">{err || "Expense not found."}</div>
+    </div>
+  );
+
+  // URL absoluta para a imagem (se precisares do host do backend)
+  const apiBase = import.meta.env.VITE_API_BASE_URL || "";
+  const host = apiBase.replace(/\/+$/,''); // remove trailing slash
+  const imgUrl = imgPath ? `${host}/${imgPath}` : null;
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Editar Despesa</h1>
-        <div className="flex space-x-3">
-          <button
-            onClick={() => navigate("/expenses")}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <X className="h-5 w-5 mr-2" />
-            Cancelar
-          </button>
-          <button
-            onClick={handleSave}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-white font-medium bg-green-600 hover:bg-green-700"
-          >
-            <Save className="h-5 w-5 mr-2" />
-            Guardar alterações
-          </button>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <Title text="Edit Expense" />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium">Nome</label>
-            <input
-              type="text"
-              value={expense.name}
-              onChange={(e) => setExpense({ ...expense, name: e.target.value })}
-              className="w-full border p-2 rounded"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">Categoria</label>
-            <input
-              type="text"
-              value={expense.category}
-              onChange={(e) =>
-                setExpense({ ...expense, category: e.target.value })
-              }
-              className="w-full border p-2 rounded"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">Valor Total</label>
-            <input
-              type="number"
-              value={expense.value}
-              onChange={(e) => {
-                const newValue = parseFloat(e.target.value);
-                if (!isNaN(newValue)) {
-                  const newInstances = recalculateInstances(
-                    newValue,
-                    expense.payAmount,
-                    expense.instances.length
-                  );
-                  setExpense((prev) => ({
-                    ...prev,
-                    value: newValue,
-                    instances: newInstances,
-                  }));
-                }
-              }}
-              className="w-full border p-2 rounded"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">Valor Pago</label>
-            <input
-              type="number"
-              value={expense.payAmount}
-              onChange={(e) => {
-                const newPayAmount = parseFloat(e.target.value);
-                if (!isNaN(newPayAmount)) {
-                  const newInstances = recalculateInstances(
-                    expense.value,
-                    newPayAmount,
-                    expense.instances.length
-                  );
-                  setExpense((prev) => ({
-                    ...prev,
-                    payAmount: newPayAmount,
-                    instances: newInstances,
-                  }));
-                }
-              }}
-              className="w-full border p-2 rounded"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">Periodicidade</label>
-            <input
-              type="text"
-              value={expense.periodicity}
-              readOnly
-              className="w-full border p-2 rounded bg-gray-100"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">Data de Início</label>
-            <input
-              type="date"
-              value={expense.startDate?.substring(0, 10)}
-              onChange={(e) =>
-                setExpense({ ...expense, startDate: e.target.value })
-              }
-              className="w-full border p-2 rounded"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium">Data de Fim</label>
-            <input
-              type="date"
-              value={expense.endDate?.substring(0, 10) || ""}
-              onChange={(e) =>
-                setExpense({ ...expense, endDate: e.target.value })
-              }
-              className="w-full border p-2 rounded"
-            />
-          </div>
-        </div>
+      <form onSubmit={handleSave} className="space-y-4">
+        <Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input label="Name" value={form.Name} onChange={(e)=>set("Name", e.target.value)} required />
+            <Select label="Periodicity" value={form.Periodicity} onChange={(e)=>set("Periodicity", e.target.value)}>
+              {["OneTime", "Daily", "Weekly", "Monthly", "Yearly", "Endless"].map(p => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </Select>
 
-        <div className="flex flex-col items-center space-y-4">
-          {imageUrl ? (
-            <div className="relative">
-              <img
-                src={imageUrl}
-                alt="Despesa"
-                className="w-48 h-48 object-contain border rounded shadow"
-              />
-              <button
-                onClick={() => setShowPreview(true)}
-                className="absolute top-1 right-1 bg-white p-1 rounded-full shadow"
-              >
-                <Eye className="w-4 h-4" />
-              </button>
+            <Input label="Value" type="number" step="0.01" value={form.Value} onChange={(e)=>set("Value", e.target.value)} required />
+            <Input label="Already paid" type="number" step="0.01" value={form.PayAmount} onChange={(e)=>set("PayAmount", e.target.value)} />
+
+            <Input label="Start date" type="date" value={form.StartDate} onChange={(e)=>set("StartDate", e.target.value)} required />
+            <Input label="End date" type="date" value={form.EndDate} onChange={(e)=>set("EndDate", e.target.value)} />
+
+            <Input label="Repeat count" type="number" min="1" value={form.RepeatCount} onChange={(e)=>set("RepeatCount", e.target.value)} />
+            <Input label="Category" value={form.Category} onChange={(e)=>set("Category", e.target.value)} />
+
+            <label className="flex items-center gap-2 mt-1">
+              <input type="checkbox" checked={form.ShouldNotify} onChange={(e)=>set("ShouldNotify", e.target.checked)} />
+              <span>Notify</span>
+            </label>
+
+            <div className="md:col-span-2">
+              <TextArea label="Description" rows={4} value={form.Description} onChange={(e)=>set("Description", e.target.value)} />
             </div>
-          ) : (
-            <p className="text-gray-500">Sem imagem</p>
-          )}
-
-          <div className="flex space-x-3">
-            <button
-              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Camera className="w-4 h-4" />
-              <span>Trocar</span>
-            </button>
-
-            {imageUrl && (
-              <a
-                href={imageUrl}
-                download
-                className="flex items-center space-x-2 bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900"
-              >
-                <Download className="w-4 h-4" />
-                <span>Download</span>
-              </a>
-            )}
           </div>
+        </Card>
 
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            className="hidden"
-            onChange={handleImageSelect}
-          />
+        {/* Imagem atual + upload */}
+        <Card>
+          <div className="flex items-center gap-4">
+            <div className="w-24 h-24 rounded-lg overflow-hidden ring-1 ring-gray-300 bg-gray-50 flex items-center justify-center">
+              {imgUrl ? (
+                <img src={imgUrl} alt="expense" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xs text-gray-500">No image</span>
+              )}
+            </div>
+            <div>
+              <label className="block mb-1 text-sm font-medium">Replace image</label>
+              <input type="file" accept="image/*" onChange={(e)=>handleUpload(e.target.files?.[0])} />
+            </div>
+          </div>
+        </Card>
+
+        {err && <div className="text-sm text-red-600">{err}</div>}
+
+        <div className="flex items-center gap-3">
+          <Button type="submit" disabled={saving}>Save</Button>
+          <Button type="button" variant="secondary" onClick={()=>window.history.back()} disabled={saving}>Cancel</Button>
         </div>
-      </div>
+      </form>
 
-      <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Instâncias</h2>
-        {expense.instances.map((instance) => (
-          <EditInstanceCard
-            key={instance.id}
-            instance={instance}
-            totalValue={instance.value}
-            onChange={handleInstanceChange}
-          />
-        ))}
-      </div>
-
-      {showPreview && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="relative">
-            <img
-              src={imageUrl}
-              alt="Preview"
-              className="max-h-[90vh] max-w-[90vw]"
+      {/* Instâncias */}
+      <Card title="Instances">
+        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          <div className="relative overflow-x-auto">
+            <GenericTable
+              filteredData={instances}
+              columns={columns}
+              theme={{}}
+              t={null}
+              loading={false}
+              rowKey={(i)=>i?.Id}
+              stickyHeader
+              minTableWidth="48rem"
+              headClassName="bg-gray-50"
+              headerCellClassName=""
+              emptyMessage="Sem instâncias"
+              edit={{
+                enabled: true,
+                onEdit: async (i) => {
+                  const nextDate = prompt("Due date (YYYY-MM-DD):", i.DueDate?.slice(0,10) || "");
+                  if (!nextDate) return;
+                  const nextVal  = prompt("Value:", String(i.Value ?? ""));
+                  const res = await apiCall.post(EP_UPD_INS, {
+                    Id: i.Id,
+                    DueDate: new Date(nextDate),
+                    IsPaid: !!i.IsPaid,
+                    Value: nextVal ? Number(nextVal) : undefined,
+                  });
+                  if (res?.ok) {
+                    const r = await apiCall.get(EP_GET(id));
+                    if (r?.ok) setItem(r.data);
+                  } else {
+                    alert(res?.error?.message || "Não foi possível atualizar a instância.");
+                  }
+                }
+              }}
+              remove={{
+                enabled: true,
+                confirmMessage: "Marcar esta instância como paga?",
+                doDelete: async (i) => {
+                  const res = await apiCall.patch(EP_MARK(i.Id), null);
+                  if (res?.ok) {
+                    const r = await apiCall.get(EP_GET(id));
+                    if (r?.ok) setItem(r.data);
+                    return true;
+                  }
+                  return false;
+                }
+              }}
             />
-            <button
-              onClick={() => setShowPreview(false)}
-              className="absolute top-2 right-2 bg-white p-1 rounded-full shadow"
-            >
-              <X className="w-5 h-5" />
-            </button>
           </div>
         </div>
-      )}
+      </Card>
     </div>
   );
 }
-
-export default EditExpense;

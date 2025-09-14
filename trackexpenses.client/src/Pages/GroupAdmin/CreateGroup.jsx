@@ -131,7 +131,7 @@ export default function CreateGroup({ onSuccess }) {
 
       if (res?.status >= 200 && res?.status < 300) {
         const created = res?.data || { ...payload };
-        onSuccess ? onSuccess(created) : navigate("/Groups");
+        onSuccess ? onSuccess(created) : navigate("/GroupsList");
       } else {
         console.error("[Group/Register] Failed:", res);
         setErr(res?.data?.message || tr("groups.errors_create_failed", "Could not create the group."));

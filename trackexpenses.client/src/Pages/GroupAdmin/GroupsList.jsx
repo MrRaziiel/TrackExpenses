@@ -1,308 +1,206 @@
 import React, { useEffect, useMemo, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import Title from "../../components/Titles/TitlePage";
+import Button from "../../components/Buttons/Button";
+import GenericFilter from "../../components/Tables/GenericFilter";
+import GenericTable from "../../components/Tables/GenericTable";
 import { useTheme } from "../../styles/Theme/Theme";
 import { useLanguage } from "../../utilis/Translate/LanguageContext";
 import apiCall from "../../services/ApiCallGeneric/apiCall";
 import AuthContext from "../../services/Authentication/AuthContext";
 
-export default function GroupsList() {
+/** Badge simples */
+function Badge({ children, tone = "info" }) {
+  const map = {
+    ok:   { bg: "rgba(16,185,129,0.15)", fg: "#10B981" },
+    err:  { bg: "rgba(239,68,68,0.15)", fg: "#EF4444" },
+    info: { bg: "rgba(59,130,246,0.15)", fg: "#3B82F6" },
+    warn: { bg: "rgba(245,158,11,0.15)", fg: "#F59E0B" },
+  }[tone] || { bg: "rgba(59,130,246,0.15)", fg: "#3B82F6" };
+
+  return (
+    <span className="inline-block px-2 py-1 rounded-full text-xs" style={{ background: map.bg, color: map.fg, whiteSpace: "nowrap" }}>
+      {children}
+    </span>
+  );
+}
+
+export default function ListGroups() {
   const navigate = useNavigate();
-  const { theme } = useTheme();
   const { t } = useLanguage();
+  const { theme } = useTheme();
   const { auth } = useContext(AuthContext) || {};
-
-  const c = theme?.colors || {};
-  const paper = c.background?.paper || "#111827";
-  const border = c.menu?.border || "rgba(255,255,255,0.12)";
-  const text = c.text?.primary || "#E5E7EB";
-  const muted = c.text?.secondary || "#94A3B8";
-  const hover = c.menu?.hoverBg || "rgba(255,255,255,0.06)";
-  const accent = c.primary?.main || "#3B82F6";
-  const errorCol = c.error?.main || "#EF4444";
-
-  const tr = (k, fb) => { try { return k?.includes(".") ? t(k) : (k ?? fb); } catch { return fb ?? k; } };
-  const norm = (s) => String(s || "").trim().toLowerCase();
 
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState("");
+  const [errorSubmit, setErrorSubmit] = useState(null);
 
-  // roles
-  const roles = useMemo(() => {
-    const r = (auth?.Roles ?? auth?.Role ?? auth?.roles ?? auth?.role) ?? [];
-    return (Array.isArray(r) ? r : [r]).map((x) => String(x || "").toUpperCase());
-  }, [auth]);
-  const hasGroupAdminRole = roles.includes("GROUPADMINISTRATOR");
+  const [flt, setFlt] = useState({ q: "", scope: "all" });
 
-  // helpers para dados
   const unwrap = (v) => (Array.isArray(v) ? v : (v?.$values ?? []));
-  const getMembers = (g) => unwrap(g?.members ?? g?.Members);
   const getAdmin = (g) => g?.admin ?? g?.Admin ?? null;
+  const getMembers = (g) => unwrap(g?.members ?? g?.Members);
 
-  const isMine = (g, myEmail) => {
-    const me = norm(myEmail);
-    if (!me) return false;
+  const rolesArr = useMemo(() => {
+    const raw = (auth?.Roles ?? auth?.Role ?? auth?.roles ?? auth?.role) ?? [];
+    return (Array.isArray(raw) ? raw : [raw]).map((x) => String(x || "").toUpperCase());
+  }, [auth]);
+  const isGroupAdmin = rolesArr.includes("GROUPADMINISTRATOR");
 
-    const a = getAdmin(g);
-    const adminEmail = norm(a?.email ?? a?.Email ?? "");
-    if (adminEmail && adminEmail === me) return true;
-
-    for (const m of getMembers(g)) {
-      const em = norm(m?.email ?? m?.Email ?? "");
-      if (em && em === me) return true;
-    }
-    return false;
-  };
-
-  const canEditDelete = (g) => {
-    if (!hasGroupAdminRole) return false;
-    const a = getAdmin(g);
-    const adminId = String(a?.id ?? a?.Id ?? "");
-    const adminEmail = norm(a?.email ?? a?.Email ?? "");
-    const meId = String(auth?.Id || "");
-    const meEmail = norm(auth?.Email || "");
-    return (meId && adminId === meId) || (meEmail && adminEmail === meEmail);
-  };
-
-  // load
-  const load = async () => {
-    setLoading(true);
-    setErr("");
-    try {
-      const email = auth?.Email || "";
-      const res = await apiCall.get("/Group/List", {
-        params: email ? { email } : undefined,
-        validateStatus: () => true
-      });
-
-      if (res?.status >= 200 && res?.status < 300) {
-        const raw = res?.data;
-        const list = Array.isArray(raw) ? raw : (raw?.$values ?? []);
-        // fallback: filtro no cliente para garantir
-        const mine = (list || []).filter((g) => isMine(g, email));
-        setGroups(mine);
-      } else {
-        setErr(res?.data?.message || tr("groups.list_error", "Could not load groups."));
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        setLoading(true);
+        setErrorSubmit(null);
+        const email = auth?.Email || "";
+        const res = await apiCall.get("/Group/List", {
+          params: email ? { email } : undefined,
+          validateStatus: () => true,
+        });
+        if (res?.status >= 200 && res?.status < 300) {
+          const raw = res?.data;
+          const list = Array.isArray(raw) ? raw : (raw?.$values ?? []);
+          if (alive) setGroups(list);
+        } else if (alive) setErrorSubmit(res?.data?.message || "Could not load groups.");
+      } catch {
+        if (alive) setErrorSubmit("Could not load groups.");
+      } finally {
+        if (alive) setLoading(false);
       }
-    } catch (e) {
-      console.error("[GET /Group/List] error:", e);
-      setErr(tr("groups.list_error", "Could not load groups."));
-    } finally {
-      setLoading(false);
-    }
-  };
+    })();
+    return () => { alive = false; };
+  }, [auth?.Email]);
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [auth?.Email]);
+  const scopeOptions = useMemo(
+    () => [
+      { value: "all", label: t?.("common.all") || "All" },
+      { value: "with", label: t?.("groups.withMembers") || "With members" },
+      { value: "empty", label: t?.("groups.noMembers") || "No members" },
+    ],
+    [t]
+  );
 
-  // ações
-  const confirm = (msg) => window.confirm(msg);
+  const filtered = useMemo(() => {
+    const q = (flt.q || "").toLowerCase().trim();
+    const scope = (flt.scope || "all").toLowerCase();
+    return (groups || []).filter((g) => {
+      const name = (g?.name ?? g?.Name ?? "").toLowerCase();
+      const admin = getAdmin(g);
+      const adminText = `${admin?.fullName ?? admin?.FullName ?? ""} ${admin?.email ?? admin?.Email ?? ""}`.toLowerCase();
+      const membersCount = getMembers(g).length;
+      const matchesText = !q || name.includes(q) || adminText.includes(q);
+      const matchesScope =
+        scope === "all" ||
+        (scope === "with" && membersCount > 0) ||
+        (scope === "empty" && membersCount === 0);
+      return matchesText && matchesScope;
+    });
+  }, [groups, flt]);
 
-  const handleEdit = (g) => {
+  const doEdit = (g) => {
     const id = g?.id ?? g?.Id;
     if (!id) return;
+    // ✅ pedido: /Groups/Edit/:id
     navigate(`/Groups/Edit/${id}`);
   };
 
-  const handleDelete = async (g) => {
-    const id = g?.id ?? g?.Id;
-    if (!id) return;
-    if (!confirm(tr("groups.confirm_delete", "Are you sure you want to delete this group?"))) return;
-
-    try {
-      const res = await apiCall.delete("/Group/Delete", { params: { id }, validateStatus: () => true });  
-      if (res?.status >= 200 && res?.status < 300) {
-        await load();
-      } else {
-        window.alert(res?.data?.message || tr("groups.delete_failed", "Could not delete the group."));
-      }
-    } catch (e) {
-      console.error("[DELETE /Group/Delete] error:", e);
-      window.alert(tr("groups.delete_failed", "Could not delete the group."));
-    }
-  };
-
-  const handleLeave = async (g) => {
-    const id = g?.id ?? g?.Id;
-    if (!id) return;
-    if (!confirm(tr("groups.confirm_leave", "Leave this group?"))) return;
-
-    try {
-      const res = await apiCall.delete("/Group/Leave", {
-        params: { id },
-        validateStatus: () => true
-      });
-      if (res?.status >= 200 && res?.status < 300) {
-        await load();
-      } else {
-        window.alert(res?.data?.message || tr("groups.leave_failed", "Could not leave the group."));
-      }
-    } catch (e) {
-      console.error("[DELETE /Group/Leave] error:", e);
-      window.alert(tr("groups.leave_failed", "Could not leave the group."));
-    }
-  };
-
-  // UI atoms
-  const Tile = ({ dashed = false, onClick, children }) => (
-    <div
-      onClick={onClick}
-      role={onClick ? "button" : undefined}
-      className={`w-full rounded-2xl p-10 ${onClick ? "cursor-pointer hover:-translate-y-0.5 transition-transform" : ""}`}
-      style={{ backgroundColor: paper, border: `${dashed ? "1px dashed" : "1px solid"} ${border}`, minHeight: 220 }}
-    >
-      {children}
-    </div>
-  );
-
-  const IconButton = ({ title, onClick, danger = false, children }) => (
-    <button
-      type="button"
-      title={title}
-      onClick={onClick}
-      className="inline-flex items-center justify-center rounded-lg px-3 py-2 text-sm"
-      style={{
-        backgroundColor: hover,
-        color: danger ? errorCol : text,
-        border: `1px solid ${danger ? `${errorCol}55` : border}`
-      }}
-    >
-      {children}
-    </button>
-  );
-
-  const CreateTile = () => (
-    <Tile dashed onClick={() => navigate("/CreateGroup")}>
-      <div className="w-full h-full flex flex-col items-center justify-center text-center">
-        <div
-          className="flex items-center justify-center rounded-full mb-4"
-          style={{ width: 64, height: 64, backgroundColor: hover, border: `1px solid ${border}` }}
-        >
-          <span style={{ fontSize: 28, color: accent, lineHeight: 0 }}>+</span>
-        </div>
-        <div className="text-lg font-semibold" style={{ color: text }}>
-          {tr("common.createGroup", "Create group")}
-        </div>
-        <div className="text-sm mt-1" style={{ color: muted }}>
-          {tr("groups.tap_to_create", "Tap to create")}
-        </div>
-      </div>
-    </Tile>
-  );
-
-  const GroupTile = ({ g }) => {
-    const id = g?.id ?? g?.Id;
-    const name = g?.name ?? g?.Name ?? "—";
-    const admin = getAdmin(g);
-    const members = getMembers(g);
-
-    const adminName = admin?.fullName ?? admin?.FullName ?? "";
-    const adminEmail = admin?.email ?? admin?.Email ?? "";
-
-    const iCanEditDelete = canEditDelete(g);
-
-    return (
-      <Tile>
-        {/* header */}
-        <div className="flex items-start justify-between mb-4 gap-4">
-          <div className="text-xl font-semibold" style={{ color: text }}>{name}</div>
-
-          <div className="flex items-center gap-2">
-            {iCanEditDelete ? (
-              <>
-                {/* edit (✎) */}
-                <IconButton title={tr("common.edit", "Edit")} onClick={() => handleEdit(g)}>
-                  {/* pen glyph */}
-                  <span aria-hidden>✎</span>
-                </IconButton>
-
-                {/* delete (×) */}
-                <IconButton title={tr("common.delete", "Delete")} onClick={() => handleDelete(g)} danger>
-                  <span aria-hidden>×</span>
-                </IconButton>
-              </>
-            ) : (
-              // membro normal → sair
-              <IconButton title={tr("groups.leave", "Leave")} onClick={() => handleLeave(g)}>
-                <span style={{ marginRight: 6 }} aria-hidden>🚪</span>
-                {tr("groups.leave", "Leave")}
-              </IconButton>
-            )}
+  const columns = [
+    { key: "name", headerKey: "name", accessor: (g) => g?.name ?? g?.Name ?? "-" },
+    {
+      key: "admin",
+      headerKey: "groups.admin", // evita 'common.common...'
+      accessor: (g) => {
+        const a = getAdmin(g);
+        const name = a?.fullName ?? a?.FullName ?? "";
+        const email = a?.email ?? a?.Email ?? "";
+        return (name || email) ? `${name} ${email}`.trim() : "-";
+      },
+    },
+    {
+      key: "members",
+      headerKey: "groups.members",
+      accessor: (g) => {
+        const count = getMembers(g).length;
+        return (
+          <div className="flex justify-center">
+            <Badge tone={count ? "info" : "warn"}>
+              {(count || 0) + " " + (t?.("groups.members") || "Members")}
+            </Badge>
           </div>
-        </div>
-
-        {/* admin */}
-        {admin && (
-          <div className="text-sm mb-2" style={{ color: muted }}>
-            <span className="opacity-80">{tr("groups.admin", "Admin")}:</span>{" "}
-            <span style={{ color: text }}>
-              {adminName || adminEmail || "—"}{adminEmail ? ` — ${adminEmail}` : ""}
-            </span>
-          </div>
-        )}
-
-        {/* members */}
-        <div className="text-sm" style={{ color: text }}>
-          <div className="opacity-80 mb-1">{tr("groups.members", "Members")}:</div>
-          {Array.isArray(members) && members.length ? (
-            <ul className="list-disc ml-6">
-              {members.map((m, i) => {
-                const nm = m?.fullName ?? m?.FullName ?? "";
-                const em = m?.email ?? m?.Email ?? "";
-                const key = m?.id ?? m?.Id ?? `${em}-${i}`;
-                return <li key={key}>{nm || em || "—"}{em ? ` — ${em}` : ""}</li>;
-              })}
-            </ul>
-          ) : (
-            <div className="opacity-70">—</div>
-          )}
-        </div>
-      </Tile>
-    );
-  };
+        );
+      },
+      cellClassName: "text-center",
+    },
+  ];
 
   return (
-    <div className="mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <Title text={tr("groups.title", "Groups list")} />
+    <div className="space-y-6 min-h-screen">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <Title text={t?.("groups.list") || "Groups"} />
+        <Button variant="primary" size="md" fullWidth={false} onClick={() => navigate("/CreateGroup")} className="shrink-0">
+          {t?.("groups.new") || "New group"}
+        </Button>
       </div>
 
-      {err && (
-        <div
-          className="mb-4 rounded-lg p-3 text-sm"
-          style={{ backgroundColor: `${errorCol}1a`, color: errorCol, border: `1px solid ${errorCol}55` }}
-        >
-          {err}
-        </div>
-      )}
+      <GenericFilter
+        className="
+          mt-2
+          grid items-center gap-3
+          grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto_auto]
+          [&_input]:h-11 [&_select]:h-11 [&_button]:h-11
+        "
+        value={flt}
+        onChange={setFlt}
+        t={t}
+        theme={theme}
+        searchPlaceholder={t?.("groups.searchPlaceholder") || "Search groups..."}
+        filters={[{ key: "scope", type: "select", options: scopeOptions }]}
+      />
 
-      {loading ? (
-        <div className="rounded-2xl p-10 animate-pulse" style={{ backgroundColor: paper, border: `1px solid ${border}`, minHeight: 220 }}>
-          <div className="h-6 w-48 mb-4 rounded" style={{ backgroundColor: hover }} />
-          <div className="h-4 w-72 mb-2 rounded" style={{ backgroundColor: hover }} />
-          <div className="h-4 w-64 rounded" style={{ backgroundColor: hover }} />
+      {/* wrapper igual ao UsersList: corta o bleed do header */}
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="relative overflow-x-auto">
+          <GenericTable
+            filteredData={filtered}
+            columns={columns}
+            theme={theme}
+            t={t}
+            loading={loading}
+            rowKey={(g) => g?.id || g?.Id}
+            stickyHeader
+            truncateKeys={["name", "admin"]}
+            minTableWidth="56rem"
+            headClassName="bg-gray-50"
+            headerCellClassName=""
+            emptyMessage={t?.("common.noResults") || "No results"}
+            edit={{
+              enabled: isGroupAdmin,     // só admin de grupo edita
+              onEdit: doEdit,
+            }}
+            remove={{
+              enabled: true,             // admin apaga; user normal sai
+              confirmMessage: isGroupAdmin
+                ? (t?.("groups.confirm_delete") || "Are you sure you want to delete this group?")
+                : (t?.("groups.confirm_leave") || "Leave this group?"),
+              doDelete: async (g) => {
+                const id = g?.id ?? g?.Id;
+                if (!id) return false;
+                const endpoint = isGroupAdmin ? "/Group/Delete" : "/Group/Leave";
+                const res = await apiCall.delete(endpoint, { params: { id }, validateStatus: () => true });
+                if (res?.status >= 200 && res?.status < 300) {
+                  setGroups((prev) => prev.filter((x) => (x.id ?? x.Id) !== id));
+                  return true;
+                }
+                return false;
+              },
+              onError: (err) => window.alert(err?.message || (isGroupAdmin ? "Could not delete the group." : "Could not leave the group.")),
+            }}
+          />
         </div>
-      ) : (
-        <>
-          {groups?.length > 0 && (
-            <div className="space-y-6 mb-6">
-              {groups.map((g) => {
-                const id = g?.id ?? g?.Id ?? Math.random().toString(36);
-                return <GroupTile key={id} g={g} />;
-              })}
-            </div>
-          )}
+      </div>
 
-          {/* tile de criação, sempre com o mesmo look/spacing */}
-          {groups?.length === 0 ? (
-            <CreateTile />
-          ) : (
-            <div className="mt-2">
-              <CreateTile />
-            </div>
-          )}
-        </>
-      )}
+      {errorSubmit && <div className="text-sm text-red-600" role="alert">{errorSubmit}</div>}
     </div>
   );
 }
