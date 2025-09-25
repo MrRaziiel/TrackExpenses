@@ -40,13 +40,18 @@ namespace TRACKEXPENSES.Server.Models
     public class ExpenseInstance
     {
         [Key] public string Id { get; set; } = Guid.NewGuid().ToString();
+
         [Required] public string ExpenseId { get; set; }
         [ForeignKey(nameof(ExpenseId))] public Expense Expense { get; set; }
 
         public DateTime DueDate { get; set; }
+
         public bool IsPaid { get; set; }
-        public decimal Value { get; set; }            // Valor daquela prestação/recorrência
+        public decimal Value { get; set; }
+
         public decimal PaidAmount { get; set; }
+
+        public DateTime? PaidDate { get; set; }
 
         public string? ImageId { get; set; }
         [ForeignKey(nameof(ImageId))] public ImageDB? Image { get; set; }

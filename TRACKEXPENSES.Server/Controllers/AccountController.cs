@@ -43,17 +43,6 @@ namespace TRACKEXPENSES.Server.Controllers
 
             var value = await _codeService.CheckGroupCodeAsync(new CheckGroupCodeRequest() { Code = model.CodeInvite });
             var response = "USER"; 
-            //if (value != null)
-            //{
-            //    var request = new GroupRegisterRequest
-            //    {
-            //        CodeInvite = model.CodeInvite,
-            //        GroupName = model.FamilyName,
-            //    };
-
-            //    response = await IGroupRegistrationService.RegisterGroupAsync(request);
-            //    if (response.ToString().IsNullOrEmpty()) return BadRequest("Code Invite is wrong");
-            //}
 
             var user = CreateUserFromRegister.fromRegister(model);
 

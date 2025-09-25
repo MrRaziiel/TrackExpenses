@@ -30,7 +30,7 @@ import EditUserProfile from "./Pages/Administrador/EditUser";
 import ListExpenses from "./Pages/Expenses/ListExpenses";
 import CreateExpense from "./Pages/Expenses/CreateExpense";
 import EditExpense from "./Pages/Expenses/EditExpense";
-import CalendarExpenses from "./Pages/Expenses/CalendarExpenses";
+import CalendarExpenses from "./Pages/Expenses/ExpensesCalendar";
 import EarningsList from "./Pages/Earnings/EarningList";
 import AddEditEarning from "./Pages/Earnings/AddEditEarning";
 import Login from "./Pages/Autentication/Login";

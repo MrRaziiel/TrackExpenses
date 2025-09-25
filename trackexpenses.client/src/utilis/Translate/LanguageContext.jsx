@@ -16,7 +16,6 @@ const translations = {
       logout: "Logout",
       save: "Save",
       cancel: "Cancel",
-      search: "Search",
       filter: "Filter",
       add: "Add",
       total: "Total",
@@ -47,7 +46,6 @@ const translations = {
       email: "Email",
       user: "User",
       add_user: "Add a user",
-      clear: "Clear",
       all: "All",
       allGroups: "All Groups",
       searchUsers: "Type to search users...",
@@ -103,7 +101,10 @@ const translations = {
       search: "Search...",
       limpar: "Clear",
       allCategories: "All Categories",
-      paid: "Paid"
+      paid: "Paid",
+      wallet: "Wallet",
+      select_option: "Select an option",
+      create: "Create"
       
   },
   tooltip: {
@@ -120,6 +121,8 @@ const translations = {
       list: "Wallets",
       new: "New Wallet",
       searchPlaceholder: "Search wallets...",
+      select: "Select wallet",
+      all: "All Wallets"
     },
     settings: {
       appearance: "Appearance",
@@ -132,15 +135,19 @@ const translations = {
       security: "Security",
     },
     categories: {
-      food: "Food",
-      transport: "Transport",
-      entertainment: "Entertainment",
-      bills: "Bills",
-      others: "Others",
-      salary: "Salary",
-      freelance: "Freelance",
-      investments: "Investments",
-    },
+  house: "House",
+  car: "Car",
+  bills: "Bills",
+  utilities: "Utilities",
+  health: "Health",
+  education: "Education",
+  personalCare: "Personal Care",
+  entertainment: "Entertainment",
+  subscriptions: "Subscriptions",
+  debtPayments: "Debt Payments",
+  others: "Others",
+}
+,
     auth: {
       loginTitle: "LOGIN",
       forgotTitle: "Forgot your password?",
@@ -314,6 +321,7 @@ const translations = {
     remaining: "Remaining",
     list: "List Expenses",
     searchPlaceholder: "Search name, description or category...",
+    deleteConfirm: "Are you sure you want to delete this expense? This action can’t be undone.",
     
     method: {
       one: "One-off",
@@ -340,14 +348,19 @@ const translations = {
       category: "Category",
       notify: "Notify",
       description: "Description",
+      categoryPlaceholder: "Type or select a category"
     },
-  },
-  periodicity: {
-    daily: "Daily",
-    weekly: "Weekly",
-    monthly: "Monthly",
-    yearly: "Yearly",
-    endless: "Endless",
+    errors: {
+      createExpense: "Could not create expense.",
+      network: "Network error while creating expense.",
+      invalidDates: "End date cannot be earlier than start date.",
+      paidExceeds: "Paid amount cannot exceed total amount."
+    },
+    kpis: {
+      planned: "Planned (all)",
+      paid: "Already paid",
+      remain: "Remaining"
+    },
   },
 
   qr: {
@@ -356,23 +369,56 @@ const translations = {
     readFromPhoto: "Read QR from photo",
   },
 
-  receipt: {
+receipt: {
     label: "Receipt / expense photo",
     add: "Add photo",
     change: "Change photo",
     remove: "Remove",
     note: "This is stored on the expense (not the QR reading).",
     noPreview: "No preview",
-    clickToEnlarge: "Click to enlarge",
     previewAlt: "Receipt preview",
-    modalAlt: "Receipt (enlarged)",
+    clickToEnlarge: "Click to enlarge",
+    modalAlt: "Receipt (enlarged)"
   },
-
-  wallets: {
-    select: "Select wallet",
+  periodicity: {
+    daily: "Daily",
+    weekly: "Weekly",
+    monthly: "Monthly",
+    yearly: "Yearly",
+    endless: "Endless"
   },
+  calendar: {
+  title: "Expenses calendar",
+  today: "Today",
+  allWallets: "All wallets",
+  wallet: "Wallet",
+  user: "User",
+  me: "Me",
+  allUsers: "All users",
+  showInstances: "Show instances",
+  showEndDates: "Show end dates",
+  legend: {
+    instance: "Instance",
+    end: "End date",
+  },
+  dow: {
+    1: "Mon",
+    2: "Tue",
+    3: "Wed",
+    4: "Thu",
+    5: "Fri",
+    6: "Sat",
+    7: "Sun",
+  },
+  instance: "Instance",
+  expense: "Expense",
+  instanceOf: "Instance of",
+  endOf: "End of",
+  loading: "Loading…",
+}
   
   },
+  
 };
 
 export function LanguageProvider({ children }) {

@@ -2,7 +2,7 @@
 
 namespace TRACKEXPENSES.Server.ViewModels
 {
-    public class ExpenseCreateRequestViewModel
+    public sealed class ExpenseCreateRequestViewModel
     {
         public string UserEmail { get; set; } = default!;
         public string Name { get; set; } = default!;
@@ -16,10 +16,13 @@ namespace TRACKEXPENSES.Server.ViewModels
         public string? Periodicity { get; set; }
         public string? Category { get; set; }
 
+        public string WalletId { get; set; } = default!;
+
         // upload
-        public IFormFile? Image { get; set; }
         public string? UploadType { get; set; }
+        public IFormFile? Image { get; set; }
     }
+
 
 
 }
