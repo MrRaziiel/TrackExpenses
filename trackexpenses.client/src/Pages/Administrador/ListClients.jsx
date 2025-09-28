@@ -40,7 +40,6 @@ export default function UsersTable() {
     return () => { alive = false; };
   }, []);
 
-  // 2) Enriquecer com Roles (faz a call aqui)
   useEffect(() => {
     if (!users?.length) {
       setUsersWithRoles([]);

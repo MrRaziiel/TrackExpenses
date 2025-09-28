@@ -31,8 +31,10 @@ import ListExpenses from "./Pages/Expenses/ListExpenses";
 import CreateExpense from "./Pages/Expenses/CreateExpense";
 import EditExpense from "./Pages/Expenses/EditExpense";
 import CalendarExpenses from "./Pages/Expenses/ExpensesCalendar";
-import EarningsList from "./Pages/Earnings/EarningList";
-import AddEditEarning from "./Pages/Earnings/AddEditEarning";
+import ListEarnings from "./Pages/Earnings/ListEarnings";
+import CreateEarning from "./Pages/Earnings/CreateEarning";
+import EditEarning from "./Pages/Earnings/EditEarning";
+import ViewEarning from "./Pages/Earnings/ViewEarning";
 import Login from "./Pages/Autentication/Login";
 import SignIn from "./Pages/Autentication/SignIn";
 import ForgotPassword from "./Pages/Autentication/ForgotPassword";
@@ -123,8 +125,10 @@ export default function App() {
           <Route path="/Dashboard" element={<Dashboard />} />
           <Route path="/CreateWallet" element={<CreateWallet />} />
 
-          <Route path="/Earnings" element={<EarningsList />} />
-          <Route path="/Earnings/add" element={<AddEditEarning />} />
+  <Route path="/Earnings" element={<ListEarnings />} />
+  <Route path="/CreateEarning" element={<CreateEarning />} />
+  <Route path="/Earnings/Edit/:id" element={<EditEarning />} />
+  <Route path="/Earnings/View/:id" element={<ViewEarning />} />
 
           <Route path="/Expenses" element={<ListExpenses />} />
           <Route path="/CreateExpense" element={<CreateExpense />} />

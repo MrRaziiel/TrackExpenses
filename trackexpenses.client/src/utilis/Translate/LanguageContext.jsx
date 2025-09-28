@@ -104,8 +104,11 @@ const translations = {
       paid: "Paid",
       wallet: "Wallet",
       select_option: "Select an option",
-      create: "Create"
-      
+      create: "Create",
+    photo: "Photo",
+    fixErrors: "Fix the errors above to continue",
+    edit: "Edit" 
+       
   },
   tooltip: {
     info: "Information"
@@ -122,7 +125,9 @@ const translations = {
       new: "New Wallet",
       searchPlaceholder: "Search wallets...",
       select: "Select wallet",
-      all: "All Wallets"
+      all: "All Wallets",
+          one: "Wallet",
+
     },
     settings: {
       appearance: "Appearance",
@@ -146,6 +151,16 @@ const translations = {
   subscriptions: "Subscriptions",
   debtPayments: "Debt Payments",
   others: "Others",
+  salary: "Salary",
+    freelance: "Freelance",
+    investments: "Investments",
+    business: "Business",
+    rental_income: "Rental Income",
+    gifts: "Gifts",
+    bonuses: "Bonuses",
+    interest: "Interest",
+    dividends: "Dividends",
+    other: "Other",
 }
 ,
     auth: {
@@ -273,6 +288,13 @@ const translations = {
       registerFailed: "Error while registering user.",
       couldnt_load_profile: "We couldn't load your profile. Please try again.",
       couldnt_save_changes: "We couldn't save your changes. Please try again.",
+      network: "Network error.",
+    save: "Could not save.",
+    load: "Failed to load.",
+    upload: "Could not upload image.",
+    notFound: "Not found",
+    generic: "Error",
+    createEarning: "Could not create earning."
     },
     password: {
       length: "Length: ",
@@ -368,6 +390,85 @@ const translations = {
     subtitle: "Upload a clear photo of the QR. I'll auto-fill date, value and description.",
     readFromPhoto: "Read QR from photo",
   },
+  earnings: {
+    list: "Earnings",
+    new: "New earning",
+    edit: "Edit earning",
+    details: "Earning details",
+    empty: "No earnings to display.",
+
+    kpi: {
+      total: "Total",
+      received: "Already received",
+      pending: "Remaining"
+    },
+
+    form: {
+      defaultTitle: "Earning",
+      title: "Title",
+      notes: "Notes",
+      wallet: "Wallet",
+      total: "Total amount",
+      firstDate: "Start date",
+      category: "Category"
+    },
+
+    photo: {
+      _: "Earning photo (optional)",
+      note: "Stored on the earning header. Instances can have their own photos later.",
+      view: "View",
+      no_photo: "No photo",
+      title: "Earning photo"
+    },
+
+    method: {
+      oneoff: "One-off",
+      installments: "Installments (credit)",
+      recurring: "Recurring"
+    },
+
+    total: "Total",
+    installments: "Installments",
+    perInstallment: "Per installment",
+
+    installmentsBlock: {
+      count: "Number of installments",
+      each: "Each installment ≈"
+    },
+
+    recurring: {
+      periodicity: "Periodicity",
+      repeatCount: "Repetitions (optional)"
+    },
+
+    table: {
+      title: "Title",
+      category: "Category",
+      total: "Total",
+      instances: "Received/Pending",
+      start: "Start",
+      created: "Created"
+    },
+
+    status: {
+      title: "Status",
+      received: "Received",
+      not_received: "Not received",
+      pending: "Pending"
+    },
+
+    instances: {
+      _: "Instances",
+      empty: "No instances."
+    },
+
+    instance: {
+      edit: "Edit instance",
+      receivedAmount: "Received amount"
+    },
+
+    deleteConfirm: "Delete this earning (and all its instances)?"
+  },
 
 receipt: {
     label: "Receipt / expense photo",
@@ -376,9 +477,9 @@ receipt: {
     remove: "Remove",
     note: "This is stored on the expense (not the QR reading).",
     noPreview: "No preview",
-    previewAlt: "Receipt preview",
     clickToEnlarge: "Click to enlarge",
-    modalAlt: "Receipt (enlarged)"
+    previewAlt: "Preview",
+    modalAlt: "Image (enlarged)"
   },
   periodicity: {
     daily: "Daily",

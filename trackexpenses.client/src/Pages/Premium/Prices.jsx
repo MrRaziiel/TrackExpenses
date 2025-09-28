@@ -224,7 +224,7 @@ export default function PremiumChoicePage() {
         </h3>
 
         <div className="text-3xl font-bold" style={{ color: col.primary }}>
-          €0 <span className="text-sm font-medium opacity-60">/mês</span>
+          €0 <span className="text-sm font-medium">/{t("premium.free") || "Free"}</span>
         </div>
 
         <div className="mt-5">
@@ -271,7 +271,7 @@ export default function PremiumChoicePage() {
           </div>
 
           <div className="text-3xl font-bold" style={{ color: col.premiumGold }}>
-            €4.99 <span className="text-sm font-medium opacity-60">/mês</span>
+            €4.99 <span className="text-sm font-medium">/{t("premium.free") || "Free"}</span>
           </div>
 
           <div className="mt-5">

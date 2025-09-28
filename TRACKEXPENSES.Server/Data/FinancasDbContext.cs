@@ -15,7 +15,7 @@ namespace TRACKEXPENSES.Server.Data
         {
 
         }
-        
+
         public DbSet<Models.Group> GroupOfUsers { get; set; }
         public DbSet<User> UsersList { get; set; }
 
@@ -30,13 +30,16 @@ namespace TRACKEXPENSES.Server.Data
 
         public DbSet<Wallet> Wallets => Set<Wallet>();
         public DbSet<ExpenseInstance> ExpenseInstances => Set<ExpenseInstance>();
-        public DbSet<Earning> Earnings => Set<Earning>();
         public DbSet<InstallmentPlan> InstallmentPlans => Set<InstallmentPlan>();
         public DbSet<Expense> Expenses => Set<Expense>();
+
+        public DbSet<Earning> Earnings => Set<Earning>();
+        public DbSet<EarningInstance> EarningInstances => Set<EarningInstance>();
 
         protected override void OnModelCreating(ModelBuilder model)
         {
             base.OnModelCreating(model);
+
             model.Entity<Group>()
                 .HasOne<User>()
                 .WithMany()
@@ -55,14 +58,14 @@ namespace TRACKEXPENSES.Server.Data
 
             model.Entity<Wallet>()
                 .HasIndex(w => new { w.UserId, w.IsPrimary })
-                .HasFilter("[IsPrimary] = 1")   //  funciona em SQL Server
+                .HasFilter("[IsPrimary] = 1")
                 .IsUnique();
 
             model.Entity<Wallet>()
                 .HasMany(w => w.Expenses)
                 .WithOne(e => e.Wallet)
                 .HasForeignKey(e => e.WalletId)
-                .OnDelete(DeleteBehavior.Restrict); // evita apagar despesas ao apagar wallet (se usas soft-delete)
+                .OnDelete(DeleteBehavior.Restrict);
 
             model.Entity<Wallet>()
                 .HasMany(w => w.Earnings)
@@ -75,29 +78,17 @@ namespace TRACKEXPENSES.Server.Data
                 .WithOne(p => p.Expense)
                 .HasForeignKey<InstallmentPlan>(p => p.ExpenseId);
 
-            // === AJUSTES RECOMENDADOS ===
-
-            // 1) Expense -> ExpenseInstances (cascade nas instâncias)
             model.Entity<Expense>()
                 .HasMany(e => e.Instances)
                 .WithOne(i => i.Expense)
                 .HasForeignKey(i => i.ExpenseId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // 2) Imagens opcionais (NÃO cascatar imagens por defeito)
-            // Expense tem ImageId mas (se não tiver navegação) não precisa mapear; se tiver navegação, algo como:
-            // model.Entity<Expense>()
-            //     .HasOne<ImageDB>()
-            //     .WithMany()
-            //     .HasForeignKey(e => e.ImageId)
-            //     .OnDelete(DeleteBehavior.SetNull);
-
             model.Entity<ExpenseInstance>()
                 .HasOne(i => i.Image)
                 .WithMany()
                 .HasForeignKey(i => i.ImageId)
                 .OnDelete(DeleteBehavior.SetNull);
-
 
             model.Entity<Expense>(b =>
             {
@@ -109,16 +100,8 @@ namespace TRACKEXPENSES.Server.Data
             {
                 b.Property(x => x.Value).HasColumnType("decimal(18,2)");
                 b.Property(x => x.PaidAmount).HasColumnType("decimal(18,2)");
-                b.HasIndex(x => new { x.ExpenseId, x.DueDate }); 
+                b.HasIndex(x => new { x.ExpenseId, x.DueDate });
             });
-
-            model.Entity<Earning>(b =>
-            {
-                b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
-                b.HasIndex(x => x.UserId);
-                b.HasIndex(x => x.WalletId);
-            });
-
 
             model.Entity<Expense>(b =>
             {
@@ -133,10 +116,32 @@ namespace TRACKEXPENSES.Server.Data
             {
                 b.Property(x => x.Name).HasMaxLength(255);
                 b.Property(x => x.Extension).HasMaxLength(16);
-
             });
 
+            model.Entity<Earning>(b =>
+            {
+                b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+                b.Property(x => x.Currency).HasMaxLength(3);
+                b.Property(x => x.Category).HasMaxLength(80).IsRequired();
+                b.Property(x => x.Title).HasMaxLength(140);
+                b.Property(x => x.Method).HasMaxLength(16);     
+                b.Property(x => x.RepeatUnit).HasMaxLength(16);
 
+                b.HasIndex(x => x.UserId);
+                b.HasIndex(x => x.WalletId);
+                b.HasIndex(x => x.Date);
+
+                b.HasMany(x => x.Instances)
+                 .WithOne(i => i.Earning)
+                 .HasForeignKey(i => i.EarningId)
+                 .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            model.Entity<EarningInstance>(b =>
+            {
+                b.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+                b.HasIndex(x => new { x.EarningId, x.ExpectedDate });
+            });
         }
 
 
