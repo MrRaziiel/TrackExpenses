@@ -469,6 +469,11 @@ const translations = {
 
     deleteConfirm: "Delete this earning (and all its instances)?"
   },
+   walletGate: {
+    title: "A wallet is required",
+    message: "We couldn't find any active wallet in your account. You'll be redirected to create your first wallet.",
+    redirectIn: "Redirecting in {seconds} second(s)…"
+  },
 
 receipt: {
     label: "Receipt / expense photo",
@@ -516,9 +521,98 @@ receipt: {
   instanceOf: "Instance of",
   endOf: "End of",
   loading: "Loading…",
-}
+},
+filters: {
+    dateRange: "Date range",
+    from: "From",
+    to: "To",
+    granularity: "Granularity",
+    day: "Day",
+    week: "Week",
+    month: "Month",
+    wallet: "Wallet",
+    scope: "Scope",
+    scope_all: "All wallets",
+    scope_primary: "Primary wallet",
+    scope_selected: "Selected wallet",
+    category: "Category",
+    all: "All",
+    thisMonth: "This month",
+    lastMonth: "Last month",
+    last3m: "Last 3 months",
+    ytd: "Year to date",
+  },
+dashboard: {
+  title: "Dashboard",
+  subtitle: "Overview of your finances",
+
+  filters: {
+    wallet_primary: "Primary",
+    wallet_all: "All wallets",
+    loadingWallets: "Loading wallets…",
+    day: "Day",
+    week: "Week",
+    month: "Month",
+    type_both: "Income & Expenses",
+    type_income: "Income only",
+    type_expense: "Expenses only",
+    search: "Search",
+    category_all: "All categories"
+  },
+
+  kpis: {
+    totalIncome: "Total income",
+    totalExpense: "Total expense",
+    net: "Net balance",
+    progress: "Progress (received / paid)",
+    progress_hint: "Income received vs. expenses paid",
+    walletBalance: "Wallet balance",
+    walletBalance_hint: "Received − Paid in selected period"
+  },
+
+  charts: {
+    evolution: "Evolution",
+    categories: "Categories",
+    income: "Income",
+    expenses: "Expenses",
+    status: "Status",
+    wallets: "Wallet balances"
+  },
+
+  legend: {
+    expensesPaid: "Expenses paid",
+    expensesPending: "Expenses pending",
+    incomePending: "Income pending",
+    incomeReceived: "Income received"
+  },
+
+  error_title: "Couldn’t load dashboard"
+},
+
+
+  welcome: {
+  take_control_of_your: "Take Control of Your",
+  finances: "Finances",
+  subtitle: "Track your expenses, monitor your income, and achieve your financial goals with our comprehensive financial management platform.",
+  get_started: "Get Started",
+  features: {
+    expense: {
+      title: "Expense Tracking",
+      desc: "Keep track of every penny with our intuitive expense tracking system."
+    },
+    income: {
+      title: "Income Management",
+      desc: "Monitor your income sources and analyze your earning patterns."
+    },
+    security: {
+      title: "Secure Platform",
+      desc: "Your financial data is protected with industry-standard security measures."
+    }
+  }
+},
   
   },
+  
   
 };
 

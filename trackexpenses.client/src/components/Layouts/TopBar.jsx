@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useContext } from "react";
 import { Link } from "react-router-dom";
-import { Menu as MenuIcon, Wallet, Settings, LogOut, DollarSign } from "lucide-react";
+import { Menu as MenuIcon, Wallet, Settings, LogOut, DollarSign, LogIn, UserPlus } from "lucide-react";
 import { useTheme } from "../../styles/Theme/Theme";
 import AuthContext from "../../services/Authentication/AuthContext";
 import useLogout from "../../services/Authentication/Logout";
@@ -36,7 +36,7 @@ export default function TopBar({ title = "TRACKEXPENSES", menuItems = [] }) {
       Array.isArray(ctxRoles)
         ? ctxRoles
         : typeof ctxRoles === "string"
-        ? ctxRoles.split(/[,\s]+/)
+        ? ctxRoles.split(/[\,\s]+/)
         : [],
     [ctxRoles]
   );
@@ -158,6 +158,31 @@ export default function TopBar({ title = "TRACKEXPENSES", menuItems = [] }) {
             <span className="font-bold text-xl">{title}</span>
           </Link>
         </div>
+
+        {/* lado direito: Signin / Login (desktop) */}
+        <div className="ml-auto hidden md:flex items-center gap-3">
+          {!isAuthenticated && (
+            <>
+              <Link
+                to="/signin"
+                className="group inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all ring-1 ring-white/5 hover:ring-white/20 hover:shadow-lg active:scale-[.98]"
+                style={{ borderColor: "rgba(255,255,255,0.16)", color: topText, backgroundColor: "rgba(255,255,255,0.04)" }}
+              >
+                <UserPlus className="h-4 w-4 opacity-90 group-hover:opacity-100" />
+                Signup
+              </Link>
+
+              <Link
+                to="/login"
+                className="group inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all hover:shadow-xl active:scale-[.98]"
+                style={{ backgroundColor: iconCol, color: "#fff" }}
+              >
+                <LogIn className="h-4 w-4 opacity-95" />
+                Login
+              </Link>
+            </>
+          )}
+        </div>
       </div>
 
       {/* menu mobile */}
@@ -166,6 +191,28 @@ export default function TopBar({ title = "TRACKEXPENSES", menuItems = [] }) {
           className="md:hidden absolute top-16 left-0 right-0 z-[210] shadow-2xl ring-1 text-center"
           style={{ backgroundColor: ddBg, borderColor: ddBorder }}
         >
+          {/* Quando NÃO autenticado, mostra Signin/Login no topo do menu mobile */}
+          {!isAuthenticated && (
+            <div className="flex justify-center gap-3 px-4 py-4 border-t" style={{ borderColor: ddBorder }}>
+              <Link
+                to="/signin"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium"
+                style={{ borderColor: "rgba(0,0,0,0.12)", color: ddText, backgroundColor: "rgba(0,0,0,0.03)" }}
+                onClick={() => setMobileOpen(false)}
+              >
+                <UserPlus className="h-4 w-4" /> {t?.("auth.signup") ?? "Criar conta"}
+              </Link>
+              <Link
+                to="/login"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold"
+                style={{ backgroundColor: iconCol, color: "#fff" }}
+                onClick={() => setMobileOpen(false)}
+              >
+                <LogIn className="h-4 w-4" /> {t?.("auth.login") ?? "Entrar"}
+              </Link>
+            </div>
+          )}
+
           <Section title={t?.("common.admin")} items={groups.ADMIN} />
           <Section title={t?.("common.adminGroup")} items={groups.GROUPADMIN} />
           <Section title={t?.("common.premium")} items={groups.PREMIUM} />

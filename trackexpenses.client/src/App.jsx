@@ -12,18 +12,22 @@ import RequireAuth from "./services/Authentication/Require";
 import NotRequireAuth from "./services/Authentication/NotRequire";
 import { AuthTimer_resume } from "./services/MicroServices/AuthTime";
 
-// icons
 import {
-  LayoutDashboard,
-  PiggyBank,
-  Wallet,
-  Users as UsersIcon,
-  Calendar, BookUser,
+  LayoutDashboard,   // dashboard / group dashboard (ícone coerente)
+  Users,             // users / groups
+  UserCog,           // group admin / settings
+  Shield,            // admin dashboard
+  PiggyBank,         // expenses
+  CircleDollarSign,  // earnings
+  Wallet,            // wallets
+  CalendarDays,      // calendar
 } from "lucide-react";
 
 // pages
 import Welcome from "./Pages/Welcome";
-import Dashboard from "./Pages/Administrador/Dashboard";
+import Dashboard from "./Pages/Dashboards/Dashboard";
+import AdminDashboard from "./Pages/Dashboards/AdminDashboard";
+import GroupDashboard from "./Pages/Dashboards/GroupDashboard";
 import UsersList from "./Pages/Administrador/ListClients";
 import EditUser from "./Pages/Administrador/EditUser";
 import EditUserProfile from "./Pages/Administrador/EditUser";
@@ -53,39 +57,164 @@ import GroupsEdit from "./Pages/GroupAdmin/GroupEdit";
 import ListWallets from "./Pages/Wallet/ListWallets";
 import EditWallet from "./Pages/Wallet/EditWallet";
 import CreateWallet from "./Pages/Wallet/CreateWallet";
+import WalletGate from "./services/Authentication/WalletGate";
 
+function normalizeGroups(raw) {
+  if (!raw) return [];
+  const arr = Array.isArray(raw) ? raw : raw.$values || [];
+  return arr
+    .map(g => {
+      const id =
+        g.id ?? g.groupId ?? g.Id ?? g.GroupId ?? g.GID ?? g.guid ?? null;
+      const name =
+        g.name ?? g.groupName ?? g.Name ?? g.GroupName ?? g.title ?? "";
+      const mine =
+        g.isAdmin ?? g.IsAdmin ?? (g.role === "GROUPADMINISTRATOR") ?? true;
+      return id ? { id: String(id), name: String(name), isAdmin: !!mine } : null;
+    })
+    .filter(Boolean);
+}
+
+async function fetchAdminGroups() {
+  const tryGet = async (url) => {
+    try {
+      const res = await apiCall.get(url, { validateStatus: () => true });
+      if (res?.status >= 200 && res?.status < 300) return res.data;
+    } catch {}
+    return null;
+  };
+
+  const candidates = [
+    "GroupAdmin/MyGroups",
+    "Groups/Admin",
+    "Groups/ListMine",
+    "Group/GetMyGroups",
+  ];
+
+  for (const path of candidates) {
+    const data = await tryGet(path);
+    if (data) {
+      const list = normalizeGroups(data);
+      const adminOnly = list.filter(g => g.isAdmin);
+      return adminOnly.length ? adminOnly : list;
+    }
+  }
+  return [];
+}
 
 export default function App() {
   const { theme } = useTheme();
   const { t } = useLanguage();
-  const { roles, isAuthenticated } = useContext(AuthContext);
-
-  // ---- estado local do utilizador para a sidebar/topbar  ----
-  const [userState, setUser] = useState({
-    email: "",
-    firstName: "",
-    lastName: "",
-    avatarUrl: "",
-  });
+  const { roles, isAuthenticated, auth } = useContext(AuthContext);
 
   useEffect(() => {
     AuthTimer_resume({ earlyMs: 30_000, graceMs: 5000 });
   }, []);
 
-  // Menu com traduções e visibilidade por role
+  const [firstAdminGroupId, setFirstAdminGroupId] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+
+    const hasGroupAdmin =
+      Array.isArray(roles)
+        ? roles.includes("GROUPADMINISTRATOR")
+        : String(roles || "").includes("GROUPADMINISTRATOR");
+
+    if (!hasGroupAdmin) {
+      setFirstAdminGroupId(null);
+      return;
+    }
+
+    (async () => {
+      const list = await fetchAdminGroups();
+      if (!alive) return;
+      setFirstAdminGroupId(list[0]?.id || null);
+    })();
+
+    return () => { alive = false; };
+  }, [roles]);
+
+  // Menu
   const items = useMemo(
     () => [
-      { to: "/Users",            icon: UsersIcon,       label: "common.users",     role: "ADMINISTRATOR", section: "ADMIN" },
-  { to: "/GroupAdminPage",            icon: BookUser,        label: "common.group_admin",  role: "GROUPADMINISTRATOR", section: "GROUPS" },
-  { to: "/GroupsList",            icon: BookUser,        label: "common.group_list",  role: "USER", section: "GROUPS" },
+      {
+        to: "/admin/dashboard",
+        icon: Shield,
+        label: "common.admin_dashboard",
+        role: "ADMINISTRATOR",
+        section: "ADMIN",
+      },
+      {
+        to: "/Users",
+        icon: Users,
+        label: "common.users",
+        role: "ADMINISTRATOR",
+        section: "ADMIN",
+      },
 
-  { to: "/Dashboard",        icon: LayoutDashboard, label: "common.dashboard", role: "USER", section: "FINANCES" },
-  { to: "/Expenses",         icon: PiggyBank,       label: "common.expenses",  role: "USER", section: "FINANCES" },
-  { to: "/Earnings",         icon: Wallet,          label: "common.earnings",  role: "USER", section: "FINANCES" },
-  { to: "/ListWallets",         icon: Wallet,          label: "common.listWallets",  role: "USER", section: "FINANCES" },
-  { to: "/CalendarExpenses", icon: Calendar,        label: "common.calendar",  role: "USER", section: "FINANCES" },
+      firstAdminGroupId
+        ? {
+            to: `/groups/${firstAdminGroupId}/dashboard`,
+            icon: LayoutDashboard,
+            label: "common.group_dashboard",
+            role: "GROUPADMINISTRATOR",
+            section: "GROUPS",
+          }
+        : {
+            to: "/GroupsList",
+            icon: Users,
+            label: "common.group_dashboard",
+            role: ["GROUPADMINISTRATOR", "GROUPMEMBER"],
+            section: "GROUPS",
+          },
+    
+      {
+        to: "/GroupsList",
+        icon: Users,
+        label: "common.group_list",
+        role: "USER",
+        section: "GROUPS",
+      },
+      {
+        to: "/ListWallets",
+        icon: Wallet,
+        label: "common.listWallets",
+        role: "USER",
+        section: "FINANCES",
+      },
+
+      {
+        to: "/Dashboard",
+        icon: LayoutDashboard,
+        label: "common.dashboard",
+        role: "USER",
+        section: "FINANCES",
+      },
+      {
+        to: "/Expenses",
+        icon: PiggyBank,
+        label: "common.expenses",
+        role: "USER",
+        section: "FINANCES",
+      },
+      {
+        to: "/Earnings",
+        icon: CircleDollarSign,
+        label: "common.earnings",
+        role: "USER",
+        section: "FINANCES",
+      },
+      
+      {
+        to: "/CalendarExpenses",
+        icon: CalendarDays,
+        label: "common.calendar",
+        role: "USER",
+        section: "FINANCES",
+      },
     ],
-    [t, roles]
+    [t, roles, firstAdminGroupId]
   );
 
   return (
@@ -109,31 +238,46 @@ export default function App() {
           <Route path="/ActivationAccount" element={<ActivationAccount />} />
           <Route path="/DeleteAccount" element={<DeleteAccount />} />
         </Route>
+
         <Route element={<RequireRoles allow={["PREMIUM", "GROUPADMINISTRATOR"]} />}>
-      <Route path="/Groups/Edit/:id" element={<GroupsEdit />} />
-      <Route path="/GroupAdminPage" element={<GroupAdminPage />} />
-      <Route path="/GroupsList" element={<GroupsList />} />
-      <Route path="/CreateGroup" element={<CreateGroup />} />
-
-
-    </Route>
+          <Route path="/Groups/Edit/:id" element={<GroupsEdit />} />
+          <Route path="/GroupAdminPage" element={<GroupAdminPage />} />
+          <Route path="/GroupsList" element={<GroupsList />} />
+          <Route path="/CreateGroup" element={<CreateGroup />} />
+        </Route>
 
         <Route element={<RequireAuth />}>
-      <Route path="/EditWallet/:id" element={<EditWallet />} />
+          <Route element={
+            <WalletGate
+              redirectTo="/CreateWallet"
+              delayMs={5200}
+              skipPaths={["/CreateWallet", "/auth"]}
+            />
+          }>
+            <Route path="/EditWallet/:id" element={<EditWallet />} />
+            <Route path="/Dashboard" element={<Dashboard />} />
+
+            <Route element={<RequireRoles allow="GROUPADMINISTRATOR" />}>
+              <Route path="/groups/:groupId/dashboard" element={<GroupDashboard />} />
+            </Route>
+
+            <Route element={<RequireRoles allow="ADMINISTRATOR" />}>
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            </Route>
+
+            <Route path="/Earnings" element={<ListEarnings />} />
+            <Route path="/CreateEarning" element={<CreateEarning />} />
+            <Route path="/Earnings/Edit/:id" element={<EditEarning />} />
+            <Route path="/Earnings/View/:id" element={<ViewEarning />} />
+
+            <Route path="/Expenses" element={<ListExpenses />} />
+            <Route path="/CreateExpense" element={<CreateExpense />} />
+            <Route path="/Expenses/Edit/:id" element={<EditExpense />} />
+            <Route path="/CalendarExpenses" element={<CalendarExpenses />} />
+          </Route>
+
           <Route path="/ListWallets" element={<ListWallets />} />
-
-          <Route path="/Dashboard" element={<Dashboard />} />
           <Route path="/CreateWallet" element={<CreateWallet />} />
-
-  <Route path="/Earnings" element={<ListEarnings />} />
-  <Route path="/CreateEarning" element={<CreateEarning />} />
-  <Route path="/Earnings/Edit/:id" element={<EditEarning />} />
-  <Route path="/Earnings/View/:id" element={<ViewEarning />} />
-
-          <Route path="/Expenses" element={<ListExpenses />} />
-          <Route path="/CreateExpense" element={<CreateExpense />} />
-          <Route path="/Expenses/Edit/:id" element={<EditExpense />} />
-          <Route path="/CalendarExpenses" element={<CalendarExpenses />} />
 
           <Route path="/Users" element={<UsersList />} />
           <Route path="/Users/edit/:id" element={<EditUser />} />
@@ -142,7 +286,6 @@ export default function App() {
           <Route path="/Profile" element={<ProfilePage />} />
           <Route path="/Premium" element={<PremiumChoicePage />} />
           <Route path="/users/new" element={<AddUser />} />
-
         </Route>
       </Routes>
     </AppShell>
