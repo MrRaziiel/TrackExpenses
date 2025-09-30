@@ -13,11 +13,11 @@ import NotRequireAuth from "./services/Authentication/NotRequire";
 import { AuthTimer_resume } from "./services/MicroServices/AuthTime";
 
 import {
-  LayoutDashboard,   // dashboard / group dashboard (ícone coerente)
+  LineChart,   // dashboard / group dashboard (ícone coerente)
   Users,             // users / groups
   UserCog,           // group admin / settings
   Shield,            // admin dashboard
-  PiggyBank,         // expenses
+ShoppingCart,         // expenses
   CircleDollarSign,  // earnings
   Wallet,            // wallets
   CalendarDays,      // calendar
@@ -140,7 +140,7 @@ export default function App() {
     () => [
       {
         to: "/admin/dashboard",
-        icon: Shield,
+        icon: LineChart,
         label: "common.admin_dashboard",
         role: "ADMINISTRATOR",
         section: "ADMIN",
@@ -156,7 +156,7 @@ export default function App() {
       firstAdminGroupId
         ? {
             to: `/groups/${firstAdminGroupId}/dashboard`,
-            icon: LayoutDashboard,
+            icon: LineChart,
             label: "common.group_dashboard",
             role: "GROUPADMINISTRATOR",
             section: "GROUPS",
@@ -186,14 +186,14 @@ export default function App() {
 
       {
         to: "/Dashboard",
-        icon: LayoutDashboard,
+        icon: LineChart,
         label: "common.dashboard",
         role: "USER",
         section: "FINANCES",
       },
       {
         to: "/Expenses",
-        icon: PiggyBank,
+        icon: ShoppingCart,
         label: "common.expenses",
         role: "USER",
         section: "FINANCES",

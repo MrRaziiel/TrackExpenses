@@ -257,7 +257,7 @@ const sections = useMemo(() => {
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
         >
           <DollarSign className="h-4 w-4" style={{ color: colors.muted }} />
-          {!collapsed && <span className="text-sm">Premium</span>}
+          {!collapsed && <span className="text-sm">{t("common.premium")}</span>}
         </Link>
 
         <Link
@@ -268,7 +268,7 @@ const sections = useMemo(() => {
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
         >
           <Settings className="h-4 w-4" style={{ color: colors.muted }} />
-          {!collapsed && <span className="text-sm">Settings</span>}
+          {!collapsed && <span className="text-sm">{t("common.settings")}</span>}
         </Link>
 
         <button
@@ -285,7 +285,7 @@ const sections = useMemo(() => {
           }}
         >
           <LogOut className="h-4 w-4" />
-          {!collapsed && <span className="text-sm">Logout</span>}
+          {!collapsed && <span className="text-sm">{t("common.logout")}</span>}
         </button>
       </div>
 
